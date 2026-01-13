@@ -1,0 +1,360 @@
+/**
+ * Global responsive styles for Clinica CAMSA
+ * These styles apply responsive fixes to common patterns across the app
+ */
+
+/* ============================================
+   GLOBAL RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Ensure all images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive container max-width */
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ============================================
+   MOBILE: 0px - 767px
+   ============================================ */
+@media (max-width: 767px) {
+  /* Reduce padding on all main containers */
+  body {
+    font-size: 14px;
+  }
+
+  /* Headers should stack vertically */
+  header,
+  .header,
+  [class*="header"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 12px 16px !important;
+  }
+
+  /* All h1 headings */
+  h1,
+  [class*="title"],
+  [class*="heading"] {
+    font-size: 20px !important;
+  }
+
+  /* All h2 headings */
+  h2 {
+    font-size: 18px !important;
+  }
+
+  /* All h3 headings */
+  h3 {
+    font-size: 16px !important;
+  }
+
+  /* Cards should have reduced padding */
+  [class*="card"],
+  [class*="panel"] {
+    padding: 16px !important;
+  }
+
+  /* Grids should collapse to single column */
+  [class*="grid"],
+  [class*="Grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Buttons should be full width */
+  button:not([class*="icon"]):not([class*="Icon"]) {
+    width: 100% !important;
+    padding: 12px 16px !important;
+  }
+
+  /* Tables should scroll horizontally */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Flex containers should wrap or stack */
+  .flex,
+  [class*="flex"] {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Reduce gaps in all containers */
+  [class*="container"],
+  [class*="Container"] {
+    padding: 15px !important;
+    gap: 12px !important;
+  }
+
+  /* Modal dialogs should be full screen on mobile */
+  [class*="modal"],
+  [class*="Modal"],
+  [class*="dialog"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Forms should stack vertically */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Input fields should be full width */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* Stats/metrics grids */
+  [class*="stats"],
+  [class*="Stats"],
+  [class*="metrics"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Product grids specific */
+  [class*="products"],
+  [class*="Products"],
+  [class*="catalog"] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only,
+  [class*="desktopOnly"] {
+    display: none !important;
+  }
+
+  /* Show mobile-only elements */
+  .mobile-only,
+  [class*="mobileOnly"] {
+    display: block !important;
+  }
+}
+
+/* ============================================
+   TABLET: 768px - 1023px
+   ============================================ */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Headers with moderate padding */
+  header,
+  .header,
+  [class*="header"] {
+    padding: 20px !important;
+    gap: 16px !important;
+  }
+
+  /* Cards with moderate padding */
+  [class*="card"],
+  [class*="panel"] {
+    padding: 20px !important;
+  }
+
+  /* 2-column grids on tablet */
+  [class*="grid"]:not([class*="products"]):not([class*="Products"]) {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  /* Product grids: 2-3 columns */
+  [class*="products"],
+  [class*="Products"] {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+    gap: 20px !important;
+  }
+
+  /* Containers with moderate padding */
+  [class*="container"],
+  [class*="Container"] {
+    padding: 20px !important;
+  }
+
+  /* Hide mobile-only elements */
+  .mobile-only,
+  [class*="mobileOnly"] {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   DESKTOP: 1024px+
+   ============================================ */
+@media (min-width: 1024px) {
+  /* Hide mobile-only elements */
+  .mobile-only,
+  [class*="mobileOnly"] {
+    display: none !important;
+  }
+
+  /* Show desktop-only elements */
+  .desktop-only,
+  [class*="desktopOnly"] {
+    display: block !important;
+  }
+}
+
+/* ============================================
+   SPECIFIC COMPONENT FIXES
+   ============================================ */
+
+/* Fix for admin sidebar on mobile */
+@media (max-width: 767px) {
+  [class*="sidebar"],
+  [class*="Sidebar"] {
+    position: fixed !important;
+    left: -250px !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    transition: left 0.3s ease !important;
+    z-index: 1000 !important;
+  }
+
+  [class*="sidebar"].open,
+  [class*="Sidebar"].open {
+    left: 0 !important;
+  }
+
+  /* Main content should not have left margin on mobile */
+  [class*="mainContent"],
+  [class*="main-content"] {
+    margin-left: 0 !important;
+  }
+}
+
+/* Fix for order cards that have flex headers */
+@media (max-width: 767px) {
+  [class*="orderCard"] [class*="header"],
+  [class*="OrderCard"] [class*="header"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* Fix for navigation breadcrumbs */
+@media (max-width: 767px) {
+  [class*="breadcrumb"],
+  [class*="Breadcrumb"] {
+    font-size: 12px !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+/* Fix for action buttons in cards/tables */
+@media (max-width: 767px) {
+  [class*="actions"],
+  [class*="Actions"] {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  [class*="actions"] button,
+  [class*="Actions"] button {
+    width: 100% !important;
+  }
+}
+
+/* Ensure scroll on tables */
+@media (max-width: 1023px) {
+  [class*="table"],
+  [class*="Table"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  table {
+    min-width: 600px; /* Force horizontal scroll if table is too wide */
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Responsive text alignment */
+.text-center-mobile {
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .text-center-mobile {
+    text-align: left;
+  }
+}
+
+/* Responsive flex direction */
+.flex-column-mobile {
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .flex-column-mobile {
+    flex-direction: row;
+  }
+}
+
+/* Responsive gaps */
+.gap-responsive {
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .gap-responsive {
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .gap-responsive {
+    gap: 24px;
+  }
+}
+
+/* Responsive padding */
+.padding-responsive {
+  padding: 15px;
+}
+
+@media (min-width: 768px) {
+  .padding-responsive {
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .padding-responsive {
+    padding: 40px;
+  }
+}
+
+/* Touch-friendly buttons */
+@media (max-width: 767px) {
+  button,
+  a.button,
+  [role="button"] {
+    min-height: 44px !important; /* iOS recommended touch target */
+    min-width: 44px !important;
+  }
+}

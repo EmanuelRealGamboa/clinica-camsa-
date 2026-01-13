@@ -1,2 +1,1 @@
-web: daphne -b 0.0.0.0 -p $PORT clinic_service.asgi:application
-release: python manage.py migrate && python manage.py collectstatic --noinput
+web: bash start.sh

@@ -6,24 +6,26 @@
 import { useWindowSize } from './responsive';
 import { spacing, typography } from './responsive';
 
+type Breakpoint = 'mobile' | 'tablet' | 'desktop';
+
 /**
  * Get responsive padding for containers
  */
-export const getContainerPadding = (breakpoint: 'mobile' | 'tablet' | 'desktop'): string => {
+export const getContainerPadding = (breakpoint: Breakpoint): string => {
   return spacing.container[breakpoint];
 };
 
 /**
  * Get responsive padding X (horizontal)
  */
-export const getPaddingX = (breakpoint: 'mobile' | 'tablet' | 'desktop'): string => {
+export const getPaddingX = (breakpoint: Breakpoint): string => {
   return spacing.paddingX[breakpoint];
 };
 
 /**
  * Get responsive padding Y (vertical)
  */
-export const getPaddingY = (breakpoint: 'mobile' | 'tablet' | 'desktop'): string => {
+export const getPaddingY = (breakpoint: Breakpoint): string => {
   return spacing.paddingY[breakpoint];
 };
 
@@ -32,7 +34,7 @@ export const getPaddingY = (breakpoint: 'mobile' | 'tablet' | 'desktop'): string
  */
 export const getHeadingSize = (
   level: 'h1' | 'h2' | 'h3' | 'h4',
-  breakpoint: 'mobile' | 'tablet' | 'desktop'
+  breakpoint: Breakpoint
 ): string => {
   return typography[level][breakpoint];
 };
@@ -42,7 +44,7 @@ export const getHeadingSize = (
  */
 export const getGap = (
   size: 'small' | 'medium' | 'large',
-  breakpoint: 'mobile' | 'tablet' | 'desktop'
+  breakpoint: Breakpoint
 ): string => {
   return spacing.gap[size][breakpoint];
 };
@@ -51,14 +53,14 @@ export const getGap = (
  * Responsive header styles for pages
  */
 export const useResponsiveHeaderStyles = () => {
-  const { isMobile, isTablet, breakpoint } = useWindowSize();
+  const { isMobile, breakpoint } = useWindowSize();
 
   return {
-    padding: `${getPaddingY(breakpoint)} ${getPaddingX(breakpoint)}`,
+    padding: `${getPaddingY(breakpoint as Breakpoint)} ${getPaddingX(breakpoint as Breakpoint)}`,
     flexDirection: isMobile ? ('column' as const) : ('row' as const),
     alignItems: isMobile ? ('flex-start' as const) : ('center' as const),
-    gap: getGap('medium', breakpoint),
-    fontSize: getHeadingSize('h2', breakpoint),
+    gap: getGap('medium', breakpoint as Breakpoint),
+    fontSize: getHeadingSize('h2', breakpoint as Breakpoint),
   };
 };
 
@@ -69,8 +71,8 @@ export const useResponsiveContainerStyles = () => {
   const { breakpoint } = useWindowSize();
 
   return {
-    padding: getContainerPadding(breakpoint),
-    paddingBottom: getPaddingY(breakpoint),
+    padding: getContainerPadding(breakpoint as Breakpoint),
+    paddingBottom: getPaddingY(breakpoint as Breakpoint),
   };
 };
 
@@ -82,7 +84,7 @@ export const useResponsiveCardStyles = () => {
 
   return {
     padding: isMobile ? '16px' : '24px',
-    gap: getGap('medium', breakpoint),
+    gap: getGap('medium', breakpoint as Breakpoint),
   };
 };
 
@@ -124,7 +126,7 @@ export const useResponsiveButtonStyles = () => {
 
   return {
     padding: isMobile ? '10px 16px' : '12px 24px',
-    fontSize: typography.button[breakpoint],
+    fontSize: typography.button[breakpoint as Breakpoint],
     width: isMobile ? '100%' : 'auto', // Full width buttons on mobile
   };
 };

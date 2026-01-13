@@ -17,12 +17,18 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'clinic_service.settings')
 django_asgi_app = get_asgi_application()
 
 from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.security.websocket import AllowedHostsOriginValidator
+from channels.security.websocket import OriginValidator
 from orders.routing import websocket_urlpatterns
+from django.conf import settings
+
+# Custom origin validator that uses WS_ALLOWED_ORIGINS from settings
+class CustomOriginValidator(OriginValidator):
+    def __init__(self, application):
+        super().__init__(application, settings.WS_ALLOWED_ORIGINS)
 
 application = ProtocolTypeRouter({
     'http': django_asgi_app,
-    'websocket': AllowedHostsOriginValidator(
+    'websocket': CustomOriginValidator(
         URLRouter(websocket_urlpatterns)
     ),
 })

@@ -106,6 +106,7 @@ class PatientAssignmentSerializer(serializers.ModelSerializer):
             'device_details',
             'room',
             'room_details',
+            'order_limits',
             'is_active',
             'started_at',
             'ended_at',

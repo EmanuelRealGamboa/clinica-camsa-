@@ -311,7 +311,7 @@ const InventoryPage: React.FC = () => {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Motivo del Ajuste *</label>
+              <label style={styles.label}>Motivo del Ajuste</label>
               <textarea
                 value={adjustNote}
                 onChange={(e) => setAdjustNote(e.target.value)}
@@ -325,7 +325,7 @@ const InventoryPage: React.FC = () => {
               <button
                 onClick={handleAdjustStock}
                 style={styles.submitButton}
-                disabled={!adjustDelta || parseInt(adjustDelta) === 0 || !adjustNote}
+                disabled={!adjustDelta || parseInt(adjustDelta) === 0}
               >
                 Ajustar Inventario
               </button>

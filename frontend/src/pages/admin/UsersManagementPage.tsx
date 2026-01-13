@@ -65,15 +65,15 @@ const UsersManagementPage: React.FC = () => {
         await adminApi.updateUser(editingUser.id, formData);
         setSuccessModal({
           show: true,
-          title: 'User Updated',
-          message: `User "${formData.full_name}" has been updated successfully.`,
+          title: 'Usuario Actualizado',
+          message: `El usuario "${formData.full_name}" ha sido actualizado exitosamente.`,
         });
       } else {
         await adminApi.createUser(formData);
         setSuccessModal({
           show: true,
-          title: 'User Created',
-          message: `User "${formData.full_name}" has been created successfully.`,
+          title: 'Usuario Creado',
+          message: `El usuario "${formData.full_name}" ha sido creado exitosamente.`,
         });
       }
       setShowModal(false);
@@ -85,7 +85,7 @@ const UsersManagementPage: React.FC = () => {
       setConfirmModal({
         show: true,
         title: 'Error',
-        message: err.response?.data?.error || 'Failed to save user',
+        message: err.response?.data?.error || 'Error al guardar el usuario',
         onConfirm: () => setConfirmModal({ ...confirmModal, show: false }),
         confirmText: 'OK',
         cancelText: undefined,
@@ -98,8 +98,8 @@ const UsersManagementPage: React.FC = () => {
 
     setConfirmModal({
       show: true,
-      title: 'Delete User',
-      message: `Are you sure you want to delete "${user?.full_name || 'this user'}"? This action cannot be undone.`,
+      title: 'Eliminar Usuario',
+      message: `¿Estás seguro de que deseas eliminar a "${user?.full_name || 'este usuario'}"? Esta acción no se puede deshacer.`,
       onConfirm: async () => {
         setConfirmModal({ ...confirmModal, show: false });
 
@@ -107,15 +107,15 @@ const UsersManagementPage: React.FC = () => {
           await adminApi.deleteUser(userId);
           setSuccessModal({
             show: true,
-            title: 'User Deleted',
-            message: `User "${user?.full_name}" has been deleted successfully.`,
+            title: 'Usuario Eliminado',
+            message: `El usuario "${user?.full_name}" ha sido eliminado exitosamente.`,
           });
           loadUsers();
         } catch (err: any) {
           setConfirmModal({
             show: true,
             title: 'Error',
-            message: err.response?.data?.error || 'Failed to delete user',
+            message: err.response?.data?.error || 'Error al eliminar el usuario',
             onConfirm: () => setConfirmModal({ ...confirmModal, show: false }),
             confirmText: 'OK',
             cancelText: undefined,
@@ -123,8 +123,8 @@ const UsersManagementPage: React.FC = () => {
           console.error('Failed to delete user:', err);
         }
       },
-      confirmText: 'Yes, Delete',
-      cancelText: 'Cancel',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
     });
   };
 
@@ -158,17 +158,17 @@ const UsersManagementPage: React.FC = () => {
     <div style={styles.container}>
       <header style={styles.header}>
         <div>
-          <Link to="/admin/dashboard" style={styles.backLink}>← Back to Dashboard</Link>
-          <h1>User Management</h1>
+          <Link to="/admin/dashboard" style={styles.backLink}>← Volver al Panel</Link>
+          <h1>Gestión de Usuarios</h1>
         </div>
         <button onClick={() => logout()} style={styles.logoutButton}>
-          Logout
+          Cerrar Sesión
         </button>
       </header>
 
       <div style={styles.content}>
         <div style={styles.toolbar}>
-          <h2>Staff & Nurses</h2>
+          <h2>Personal y Enfermeras</h2>
           <button
             onClick={() => {
               resetForm();
@@ -177,23 +177,23 @@ const UsersManagementPage: React.FC = () => {
             }}
             style={styles.addButton}
           >
-            + Add New User
+            + Agregar Nuevo Usuario
           </button>
         </div>
 
         {loading ? (
-          <div style={styles.loading}>Loading users...</div>
+          <div style={styles.loading}>Cargando usuarios...</div>
         ) : (
           <div style={styles.tableContainer}>
             <table style={styles.table}>
               <thead>
                 <tr>
                   <th style={styles.th}>ID</th>
-                  <th style={styles.th}>Email</th>
-                  <th style={styles.th}>Full Name</th>
+                  <th style={styles.th}>Correo</th>
+                  <th style={styles.th}>Nombre Completo</th>
                   <th style={styles.th}>Roles</th>
-                  <th style={styles.th}>Status</th>
-                  <th style={styles.th}>Actions</th>
+                  <th style={styles.th}>Estado</th>
+                  <th style={styles.th}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,7 +212,7 @@ const UsersManagementPage: React.FC = () => {
                         ...styles.statusBadge,
                         backgroundColor: user.is_active ? '#27ae60' : '#95a5a6'
                       }}>
-                        {user.is_active ? 'Active' : 'Inactive'}
+                        {user.is_active ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
                     <td style={styles.td}>
@@ -220,13 +220,13 @@ const UsersManagementPage: React.FC = () => {
                         onClick={() => handleEdit(user)}
                         style={styles.editButton}
                       >
-                        Edit
+                        Editar
                       </button>
                       <button
                         onClick={() => handleDelete(user.id)}
                         style={styles.deleteButton}
                       >
-                        Delete
+                        Eliminar
                       </button>
                     </td>
                   </tr>
@@ -241,10 +241,10 @@ const UsersManagementPage: React.FC = () => {
       {showModal && (
         <div style={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2>{editingUser ? 'Edit User' : 'Add New User'}</h2>
+            <h2>{editingUser ? 'Editar Usuario' : 'Agregar Nuevo Usuario'}</h2>
             <form onSubmit={handleSubmit} style={styles.form}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Email</label>
+                <label style={styles.label}>Correo Electrónico</label>
                 <input
                   type="email"
                   value={formData.email}
@@ -254,7 +254,7 @@ const UsersManagementPage: React.FC = () => {
                 />
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Full Name</label>
+                <label style={styles.label}>Nombre Completo</label>
                 <input
                   type="text"
                   value={formData.full_name}
@@ -264,7 +264,7 @@ const UsersManagementPage: React.FC = () => {
                 />
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Username</label>
+                <label style={styles.label}>Usuario</label>
                 <input
                   type="text"
                   value={formData.username}
@@ -275,7 +275,7 @@ const UsersManagementPage: React.FC = () => {
               </div>
               <div style={styles.formGroup}>
                 <label style={styles.label}>
-                  Password {editingUser && '(leave blank to keep current)'}
+                  Contraseña {editingUser && '(dejar en blanco para mantener actual)'}
                 </label>
                 <input
                   type="password"
@@ -293,15 +293,15 @@ const UsersManagementPage: React.FC = () => {
                     onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
                     style={{marginRight: '8px'}}
                   />
-                  Active
+                  Activo
                 </label>
               </div>
               <div style={styles.formActions}>
                 <button type="button" onClick={() => setShowModal(false)} style={styles.cancelButton}>
-                  Cancel
+                  Cancelar
                 </button>
                 <button type="submit" style={styles.submitButton}>
-                  {editingUser ? 'Update' : 'Create'}
+                  {editingUser ? 'Actualizar' : 'Crear'}
                 </button>
               </div>
             </form>

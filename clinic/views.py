@@ -185,6 +185,62 @@ class PatientAssignmentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(assignment)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['patch'])
+    def update_limits(self, request, pk=None):
+        """
+        Update order limits for a patient assignment
+        PATCH /api/clinic/patient-assignments/{id}/update_limits/
+        Body: {"DRINK": 1, "SNACK": 1}
+        """
+        assignment = self.get_object()
+
+        # Check if assignment is active
+        if not assignment.is_active:
+            return Response(
+                {'detail': 'Cannot update limits for an ended assignment'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if current user is the assigned staff
+        if assignment.staff != request.user and not request.user.is_superuser:
+            return Response(
+                {'detail': 'You can only update limits for your own patient assignments'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Get limits from request
+        order_limits = request.data
+
+        # Validate limits
+        if not isinstance(order_limits, dict):
+            return Response(
+                {'detail': 'order_limits must be a dictionary'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Ensure DRINK and SNACK are integers
+        for key in ['DRINK', 'SNACK']:
+            if key in order_limits:
+                try:
+                    order_limits[key] = int(order_limits[key])
+                    if order_limits[key] < 0:
+                        return Response(
+                            {'detail': f'{key} limit must be a non-negative integer'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                except (ValueError, TypeError):
+                    return Response(
+                        {'detail': f'{key} limit must be a valid integer'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+        # Update limits
+        assignment.order_limits = order_limits
+        assignment.save(update_fields=['order_limits', 'updated_at'])
+
+        serializer = self.get_serializer(assignment)
+        return Response(serializer.data)
+
 
 # Public endpoints for Kiosk
 
@@ -234,7 +290,8 @@ def get_active_patient_by_device(request, device_uid):
                 'email': assignment.staff.email,
             },
             'assignment_id': assignment.id,
-            'started_at': assignment.started_at.isoformat()
+            'started_at': assignment.started_at.isoformat(),
+            'order_limits': assignment.order_limits or {}
         }, status=status.HTTP_200_OK)
 
     except Device.DoesNotExist:

@@ -6,12 +6,16 @@ import { AdminProtectedRoute } from './auth/AdminProtectedRoute';
 
 // Kiosk Pages
 import KioskPage from './pages/kiosk/KioskPage';
+import { KioskHomePage } from './pages/kiosk/KioskHomePage';
+import { KioskCategoryPage } from './pages/kiosk/KioskCategoryPage';
+import { KioskOrdersPage } from './pages/kiosk/KioskOrdersPage';
 
 // Staff Pages
 import LoginPage from './pages/staff/LoginPage';
 import DashboardPage from './pages/staff/DashboardPage';
 import OrdersPage from './pages/staff/OrdersPage';
 import OrderDetailPage from './pages/staff/OrderDetailPage';
+import { InventoryViewPage } from './pages/staff/InventoryViewPage';
 
 // Admin Pages
 import AdminLoginPage from './pages/admin/AdminLoginPage';
@@ -27,8 +31,10 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Kiosk Routes */}
-          <Route path="/kiosk/:deviceId" element={<KioskPage />} />
+          {/* Kiosk Routes - New Design */}
+          <Route path="/kiosk/:deviceId" element={<KioskHomePage />} />
+          <Route path="/kiosk/:deviceId/category/:categoryId" element={<KioskCategoryPage />} />
+          <Route path="/kiosk/:deviceId/orders" element={<KioskOrdersPage />} />
           <Route path="/kiosk" element={<Navigate to="/kiosk/01" replace />} />
 
           {/* Staff Routes */}
@@ -54,6 +60,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <OrderDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/inventory"
+            element={
+              <ProtectedRoute>
+                <InventoryViewPage />
               </ProtectedRoute>
             }
           />

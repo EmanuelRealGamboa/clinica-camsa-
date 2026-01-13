@@ -27,6 +27,53 @@ class InventoryBalanceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = InventoryBalanceSerializer
     permission_classes = [IsStaffOrAdmin]
 
+    @action(detail=False, methods=['get'])
+    def all_products(self, request):
+        """
+        Get all products with their inventory data
+        Shows both inventoried and non-inventoried products
+        GET /api/inventory/balances/all_products/
+        """
+        # Get all active products
+        products = Product.objects.filter(is_active=True).select_related('category').order_by('category__name', 'name')
+
+        result = []
+        for product in products:
+            try:
+                # Try to get inventory balance
+                balance = InventoryBalance.objects.get(product=product)
+                result.append({
+                    'id': product.id,
+                    'name': product.name,
+                    'category': product.category.name,
+                    'sku': product.sku or '-',
+                    'inventoried': True,
+                    'on_hand': balance.on_hand,
+                    'reserved': balance.reserved,
+                    'available': balance.available,
+                    'reorder_level': balance.reorder_level,
+                    'needs_reorder': balance.needs_reorder,
+                })
+            except InventoryBalance.DoesNotExist:
+                # Product not in inventory system
+                result.append({
+                    'id': product.id,
+                    'name': product.name,
+                    'category': product.category.name,
+                    'sku': product.sku or '-',
+                    'inventoried': False,
+                    'on_hand': None,
+                    'reserved': None,
+                    'available': None,
+                    'reorder_level': None,
+                    'needs_reorder': False,
+                })
+
+        return Response({
+            'count': len(result),
+            'results': result
+        }, status=status.HTTP_200_OK)
+
 
 class StockOperationsViewSet(viewsets.ViewSet):
     """

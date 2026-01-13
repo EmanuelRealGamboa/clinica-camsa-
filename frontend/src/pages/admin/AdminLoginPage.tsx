@@ -26,11 +26,11 @@ const AdminLoginPage: React.FC = () => {
       if (isSuperAdmin || hasAdminRole) {
         navigate('/admin/dashboard');
       } else {
-        setError('Access denied. Superadmin privileges required.');
+        setError('Acceso denegado. Se requieren privilegios de superadministrador.');
         await logout();
       }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Login failed. Please check your credentials.';
+      const errorMsg = err.response?.data?.error || 'Error de inicio de sesión. Por favor verifica tus credenciales.';
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -47,12 +47,12 @@ const AdminLoginPage: React.FC = () => {
     <div style={styles.container}>
       <div style={styles.loginBox}>
         <div style={styles.header}>
-          <h1 style={styles.title}>Admin Panel</h1>
-          <p style={styles.subtitle}>Superadmin Access Only</p>
+          <h1 style={styles.title}>Panel de Administración</h1>
+          <p style={styles.subtitle}>Solo Acceso de Superadministrador</p>
         </div>
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Email</label>
+            <label style={styles.label}>Correo Electrónico</label>
             <input
               type="email"
               value={email}
@@ -64,7 +64,7 @@ const AdminLoginPage: React.FC = () => {
             />
           </div>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Password</label>
+            <label style={styles.label}>Contraseña</label>
             <input
               type="password"
               value={password}
@@ -77,11 +77,11 @@ const AdminLoginPage: React.FC = () => {
           </div>
           {error && <div style={styles.error}>{error}</div>}
           <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
         <div style={styles.footer}>
-          <a href="/staff/login" style={styles.link}>Staff Login</a>
+          <a href="/staff/login" style={styles.link}>Inicio de Sesión del Personal</a>
         </div>
       </div>
     </div>

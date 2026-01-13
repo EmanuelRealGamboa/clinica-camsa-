@@ -10,6 +10,7 @@ const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
 const KioskPage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -130,6 +131,21 @@ const KioskPage: React.FC = () => {
       loadActiveOrders();
     }
   }, [showOrders]);
+
+  // Handle window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Helper functions for responsive breakpoints
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+  const isDesktop = windowWidth >= 1024;
 
   const loadData = async () => {
     try {
@@ -373,21 +389,27 @@ const KioskPage: React.FC = () => {
 
   return (
     <div style={styles.container}>
-      <header style={styles.header}>
+      <header style={{
+        ...styles.header,
+        flexDirection: isMobile ? 'column' as const : 'row' as const,
+        alignItems: isMobile ? 'flex-start' : 'center',
+        gap: isMobile ? '15px' : '0',
+        padding: isMobile ? '15px' : '20px'
+      }}>
         <div>
-          <h1>Room Service Order</h1>
+          <h1 style={{fontSize: isMobile ? '20px' : '28px', margin: 0}}>Room Service Order</h1>
           {patientInfo && (
             <>
-              <div style={styles.patientWelcome}>
+              <div style={{...styles.patientWelcome, fontSize: isMobile ? '14px' : '16px'}}>
                 Welcome, <strong>{patientInfo.patient.full_name}</strong>
               </div>
-              <div style={styles.staffInfo}>
+              <div style={{...styles.staffInfo, fontSize: isMobile ? '12px' : '14px'}}>
                 Your nurse: <strong>{patientInfo.staff.full_name}</strong>
               </div>
             </>
           )}
         </div>
-        <div style={styles.headerRight}>
+        <div style={{...styles.headerRight, textAlign: isMobile ? 'left' as const : 'right' as const}}>
           {patientInfo && (
             <div style={styles.roomInfo}>
               Room: <strong>{patientInfo.room.code}</strong>
@@ -414,10 +436,19 @@ const KioskPage: React.FC = () => {
         </div>
       </header>
 
-      <div style={styles.topBar}>
+      <div style={{
+        ...styles.topBar,
+        flexDirection: isMobile ? 'column' as const : 'row' as const,
+        gap: isMobile ? '15px' : '0',
+        padding: isMobile ? '15px' : '20px'
+      }}>
         <div style={styles.categories}>
           <button
-            style={selectedCategory === null ? styles.categoryButtonActive : styles.categoryButton}
+            style={{
+              ...(selectedCategory === null ? styles.categoryButtonActive : styles.categoryButton),
+              padding: isMobile ? '8px 15px' : '10px 20px',
+              fontSize: isMobile ? '14px' : '16px'
+            }}
             onClick={() => setSelectedCategory(null)}
           >
             All
@@ -425,7 +456,11 @@ const KioskPage: React.FC = () => {
           {categories.map((category) => (
             <button
               key={category.id}
-              style={selectedCategory === category.id ? styles.categoryButtonActive : styles.categoryButton}
+              style={{
+                ...(selectedCategory === category.id ? styles.categoryButtonActive : styles.categoryButton),
+                padding: isMobile ? '8px 15px' : '10px 20px',
+                fontSize: isMobile ? '14px' : '16px'
+              }}
               onClick={() => setSelectedCategory(category.id)}
             >
               {category.name}
@@ -433,7 +468,12 @@ const KioskPage: React.FC = () => {
           ))}
         </div>
         <button
-          style={showOrders ? styles.viewOrdersButtonActive : styles.viewOrdersButton}
+          style={{
+            ...(showOrders ? styles.viewOrdersButtonActive : styles.viewOrdersButton),
+            marginLeft: isMobile ? '0' : '20px',
+            width: isMobile ? '100%' : 'auto',
+            padding: isMobile ? '12px 20px' : '10px 20px'
+          }}
           onClick={() => setShowOrders(!showOrders)}
         >
           {showOrders ? 'View Menu' : 'My Orders'}
@@ -484,16 +524,67 @@ const KioskPage: React.FC = () => {
           )}
         </div>
       ) : (
-        <div style={styles.productsGrid}>
+        <div style={{
+          ...styles.productsGrid,
+          gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(auto-fill, minmax(200px, 1fr))' : 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: isMobile ? '15px' : '20px',
+          padding: isMobile ? '15px' : '20px'
+        }}>
           {filteredProducts.map((product) => {
             const qty = cart.get(product.id) || 0;
+            const isOutOfStock = product.is_available === false;
+
             return (
-              <div key={product.id} style={styles.productCard}>
-                <h3>{product.name}</h3>
-                <p style={styles.description}>{product.description}</p>
-                <p style={styles.unit}>{product.unit_label}</p>
+              <div
+                key={product.id}
+                style={{
+                  ...styles.productCard,
+                  opacity: isOutOfStock ? 0.6 : 1,
+                }}
+              >
+                <div style={{ position: 'relative' }}>
+                  {product.image_url_full && (
+                    <img
+                      src={product.image_url_full}
+                      alt={product.name}
+                      style={{
+                        ...styles.productImage,
+                        filter: isOutOfStock ? 'grayscale(100%)' : 'none',
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  )}
+                  {isOutOfStock && (
+                    <div style={styles.outOfStockBadge}>
+                      Agotado
+                    </div>
+                  )}
+                </div>
+                <div style={styles.productContent}>
+                  <h3>{product.name}</h3>
+                  <p style={styles.description}>{product.description}</p>
+                  <p style={styles.unit}>{product.unit_label}</p>
+                  {product.available !== null && product.available !== undefined && !isOutOfStock && (
+                    <p style={styles.stockInfo}>
+                      Disponibles: {product.available}
+                    </p>
+                  )}
+                </div>
                 <div style={styles.productActions}>
-                  {qty > 0 ? (
+                  {isOutOfStock ? (
+                    <button
+                      style={{
+                        ...styles.addButton,
+                        backgroundColor: '#95a5a6',
+                        cursor: 'not-allowed',
+                      }}
+                      disabled
+                    >
+                      No disponible
+                    </button>
+                  ) : qty > 0 ? (
                     <div style={styles.quantityControl}>
                       <button onClick={() => removeFromCart(product.id)} style={styles.qtyButton}>
                         -
@@ -518,7 +609,11 @@ const KioskPage: React.FC = () => {
       {/* Cart Sidebar Modal */}
       {showCart && (
         <div style={styles.cartSidebarOverlay} onClick={() => setShowCart(false)}>
-          <div style={styles.cartSidebar} onClick={(e) => e.stopPropagation()}>
+          <div style={{
+            ...styles.cartSidebar,
+            width: isMobile ? '100%' : isTablet ? '350px' : '400px',
+            maxWidth: isMobile ? '100%' : '90%'
+          }} onClick={(e) => e.stopPropagation()}>
             <div style={styles.cartHeader}>
               <h2>Your Cart ({cartTotal} items)</h2>
               <button style={styles.closeCartButton} onClick={() => setShowCart(false)}>
@@ -576,10 +671,18 @@ const KioskPage: React.FC = () => {
       {/* Confirmation Modal */}
       {confirmModal.show && (
         <div style={styles.modalOverlay} onClick={() => !confirmModal.cancelText && setConfirmModal({ ...confirmModal, show: false })}>
-          <div style={styles.confirmModalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.confirmModalTitle}>{confirmModal.title}</h2>
-            <p style={styles.confirmModalMessage}>{confirmModal.message}</p>
-            <div style={styles.confirmModalButtons}>
+          <div style={{
+            ...styles.confirmModalContent,
+            padding: isMobile ? '20px' : '30px',
+            margin: isMobile ? '10px' : '0'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{...styles.confirmModalTitle, fontSize: isMobile ? '20px' : '24px'}}>{confirmModal.title}</h2>
+            <p style={{...styles.confirmModalMessage, fontSize: isMobile ? '14px' : '16px'}}>{confirmModal.message}</p>
+            <div style={{
+              ...styles.confirmModalButtons,
+              flexDirection: isMobile ? 'column' as const : 'row' as const,
+              gap: isMobile ? '10px' : '15px'
+            }}>
               {confirmModal.cancelText && (
                 <button
                   style={styles.cancelButton}
@@ -624,17 +727,24 @@ const KioskPage: React.FC = () => {
           setSelectedRating(null);
           setShowCommentStep(false);
         }}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>¡Pedido entregado!</h2>
-            <p style={styles.modalSubtitle}>
+          <div style={{
+            ...styles.modalContent,
+            padding: isMobile ? '20px' : '40px'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{...styles.modalTitle, fontSize: isMobile ? '24px' : '32px'}}>¡Pedido entregado!</h2>
+            <p style={{...styles.modalSubtitle, fontSize: isMobile ? '16px' : '18px'}}>
               Su pedido n° {satisfactionModal.order?.id} ha sido entregado
             </p>
 
             {!showCommentStep ? (
               <>
                 {/* Step 1: Rating Selection */}
-                <p style={styles.modalQuestion}>¿Qué tan satisfecho está usted con su pedido?</p>
-                <div style={styles.ratingButtons}>
+                <p style={{...styles.modalQuestion, fontSize: isMobile ? '18px' : '20px'}}>¿Qué tan satisfecho está usted con su pedido?</p>
+                <div style={{
+                  ...styles.ratingButtons,
+                  flexDirection: isMobile ? 'column' as const : 'row' as const,
+                  gap: isMobile ? '15px' : '10px'
+                }}>
                   <button
                     style={{ ...styles.ratingButton, backgroundColor: '#e74c3c' }}
                     onClick={() => handleRatingSelect(1)}
@@ -815,9 +925,22 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   productCard: {
     backgroundColor: 'white',
-    padding: '20px',
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    overflow: 'hidden' as const,
+    display: 'flex' as const,
+    flexDirection: 'column' as const,
+  },
+  productImage: {
+    width: '100%',
+    height: '200px',
+    objectFit: 'contain' as const,
+    backgroundColor: '#f8f9fa',
+    padding: '10px',
+  },
+  productContent: {
+    padding: '15px 20px',
+    flex: 1,
   },
   description: {
     color: '#666',
@@ -828,8 +951,28 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#999',
     fontSize: '12px',
   },
+  stockInfo: {
+    color: '#27ae60',
+    fontSize: '13px',
+    fontWeight: 'bold',
+    marginTop: '8px',
+  },
+  outOfStockBadge: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    color: 'white',
+    padding: '10px 20px',
+    borderRadius: '8px',
+    fontSize: '18px',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    zIndex: 10,
+  },
   productActions: {
-    marginTop: '15px',
+    padding: '0 20px 20px 20px',
   },
   addButton: {
     width: '100%',

@@ -86,6 +86,10 @@ class PublicFeedbackViewSet(viewsets.ViewSet):
                     comment=comment if comment else None
                 )
 
+                # End the patient assignment automatically after feedback is submitted
+                if order.patient_assignment and order.patient_assignment.is_active:
+                    order.patient_assignment.end_care()
+
                 return Response({
                     'success': True,
                     'message': 'Thank you for your feedback!',

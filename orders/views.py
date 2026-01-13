@@ -17,7 +17,8 @@ from .serializers import (
     PublicOrderSerializer,
     CreateOrderSerializer,
     OrderStatusChangeSerializer,
-    OrderCancelSerializer
+    OrderCancelSerializer,
+    StaffCreateOrderSerializer
 )
 
 
@@ -68,6 +69,39 @@ class PublicOrderViewSet(viewsets.ViewSet):
                 # Update device last_seen_at
                 device.last_seen_at = timezone.now()
                 device.save(update_fields=['last_seen_at'])
+
+                # VALIDATE ORDER LIMITS BY CATEGORY TYPE
+                order_limits = patient_assignment.order_limits or {}
+                category_counts = {}
+
+                # Count items by category type
+                for item_data in items_data:
+                    product = Product.objects.select_related('category').get(
+                        id=item_data['product_id'],
+                        is_active=True
+                    )
+                    category_type = product.category.category_type
+                    if category_type not in category_counts:
+                        category_counts[category_type] = 0
+                    category_counts[category_type] += item_data['quantity']
+
+                # Check against limits
+                for category_type, count in category_counts.items():
+                    max_allowed = order_limits.get(category_type, 999)  # 999 = no limit
+                    if count > max_allowed:
+                        category_label = {
+                            'DRINK': 'bebidas',
+                            'SNACK': 'snacks',
+                            'OTHER': 'productos'
+                        }.get(category_type, 'productos')
+
+                        return Response({
+                            'error': f'Has alcanzado tu límite de {category_label}. Máximo permitido: {max_allowed}',
+                            'limit_reached': True,
+                            'category_type': category_type,
+                            'max_allowed': max_allowed,
+                            'requested': count
+                        }, status=status.HTTP_400_BAD_REQUEST)
 
                 # Validate inventory availability for all items first
                 inventory_checks = []
@@ -492,6 +526,168 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({
                 'error': 'Inventory balance not found for one or more products'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'], url_path='create-order')
+    def create_order_for_patient(self, request, pk=None):
+        """
+        Staff creates an order for their assigned patient (no limits)
+        POST /api/staff/patient-assignments/{id}/create-order/
+        {
+            "items": [
+                {"product_id": 1, "quantity": 2},
+                {"product_id": 3, "quantity": 1}
+            ]
+        }
+        """
+        serializer = StaffCreateOrderSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        items = serializer.validated_data['items']
+
+        try:
+            with transaction.atomic():
+                from clinic.models import PatientAssignment
+
+                # Get the patient assignment
+                assignment = PatientAssignment.objects.select_related(
+                    'patient', 'staff', 'room', 'device'
+                ).select_for_update().get(id=pk)
+
+                # Validate assignment is active
+                if not assignment.is_active:
+                    return Response({
+                        'error': 'Patient assignment is not active'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                # Validate staff owns this assignment (unless superuser)
+                if assignment.staff != request.user and not request.user.is_superuser:
+                    return Response({
+                        'error': 'You can only create orders for your own assigned patients'
+                    }, status=status.HTTP_403_FORBIDDEN)
+
+                # Validate inventory availability for all items
+                for item in items:
+                    product = Product.objects.select_related('category').get(
+                        id=item['product_id'],
+                        is_active=True
+                    )
+                    quantity = int(item['quantity'])
+
+                    # Check inventory if product is tracked
+                    try:
+                        inventory = InventoryBalance.objects.select_for_update().get(product=product)
+                        available = inventory.on_hand - inventory.reserved
+                        if available < quantity:
+                            return Response({
+                                'error': f'Insufficient inventory for {product.name}. Available: {available}, Requested: {quantity}'
+                            }, status=status.HTTP_400_BAD_REQUEST)
+                    except InventoryBalance.DoesNotExist:
+                        # Product not tracked in inventory, allow order
+                        pass
+
+                # Create the order
+                order = Order.objects.create(
+                    assignment=assignment.device,
+                    room=assignment.room,
+                    patient=assignment.patient,
+                    patient_assignment=assignment,
+                    status='PLACED',
+                    placed_at=timezone.now()
+                )
+
+                # Create order items and reserve inventory
+                for item in items:
+                    product = Product.objects.select_related('category').get(
+                        id=item['product_id'],
+                        is_active=True
+                    )
+                    quantity = int(item['quantity'])
+
+                    # Create order item
+                    OrderItem.objects.create(
+                        order=order,
+                        product=product,
+                        quantity=quantity,
+                        unit_label=product.unit_label
+                    )
+
+                    # Reserve inventory if product is tracked
+                    try:
+                        inventory = InventoryBalance.objects.select_for_update().get(product=product)
+                        inventory.reserved += quantity
+                        inventory.save(update_fields=['reserved', 'updated_at'])
+
+                        # Create inventory movement
+                        InventoryMovement.objects.create(
+                            product=product,
+                            movement_type='RESERVE',
+                            quantity=quantity,
+                            order=order,
+                            created_by=request.user,
+                            note=f'Reserved for Order #{order.id} (created by staff)'
+                        )
+                    except InventoryBalance.DoesNotExist:
+                        # Product not tracked, skip inventory operations
+                        pass
+
+                # Create status event
+                OrderStatusEvent.objects.create(
+                    order=order,
+                    from_status='',
+                    to_status='PLACED',
+                    changed_by=request.user,
+                    note='Order created by staff for patient'
+                )
+
+                # Broadcast via WebSocket
+                try:
+                    channel_layer = get_channel_layer()
+                    if channel_layer:
+                        # Notify staff dashboard
+                        async_to_sync(channel_layer.group_send)(
+                            'staff_orders',
+                            {
+                                'type': 'new_order',
+                                'order_id': order.id,
+                                'room_code': assignment.room.code if assignment.room else None,
+                                'device_uid': assignment.device.device_uid if assignment.device else None,
+                                'placed_at': order.placed_at.isoformat()
+                            }
+                        )
+
+                        # Notify kiosk (patient device) to redirect to order status
+                        if assignment.device:
+                            async_to_sync(channel_layer.group_send)(
+                                f'device_{assignment.device.id}',
+                                {
+                                    'type': 'order_created_by_staff',
+                                    'order_id': order.id,
+                                    'placed_at': order.placed_at.isoformat()
+                                }
+                            )
+                except Exception as ws_error:
+                    # Log but don't fail the request
+                    print(f'WebSocket broadcast failed: {ws_error}')
+
+                return Response({
+                    'success': True,
+                    'message': 'Order created successfully for patient',
+                    'order': PublicOrderSerializer(order, context={'request': request}).data
+                }, status=status.HTTP_201_CREATED)
+
+        except PatientAssignment.DoesNotExist:
+            return Response({
+                'error': 'Patient assignment not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Product.DoesNotExist:
+            return Response({
+                'error': 'One or more products not found or inactive'
+            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({
                 'error': str(e)

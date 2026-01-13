@@ -3,6 +3,11 @@ from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy as _
 
 
+def get_default_order_limits():
+    """Return default order limits: 1 DRINK and 1 SNACK"""
+    return {'DRINK': 1, 'SNACK': 1}
+
+
 class Room(models.Model):
     """
     Hospital room model
@@ -172,6 +177,12 @@ class PatientAssignment(models.Model):
         related_name='patient_assignments',
         verbose_name=_('room'),
         help_text=_('Room where patient is located')
+    )
+    order_limits = models.JSONField(
+        _('order limits'),
+        default=get_default_order_limits,
+        blank=True,
+        help_text=_('Order limits by category type (e.g., {"DRINK": 1, "SNACK": 1})')
     )
     is_active = models.BooleanField(
         _('is active'),

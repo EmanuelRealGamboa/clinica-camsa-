@@ -77,11 +77,11 @@ const FeedbackPage: React.FC = () => {
     <div style={styles.container}>
       <header style={styles.header}>
         <div>
-          <Link to="/admin/dashboard" style={styles.backLink}>← Back to Dashboard</Link>
-          <h1>Customer Satisfaction & Feedback</h1>
+          <Link to="/admin/dashboard" style={styles.backLink}>← Volver al Panel</Link>
+          <h1>Satisfacción del Cliente y Retroalimentación</h1>
         </div>
         <button onClick={() => logout()} style={styles.logoutButton}>
-          Logout
+          Cerrar Sesión
         </button>
       </header>
 
@@ -92,48 +92,48 @@ const FeedbackPage: React.FC = () => {
             <div style={styles.statCard}>
               <div style={styles.statIcon}>📊</div>
               <div style={styles.statValue}>{stats.total_feedbacks}</div>
-              <div style={styles.statLabel}>Total Feedbacks</div>
+              <div style={styles.statLabel}>Retroalimentaciones Totales</div>
             </div>
             <div style={styles.statCard}>
               <div style={styles.statIcon}>⭐</div>
               <div style={styles.statValue}>{stats.average_rating.toFixed(1)}/5</div>
-              <div style={styles.statLabel}>Average Rating</div>
+              <div style={styles.statLabel}>Calificación Promedio</div>
             </div>
             <div style={styles.statCard}>
               <div style={styles.statIcon}>📅</div>
               <div style={styles.statValue}>{stats.today_feedbacks}</div>
-              <div style={styles.statLabel}>Today's Feedbacks</div>
+              <div style={styles.statLabel}>Retroalimentaciones de Hoy</div>
             </div>
             <div style={styles.statCard}>
               <div style={styles.statIcon}>📈</div>
               <div style={styles.statValue}>{stats.response_rate.toFixed(1)}%</div>
-              <div style={styles.statLabel}>Response Rate</div>
+              <div style={styles.statLabel}>Tasa de Respuesta</div>
             </div>
           </div>
         )}
 
         {/* Filters */}
         <div style={styles.filtersCard}>
-          <h3 style={styles.filtersTitle}>Filters</h3>
+          <h3 style={styles.filtersTitle}>Filtros</h3>
           <div style={styles.filtersGrid}>
             <div style={styles.filterGroup}>
-              <label style={styles.filterLabel}>Rating</label>
+              <label style={styles.filterLabel}>Calificación</label>
               <select
                 value={filters.rating}
                 onChange={(e) => setFilters({ ...filters, rating: e.target.value })}
                 style={styles.filterSelect}
               >
-                <option value="">All Ratings</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="2">2 Stars</option>
-                <option value="1">1 Star</option>
+                <option value="">Todas las Calificaciones</option>
+                <option value="5">5 Estrellas</option>
+                <option value="4">4 Estrellas</option>
+                <option value="3">3 Estrellas</option>
+                <option value="2">2 Estrellas</option>
+                <option value="1">1 Estrella</option>
               </select>
             </div>
 
             <div style={styles.filterGroup}>
-              <label style={styles.filterLabel}>Date From</label>
+              <label style={styles.filterLabel}>Fecha Desde</label>
               <input
                 type="date"
                 value={filters.date_from}
@@ -143,7 +143,7 @@ const FeedbackPage: React.FC = () => {
             </div>
 
             <div style={styles.filterGroup}>
-              <label style={styles.filterLabel}>Date To</label>
+              <label style={styles.filterLabel}>Fecha Hasta</label>
               <input
                 type="date"
                 value={filters.date_to}
@@ -154,7 +154,7 @@ const FeedbackPage: React.FC = () => {
 
             <div style={styles.filterGroup}>
               <button onClick={clearFilters} style={styles.clearButton}>
-                Clear Filters
+                Limpiar Filtros
               </button>
             </div>
           </div>
@@ -162,25 +162,25 @@ const FeedbackPage: React.FC = () => {
 
         {/* Feedbacks Table */}
         <div style={styles.tableCard}>
-          <h3 style={styles.tableTitle}>Feedback List ({feedbacks.length})</h3>
+          <h3 style={styles.tableTitle}>Lista de Retroalimentación ({feedbacks.length})</h3>
 
           {loading ? (
-            <div style={styles.loading}>Loading feedbacks...</div>
+            <div style={styles.loading}>Cargando retroalimentaciones...</div>
           ) : feedbacks.length === 0 ? (
-            <div style={styles.empty}>No feedbacks found</div>
+            <div style={styles.empty}>No se encontraron retroalimentaciones</div>
           ) : (
             <div style={styles.tableContainer}>
               <table style={styles.table}>
                 <thead>
                   <tr>
-                    <th style={styles.th}>Order ID</th>
-                    <th style={styles.th}>Date</th>
-                    <th style={styles.th}>Patient</th>
-                    <th style={styles.th}>Nurse/Staff</th>
-                    <th style={styles.th}>Room</th>
-                    <th style={styles.th}>Rating</th>
-                    <th style={styles.th}>Comment</th>
-                    <th style={styles.th}>Actions</th>
+                    <th style={styles.th}>ID de Orden</th>
+                    <th style={styles.th}>Fecha</th>
+                    <th style={styles.th}>Paciente</th>
+                    <th style={styles.th}>Enfermera/Personal</th>
+                    <th style={styles.th}>Habitación</th>
+                    <th style={styles.th}>Calificación</th>
+                    <th style={styles.th}>Comentario</th>
+                    <th style={styles.th}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>

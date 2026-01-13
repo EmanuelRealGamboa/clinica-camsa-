@@ -49,12 +49,16 @@ export const adminApi = {
   },
 
   createProduct: async (productData: any) => {
-    const response = await apiClient.post('/catalog/products/', productData);
+    const response = await apiClient.post('/catalog/products/', productData, {
+      headers: productData instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
+    });
     return response.data;
   },
 
   updateProduct: async (id: number, productData: any) => {
-    const response = await apiClient.put(`/catalog/products/${id}/`, productData);
+    const response = await apiClient.put(`/catalog/products/${id}/`, productData, {
+      headers: productData instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
+    });
     return response.data;
   },
 
@@ -86,6 +90,32 @@ export const adminApi = {
 
   deleteCategory: async (id: number) => {
     const response = await apiClient.delete(`/catalog/categories/${id}/`);
+    return response.data;
+  },
+
+  // Tag management
+  getTags: async (params = {}) => {
+    const response = await apiClient.get('/catalog/tags/', { params });
+    return response.data;
+  },
+
+  getTag: async (id: number) => {
+    const response = await apiClient.get(`/catalog/tags/${id}/`);
+    return response.data;
+  },
+
+  createTag: async (tagData: any) => {
+    const response = await apiClient.post('/catalog/tags/', tagData);
+    return response.data;
+  },
+
+  updateTag: async (id: number, tagData: any) => {
+    const response = await apiClient.put(`/catalog/tags/${id}/`, tagData);
+    return response.data;
+  },
+
+  deleteTag: async (id: number) => {
+    const response = await apiClient.delete(`/catalog/tags/${id}/`);
     return response.data;
   },
 

@@ -193,7 +193,7 @@ const NewAdminDashboardPage: React.FC = () => {
             </ResponsiveContainer>
             {stats?.satisfaction?.top_staff && stats.satisfaction.top_staff.length > 0 && (
               <div style={styles.topStaffSection}>
-                <div style={styles.sectionTitle}>Top Staff</div>
+                <div style={styles.sectionTitle}>Mejor Personal</div>
                 {stats.satisfaction.top_staff.map((staff: any, index: number) => (
                   <div key={index} style={styles.staffItem}>
                     <span>{staff.staff__full_name}</span>
@@ -225,7 +225,7 @@ const NewAdminDashboardPage: React.FC = () => {
                   {stats.products.low_stock.map((item: any, index: number) => (
                     <div key={index} style={styles.lowStockItem}>
                       <span>{item.product__name}</span>
-                      <span style={styles.stockLevel}>Stock: {item.on_hand}</span>
+                      <span style={styles.stockLevel}>Existencias: {item.on_hand}</span>
                     </div>
                   ))}
                 </div>

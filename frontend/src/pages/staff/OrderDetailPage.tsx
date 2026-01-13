@@ -43,7 +43,7 @@ const OrderDetailPage: React.FC = () => {
       const data = await ordersApi.getOrderById(orderId);
       setOrder(data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load order');
+      setError(err.response?.data?.error || 'Error al cargar la orden');
       console.error(err);
     } finally {
       setLoading(false);
@@ -61,11 +61,11 @@ const OrderDetailPage: React.FC = () => {
       setOrder(response.order);
       setSuccessModal({
         show: true,
-        title: 'Status Updated',
+        title: 'Estado Actualizado',
         message: response.message,
       });
     } catch (err: any) {
-      const errorMsg = err.response?.data?.error || 'Failed to update status';
+      const errorMsg = err.response?.data?.error || 'Error al actualizar el estado';
       setConfirmModal({
         show: true,
         title: 'Error',
@@ -83,21 +83,21 @@ const OrderDetailPage: React.FC = () => {
 
     setConfirmModal({
       show: true,
-      title: 'Cancel Order',
-      message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+      title: 'Cancelar Orden',
+      message: '¿Estás seguro de que deseas cancelar esta orden? Esta acción no se puede deshacer.',
       onConfirm: async () => {
         setConfirmModal({ ...confirmModal, show: false });
 
         try {
-          const response = await ordersApi.cancelOrder(order.id, 'Cancelled by staff');
+          const response = await ordersApi.cancelOrder(order.id, 'Cancelada por el personal');
           setOrder(response.order);
           setSuccessModal({
             show: true,
-            title: 'Order Cancelled',
+            title: 'Orden Cancelada',
             message: response.message,
           });
         } catch (err: any) {
-          const errorMsg = err.response?.data?.error || 'Failed to cancel order';
+          const errorMsg = err.response?.data?.error || 'Error al cancelar la orden';
           setConfirmModal({
             show: true,
             title: 'Error',
@@ -109,8 +109,8 @@ const OrderDetailPage: React.FC = () => {
           console.error(err);
         }
       },
-      confirmText: 'Yes, Cancel Order',
-      cancelText: 'No, Keep Order',
+      confirmText: 'Sí, Cancelar Orden',
+      cancelText: 'No, Mantener Orden',
     });
   };
 
@@ -134,26 +134,26 @@ const OrderDetailPage: React.FC = () => {
   const getNextActions = (currentStatus: string) => {
     switch (currentStatus) {
       case 'PLACED':
-        return [{ status: 'PREPARING', label: 'Start Preparing' }];
+        return [{ status: 'PREPARING', label: 'Comenzar Preparación' }];
       case 'PREPARING':
-        return [{ status: 'READY', label: 'Mark as Ready' }];
+        return [{ status: 'READY', label: 'Marcar como Lista' }];
       case 'READY':
-        return [{ status: 'DELIVERED', label: 'Mark as Delivered' }];
+        return [{ status: 'DELIVERED', label: 'Marcar como Entregada' }];
       default:
         return [];
     }
   };
 
   if (loading) {
-    return <div style={styles.container}>Loading...</div>;
+    return <div style={styles.container}>Cargando...</div>;
   }
 
   if (error || !order) {
     return (
       <div style={styles.container}>
-        <div style={styles.error}>{error || 'Order not found'}</div>
+        <div style={styles.error}>{error || 'Orden no encontrada'}</div>
         <button onClick={() => navigate('/staff/orders')} style={styles.backButton}>
-          Back to Orders
+          Volver a Órdenes
         </button>
       </div>
     );
@@ -166,14 +166,14 @@ const OrderDetailPage: React.FC = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <button onClick={() => navigate('/staff/orders')} style={styles.backButton}>
-          ← Back
+          ← Atrás
         </button>
-        <h1>Order #{order.id}</h1>
+        <h1>Orden #{order.id}</h1>
       </div>
 
       <div style={styles.content}>
         <div style={styles.section}>
-          <h2>Status</h2>
+          <h2>Estado</h2>
           <div
             style={{
               ...styles.statusBadge,
@@ -185,42 +185,42 @@ const OrderDetailPage: React.FC = () => {
         </div>
 
         <div style={styles.section}>
-          <h2>Order Information</h2>
+          <h2>Información de la Orden</h2>
           <div style={styles.infoGrid}>
             <div>
-              <strong>Room:</strong> {order.room_code || 'N/A'}
+              <strong>Habitación:</strong> {order.room_code || 'N/A'}
             </div>
             <div>
-              <strong>Device:</strong> {order.device_uid || 'N/A'}
+              <strong>Dispositivo:</strong> {order.device_uid || 'N/A'}
             </div>
             <div>
-              <strong>Patient:</strong> {order.patient_name || 'N/A'}
+              <strong>Paciente:</strong> {order.patient_name || 'N/A'}
             </div>
             <div>
-              <strong>Placed At:</strong> {new Date(order.placed_at).toLocaleString()}
+              <strong>Realizada:</strong> {new Date(order.placed_at).toLocaleString('es-MX')}
             </div>
             {order.delivered_at && (
               <div>
-                <strong>Delivered At:</strong> {new Date(order.delivered_at).toLocaleString()}
+                <strong>Entregada:</strong> {new Date(order.delivered_at).toLocaleString('es-MX')}
               </div>
             )}
             {order.cancelled_at && (
               <div>
-                <strong>Cancelled At:</strong> {new Date(order.cancelled_at).toLocaleString()}
+                <strong>Cancelada:</strong> {new Date(order.cancelled_at).toLocaleString('es-MX')}
               </div>
             )}
           </div>
         </div>
 
         <div style={styles.section}>
-          <h2>Items</h2>
+          <h2>Artículos</h2>
           <table style={styles.table}>
             <thead>
               <tr>
-                <th style={styles.th}>Product</th>
-                <th style={styles.th}>Category</th>
-                <th style={styles.th}>Quantity</th>
-                <th style={styles.th}>Unit</th>
+                <th style={styles.th}>Producto</th>
+                <th style={styles.th}>Categoría</th>
+                <th style={styles.th}>Cantidad</th>
+                <th style={styles.th}>Unidad</th>
               </tr>
             </thead>
             <tbody>
@@ -238,18 +238,18 @@ const OrderDetailPage: React.FC = () => {
 
         {order.status_events && order.status_events.length > 0 && (
           <div style={styles.section}>
-            <h2>Status History</h2>
+            <h2>Historial de Estados</h2>
             <div style={styles.timeline}>
               {order.status_events.map((event) => (
                 <div key={event.id} style={styles.timelineItem}>
                   <div style={styles.timelineStatus}>
-                    {event.from_status || 'NEW'} → {event.to_status}
+                    {event.from_status || 'NUEVO'} → {event.to_status}
                   </div>
                   <div style={styles.timelineTime}>
-                    {new Date(event.changed_at).toLocaleString()}
+                    {new Date(event.changed_at).toLocaleString('es-MX')}
                   </div>
                   {event.changed_by_email && (
-                    <div style={styles.timelineUser}>By: {event.changed_by_email}</div>
+                    <div style={styles.timelineUser}>Por: {event.changed_by_email}</div>
                   )}
                   {event.note && <div style={styles.timelineNote}>{event.note}</div>}
                 </div>
@@ -270,7 +270,7 @@ const OrderDetailPage: React.FC = () => {
           ))}
           {canCancel && (
             <button onClick={handleCancel} style={styles.cancelButton}>
-              Cancel Order
+              Cancelar Orden
             </button>
           )}
         </div>
@@ -295,7 +295,7 @@ const OrderDetailPage: React.FC = () => {
                 style={styles.modalConfirmButton}
                 onClick={confirmModal.onConfirm}
               >
-                {confirmModal.confirmText || 'Confirm'}
+                {confirmModal.confirmText || 'Confirmar'}
               </button>
             </div>
           </div>

@@ -77,12 +77,12 @@ const DevicesManagementPage: React.FC = () => {
       loadData();
     } catch (err: any) {
       console.error('Failed to save device:', err);
-      alert(err.response?.data?.error || err.response?.data?.device_uid?.[0] || 'Failed to save device');
+      alert(err.response?.data?.error || err.response?.data?.device_uid?.[0] || 'Error al guardar el dispositivo');
     }
   };
 
   const handleDeleteDevice = async (id: number) => {
-    if (confirm('Are you sure you want to delete this device?')) {
+    if (confirm('¿Estás seguro de que deseas eliminar este dispositivo?')) {
       try {
         await adminApi.deleteDevice(id);
         loadData();
@@ -130,12 +130,12 @@ const DevicesManagementPage: React.FC = () => {
       loadData();
     } catch (err: any) {
       console.error('Failed to save room:', err);
-      alert(err.response?.data?.error || err.response?.data?.code?.[0] || 'Failed to save room');
+      alert(err.response?.data?.error || err.response?.data?.code?.[0] || 'Error al guardar la habitación');
     }
   };
 
   const handleDeleteRoom = async (id: number) => {
-    if (confirm('Are you sure you want to delete this room? Devices in this room will be unassigned.')) {
+    if (confirm('¿Estás seguro de que deseas eliminar esta habitación? Los dispositivos en esta habitación quedarán sin asignar.')) {
       try {
         await adminApi.deleteRoom(id);
         loadData();
@@ -164,9 +164,9 @@ const DevicesManagementPage: React.FC = () => {
   };
 
   const getRoomName = (roomId: number | null) => {
-    if (!roomId) return 'No room assigned';
+    if (!roomId) return 'Sin habitación asignada';
     const room = rooms.find(r => r.id === roomId);
-    return room ? room.code : 'Unknown';
+    return room ? room.code : 'Desconocido';
   };
 
   const toggleStaffAssignment = (staffId: number) => {
@@ -182,11 +182,11 @@ const DevicesManagementPage: React.FC = () => {
     <div style={styles.container}>
       <header style={styles.header}>
         <div>
-          <Link to="/admin/dashboard" style={styles.backLink}>← Back to Dashboard</Link>
-          <h1>Devices & Rooms Management</h1>
+          <Link to="/admin/dashboard" style={styles.backLink}>← Volver al Panel</Link>
+          <h1>Gestión de Dispositivos y Habitaciones</h1>
         </div>
         <button onClick={() => logout()} style={styles.logoutButton}>
-          Logout
+          Cerrar Sesión
         </button>
       </header>
 
@@ -196,20 +196,20 @@ const DevicesManagementPage: React.FC = () => {
             onClick={() => setActiveTab('devices')}
             style={activeTab === 'devices' ? styles.tabActive : styles.tab}
           >
-            Devices ({devices.length})
+            Dispositivos ({devices.length})
           </button>
           <button
             onClick={() => setActiveTab('rooms')}
             style={activeTab === 'rooms' ? styles.tabActive : styles.tab}
           >
-            Rooms ({rooms.length})
+            Habitaciones ({rooms.length})
           </button>
         </div>
 
         {activeTab === 'devices' ? (
           <>
             <div style={styles.toolbar}>
-              <h2>Devices</h2>
+              <h2>Dispositivos</h2>
               <button
                 onClick={() => {
                   resetDeviceForm();
@@ -218,24 +218,24 @@ const DevicesManagementPage: React.FC = () => {
                 }}
                 style={styles.addButton}
               >
-                + Add Device
+                + Agregar Dispositivo
               </button>
             </div>
 
             {loading ? (
-              <div style={styles.loading}>Loading devices...</div>
+              <div style={styles.loading}>Cargando dispositivos...</div>
             ) : (
               <div style={styles.tableContainer}>
                 <table style={styles.table}>
                   <thead>
                     <tr>
                       <th style={styles.th}>ID</th>
-                      <th style={styles.th}>Device UID</th>
-                      <th style={styles.th}>Type</th>
-                      <th style={styles.th}>Room</th>
-                      <th style={styles.th}>Assigned Staff</th>
-                      <th style={styles.th}>Status</th>
-                      <th style={styles.th}>Actions</th>
+                      <th style={styles.th}>UID del Dispositivo</th>
+                      <th style={styles.th}>Tipo</th>
+                      <th style={styles.th}>Habitación</th>
+                      <th style={styles.th}>Personal Asignado</th>
+                      <th style={styles.th}>Estado</th>
+                      <th style={styles.th}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -253,7 +253,7 @@ const DevicesManagementPage: React.FC = () => {
                               ))}
                             </div>
                           ) : (
-                            <span style={{ color: '#999' }}>No staff assigned</span>
+                            <span style={{ color: '#999' }}>Sin personal asignado</span>
                           )}
                         </td>
                         <td style={styles.td}>
@@ -261,7 +261,7 @@ const DevicesManagementPage: React.FC = () => {
                             ...styles.statusBadge,
                             backgroundColor: device.is_active ? '#27ae60' : '#95a5a6'
                           }}>
-                            {device.is_active ? 'Active' : 'Inactive'}
+                            {device.is_active ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
                         <td style={styles.td}>
@@ -269,13 +269,13 @@ const DevicesManagementPage: React.FC = () => {
                             onClick={() => handleEditDevice(device)}
                             style={styles.editButton}
                           >
-                            Edit
+                            Editar
                           </button>
                           <button
                             onClick={() => handleDeleteDevice(device.id)}
                             style={styles.deleteButton}
                           >
-                            Delete
+                            Eliminar
                           </button>
                         </td>
                       </tr>
@@ -288,7 +288,7 @@ const DevicesManagementPage: React.FC = () => {
         ) : (
           <>
             <div style={styles.toolbar}>
-              <h2>Rooms</h2>
+              <h2>Habitaciones</h2>
               <button
                 onClick={() => {
                   resetRoomForm();
@@ -297,23 +297,23 @@ const DevicesManagementPage: React.FC = () => {
                 }}
                 style={styles.addButton}
               >
-                + Add Room
+                + Agregar Habitación
               </button>
             </div>
 
             {loading ? (
-              <div style={styles.loading}>Loading rooms...</div>
+              <div style={styles.loading}>Cargando habitaciones...</div>
             ) : (
               <div style={styles.tableContainer}>
                 <table style={styles.table}>
                   <thead>
                     <tr>
                       <th style={styles.th}>ID</th>
-                      <th style={styles.th}>Room Code</th>
-                      <th style={styles.th}>Floor</th>
-                      <th style={styles.th}>Devices</th>
-                      <th style={styles.th}>Status</th>
-                      <th style={styles.th}>Actions</th>
+                      <th style={styles.th}>Código de Habitación</th>
+                      <th style={styles.th}>Piso</th>
+                      <th style={styles.th}>Dispositivos</th>
+                      <th style={styles.th}>Estado</th>
+                      <th style={styles.th}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -330,7 +330,7 @@ const DevicesManagementPage: React.FC = () => {
                             ...styles.statusBadge,
                             backgroundColor: room.is_active ? '#27ae60' : '#95a5a6'
                           }}>
-                            {room.is_active ? 'Active' : 'Inactive'}
+                            {room.is_active ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
                         <td style={styles.td}>
@@ -338,13 +338,13 @@ const DevicesManagementPage: React.FC = () => {
                             onClick={() => handleEditRoom(room)}
                             style={styles.editButton}
                           >
-                            Edit
+                            Editar
                           </button>
                           <button
                             onClick={() => handleDeleteRoom(room.id)}
                             style={styles.deleteButton}
                           >
-                            Delete
+                            Eliminar
                           </button>
                         </td>
                       </tr>
@@ -361,10 +361,10 @@ const DevicesManagementPage: React.FC = () => {
       {showDeviceModal && (
         <div style={styles.modalOverlay} onClick={() => setShowDeviceModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2>{editingDevice ? 'Edit Device' : 'Add New Device'}</h2>
+            <h2>{editingDevice ? 'Editar Dispositivo' : 'Agregar Nuevo Dispositivo'}</h2>
             <form onSubmit={handleDeviceSubmit} style={styles.form}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Device UID *</label>
+                <label style={styles.label}>UID del Dispositivo *</label>
                 <input
                   type="text"
                   value={deviceForm.device_uid}
@@ -375,7 +375,7 @@ const DevicesManagementPage: React.FC = () => {
                 />
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Device Type *</label>
+                <label style={styles.label}>Tipo de Dispositivo *</label>
                 <select
                   value={deviceForm.device_type}
                   onChange={(e) => setDeviceForm({...deviceForm, device_type: e.target.value})}
@@ -383,25 +383,25 @@ const DevicesManagementPage: React.FC = () => {
                   required
                 >
                   <option value="IPAD">iPad</option>
-                  <option value="WEB">Web Browser</option>
-                  <option value="OTHER">Other</option>
+                  <option value="WEB">Navegador Web</option>
+                  <option value="OTHER">Otro</option>
                 </select>
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Room</label>
+                <label style={styles.label}>Habitación</label>
                 <select
                   value={deviceForm.room}
                   onChange={(e) => setDeviceForm({...deviceForm, room: e.target.value})}
                   style={styles.input}
                 >
-                  <option value="">No room assigned</option>
+                  <option value="">Sin habitación asignada</option>
                   {rooms.filter(r => r.is_active).map(room => (
-                    <option key={room.id} value={room.id}>{room.code} {room.floor ? `(Floor ${room.floor})` : ''}</option>
+                    <option key={room.id} value={room.id}>{room.code} {room.floor ? `(Piso ${room.floor})` : ''}</option>
                   ))}
                 </select>
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Assigned Staff (Nurses)</label>
+                <label style={styles.label}>Personal Asignado (Enfermeras)</label>
                 <div style={styles.checkboxGroup}>
                   {staff.map(s => (
                     <label key={s.id} style={styles.checkboxLabel}>
@@ -424,15 +424,15 @@ const DevicesManagementPage: React.FC = () => {
                     onChange={(e) => setDeviceForm({...deviceForm, is_active: e.target.checked})}
                     style={{marginRight: '8px'}}
                   />
-                  Active
+                  Activo
                 </label>
               </div>
               <div style={styles.formActions}>
                 <button type="button" onClick={() => setShowDeviceModal(false)} style={styles.cancelButton}>
-                  Cancel
+                  Cancelar
                 </button>
                 <button type="submit" style={styles.submitButton}>
-                  {editingDevice ? 'Update' : 'Create'}
+                  {editingDevice ? 'Actualizar' : 'Crear'}
                 </button>
               </div>
             </form>
@@ -444,10 +444,10 @@ const DevicesManagementPage: React.FC = () => {
       {showRoomModal && (
         <div style={styles.modalOverlay} onClick={() => setShowRoomModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2>{editingRoom ? 'Edit Room' : 'Add New Room'}</h2>
+            <h2>{editingRoom ? 'Editar Habitación' : 'Agregar Nueva Habitación'}</h2>
             <form onSubmit={handleRoomSubmit} style={styles.form}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Room Code *</label>
+                <label style={styles.label}>Código de Habitación *</label>
                 <input
                   type="text"
                   value={roomForm.code}
@@ -458,13 +458,13 @@ const DevicesManagementPage: React.FC = () => {
                 />
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Floor</label>
+                <label style={styles.label}>Piso</label>
                 <input
                   type="text"
                   value={roomForm.floor}
                   onChange={(e) => setRoomForm({...roomForm, floor: e.target.value})}
                   style={styles.input}
-                  placeholder="1, 2, Ground, etc."
+                  placeholder="1, 2, Planta Baja, etc."
                 />
               </div>
               <div style={styles.formGroup}>
@@ -475,15 +475,15 @@ const DevicesManagementPage: React.FC = () => {
                     onChange={(e) => setRoomForm({...roomForm, is_active: e.target.checked})}
                     style={{marginRight: '8px'}}
                   />
-                  Active
+                  Activo
                 </label>
               </div>
               <div style={styles.formActions}>
                 <button type="button" onClick={() => setShowRoomModal(false)} style={styles.cancelButton}>
-                  Cancel
+                  Cancelar
                 </button>
                 <button type="submit" style={styles.submitButton}>
-                  {editingRoom ? 'Update' : 'Create'}
+                  {editingRoom ? 'Actualizar' : 'Crear'}
                 </button>
               </div>
             </form>

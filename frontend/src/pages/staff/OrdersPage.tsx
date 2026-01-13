@@ -7,6 +7,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
 const OrdersPage: React.FC = () => {
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('PLACED,PREPARING');
@@ -45,6 +46,20 @@ const OrdersPage: React.FC = () => {
     loadOrders();
   }, [filter]);
 
+  // Handle window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Helper functions for responsive breakpoints
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+
   const loadOrders = async () => {
     try {
       setLoading(true);
@@ -78,54 +93,89 @@ const OrdersPage: React.FC = () => {
 
   return (
     <div style={styles.container}>
-      <header style={styles.header}>
+      <header style={{
+        ...styles.header,
+        flexDirection: isMobile ? 'column' as const : 'row' as const,
+        alignItems: isMobile ? 'flex-start' : 'center',
+        gap: isMobile ? '15px' : '0',
+        padding: isMobile ? '15px' : '20px'
+      }}>
         <div>
-          <h1>Orders Dashboard</h1>
-          <div style={styles.userInfo}>
+          <h1 style={{fontSize: isMobile ? '20px' : '28px', margin: 0}}>Panel de Órdenes</h1>
+          <div style={{...styles.userInfo, fontSize: isMobile ? '12px' : '14px'}}>
             {user?.email} |
             <span style={{ marginLeft: '10px', color: isConnected ? '#27ae60' : '#e74c3c' }}>
-              {isConnected ? '● Connected' : '○ Disconnected'}
+              {isConnected ? '● Conectado' : '○ Desconectado'}
             </span>
           </div>
         </div>
-        <button onClick={handleLogout} style={styles.logoutButton}>
-          Logout
-        </button>
+        <div style={{
+          ...styles.headerButtons,
+          width: isMobile ? '100%' : 'auto',
+          flexDirection: isMobile ? 'column' as const : 'row' as const,
+          gap: isMobile ? '10px' : '10px'
+        }}>
+          <Link to="/staff" style={{
+            ...styles.backButton,
+            width: isMobile ? '100%' : 'auto',
+            textAlign: 'center' as const,
+            padding: isMobile ? '12px' : '10px 20px'
+          }}>
+            ← Volver al Panel
+          </Link>
+          <button onClick={handleLogout} style={{
+            ...styles.logoutButton,
+            width: isMobile ? '100%' : 'auto',
+            padding: isMobile ? '12px' : '10px 20px'
+          }}>
+            Cerrar Sesión
+          </button>
+        </div>
       </header>
 
-      <div style={styles.filters}>
+      <div style={{
+        ...styles.filters,
+        flexWrap: isMobile ? 'wrap' as const : 'nowrap' as const,
+        gap: isMobile ? '10px' : '15px',
+        padding: isMobile ? '15px' : '20px'
+      }}>
         <button
           onClick={() => setFilter('PLACED,PREPARING')}
           style={filter === 'PLACED,PREPARING' ? styles.filterButtonActive : styles.filterButton}
         >
-          Active Orders
+          Órdenes Activas
         </button>
         <button
           onClick={() => setFilter('READY')}
           style={filter === 'READY' ? styles.filterButtonActive : styles.filterButton}
         >
-          Ready
+          Listas
         </button>
         <button
           onClick={() => setFilter('DELIVERED')}
           style={filter === 'DELIVERED' ? styles.filterButtonActive : styles.filterButton}
         >
-          Delivered
+          Entregadas
         </button>
         <button
           onClick={() => setFilter('PLACED,PREPARING,READY,DELIVERED,CANCELLED')}
           style={filter === 'PLACED,PREPARING,READY,DELIVERED,CANCELLED' ? styles.filterButtonActive : styles.filterButton}
         >
-          All
+          Todas
         </button>
       </div>
 
       {loading ? (
-        <div style={styles.loading}>Loading orders...</div>
+        <div style={styles.loading}>Cargando órdenes...</div>
       ) : (
-        <div style={styles.ordersGrid}>
+        <div style={{
+          ...styles.ordersGrid,
+          gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(auto-fill, minmax(280px, 1fr))' : 'repeat(auto-fill, minmax(300px, 1fr))',
+          gap: isMobile ? '15px' : '20px',
+          padding: isMobile ? '15px' : '20px'
+        }}>
           {orders.length === 0 ? (
-            <div style={styles.emptyState}>No orders found</div>
+            <div style={styles.emptyState}>No se encontraron órdenes</div>
           ) : (
             orders.map((order) => (
               <Link
@@ -134,7 +184,7 @@ const OrdersPage: React.FC = () => {
                 style={styles.orderCard}
               >
                 <div style={styles.orderHeader}>
-                  <h3>Order #{order.id}</h3>
+                  <h3>Orden #{order.id}</h3>
                   <span
                     style={{
                       ...styles.statusBadge,
@@ -145,8 +195,8 @@ const OrdersPage: React.FC = () => {
                   </span>
                 </div>
                 <div style={styles.orderInfo}>
-                  <p>Room: {order.room_code || 'N/A'}</p>
-                  <p>Device: {order.device_uid || 'N/A'}</p>
+                  <p>Habitación: {order.room_code || 'N/A'}</p>
+                  <p>Dispositivo: {order.device_uid || 'N/A'}</p>
                   <p>Items: {order.items.length}</p>
                   <p style={styles.timestamp}>
                     {new Date(order.placed_at).toLocaleString()}
@@ -178,6 +228,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
     opacity: 0.9,
     marginTop: '5px',
+  },
+  headerButtons: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center',
+  },
+  backButton: {
+    padding: '10px 20px',
+    backgroundColor: '#34495e',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    fontSize: '14px',
+    transition: 'background-color 0.2s',
   },
   logoutButton: {
     padding: '10px 20px',

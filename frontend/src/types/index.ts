@@ -74,15 +74,43 @@ export interface OrderStatusChangeRequest {
   note?: string;
 }
 
+// Product Tag Types
+export interface ProductTag {
+  id: number;
+  name: string;
+  color: string;
+  icon?: string;
+  sort_order: number;
+}
+
+// Product Benefit Types
+export interface ProductBenefit {
+  icon: string;
+  text: string;
+}
+
 // Product Types
 export interface Product {
   id: number;
   category: number;
   category_name: string;
+  category_type?: 'DRINK' | 'SNACK' | 'OTHER';
   name: string;
   description: string;
+  image_url?: string;
+  image_url_full?: string;
   unit_label: string;
   is_active: boolean;
+  available?: number | null; // Available inventory quantity (null means unlimited)
+  is_available?: boolean; // Whether product is available for ordering
+  rating?: number; // 0-5 stars
+  rating_count?: number;
+  tags?: ProductTag[];
+  benefits?: ProductBenefit[];
+  is_featured?: boolean;
+  featured_title?: string;
+  featured_description?: string;
+  product_sort_order?: number;
   created_at: string;
   updated_at: string;
 }
@@ -90,7 +118,12 @@ export interface Product {
 export interface ProductCategory {
   id: number;
   name: string;
-  description: string;
+  icon?: string;
+  description?: string;
+  sort_order: number;
+  show_in_carousel?: boolean;
+  carousel_order?: number;
+  product_count?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;

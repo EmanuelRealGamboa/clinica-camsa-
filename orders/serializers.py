@@ -163,3 +163,41 @@ class OrderCancelSerializer(serializers.Serializer):
     Serializer for cancelling orders
     """
     note = serializers.CharField(required=False, allow_blank=True)
+
+
+class StaffCreateOrderSerializer(serializers.Serializer):
+    """
+    Serializer for staff to create orders for their assigned patients
+    """
+    items = serializers.ListField(
+        child=serializers.DictField(),
+        min_length=1,
+        help_text='List of items: [{"product_id": 1, "quantity": 2}, ...]'
+    )
+
+    def validate_items(self, value):
+        """Validate items structure and products"""
+        if not value:
+            raise serializers.ValidationError("At least one item is required")
+
+        for item in value:
+            if 'product_id' not in item:
+                raise serializers.ValidationError("Each item must have product_id")
+            if 'quantity' not in item:
+                raise serializers.ValidationError("Each item must have quantity")
+
+            # Validate quantity
+            try:
+                quantity = int(item['quantity'])
+                if quantity < 1:
+                    raise serializers.ValidationError("Quantity must be at least 1")
+            except (ValueError, TypeError):
+                raise serializers.ValidationError("Quantity must be a number")
+
+            # Validate product exists and is active
+            try:
+                product = Product.objects.get(id=item['product_id'], is_active=True)
+            except Product.DoesNotExist:
+                raise serializers.ValidationError(f"Product {item['product_id']} not found or inactive")
+
+        return value

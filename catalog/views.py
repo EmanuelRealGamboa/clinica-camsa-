@@ -112,7 +112,7 @@ class PublicProductViewSet(viewsets.ReadOnlyModelViewSet):
     list: Get all active products
     retrieve: Get a specific active product
     """
-    queryset = Product.objects.select_related('category').filter(
+    queryset = Product.objects.select_related('category').prefetch_related('tags').filter(
         is_active=True,
         category__is_active=True
     )

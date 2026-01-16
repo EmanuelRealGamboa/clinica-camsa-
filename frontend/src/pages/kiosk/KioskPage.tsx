@@ -111,6 +111,10 @@ const KioskPage: React.FC = () => {
       // Automatically navigate to order status view
       setShowOrders(true);
       loadActiveOrders();
+    } else if (message.type === 'session_ended') {
+      console.log('Patient session ended by staff - reloading data');
+      // When staff ends the session, reload data to show "no patient assigned"
+      loadData();
     }
   }, [deviceUid]);
 

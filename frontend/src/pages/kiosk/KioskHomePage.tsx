@@ -8,7 +8,6 @@ import { HeroSection } from '../../components/kiosk/HeroSection';
 import { CategoryCarousel } from '../../components/kiosk/CategoryCarousel';
 import { CartModal } from '../../components/kiosk/CartModal';
 import { AddToCartNotification } from '../../components/kiosk/AddToCartNotification';
-import { SuccessModal } from '../../components/kiosk/SuccessModal';
 import { OrderLimitsIndicator } from '../../components/kiosk/OrderLimitsIndicator';
 import { LimitReachedModal } from '../../components/kiosk/LimitReachedModal';
 import { WelcomeModal } from '../../components/kiosk/WelcomeModal';
@@ -43,7 +42,6 @@ export const KioskHomePage: React.FC = () => {
   const [showCart, setShowCart] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [lastAddedProduct, setLastAddedProduct] = useState<string>('');
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLimitsIndicator, setShowLimitsIndicator] = useState(false);
   const [showLimitReachedModal, setShowLimitReachedModal] = useState(false);
   const [activeOrdersItems, setActiveOrdersItems] = useState<Map<string, number>>(new Map());
@@ -299,8 +297,8 @@ export const KioskHomePage: React.FC = () => {
       setCart(new Map());
       setShowCart(false);
 
-      // Show success modal
-      setShowSuccessModal(true);
+      // Redirect directly to orders page
+      navigate(`/kiosk/${deviceId}/orders`, { replace: true });
     } catch (error: any) {
       console.error('Error creating order:', error);
       console.error('Error response:', error.response?.data);
@@ -332,14 +330,8 @@ export const KioskHomePage: React.FC = () => {
     navigate(`/kiosk/${deviceId}/orders`);
   };
 
-  const handleSuccessModalClose = () => {
-    setShowSuccessModal(false);
-    navigate(`/kiosk/${deviceId}/orders`, { replace: true });
-  };
-
-  const handleLimitReachedViewOrders = () => {
+  const handleLimitReachedClose = () => {
     setShowLimitReachedModal(false);
-    navigate(`/kiosk/${deviceId}/orders`, { replace: true });
   };
 
   const cartTotal = Array.from(cart.values()).reduce((sum, qty) => sum + qty, 0);
@@ -444,14 +436,6 @@ export const KioskHomePage: React.FC = () => {
         onHide={() => setShowNotification(false)}
       />
 
-      {/* Success Modal */}
-      <SuccessModal
-        show={showSuccessModal}
-        title="¡Orden confirmada!"
-        message="Tu pedido está siendo preparado."
-        onClose={handleSuccessModalClose}
-      />
-
       {/* Order Limits Indicator */}
       {showLimitsIndicator && patientInfo?.order_limits && (
         <OrderLimitsIndicator
@@ -464,7 +448,7 @@ export const KioskHomePage: React.FC = () => {
       <LimitReachedModal
         show={showLimitReachedModal}
         nurseName={patientInfo?.staff_name}
-        onViewOrders={handleLimitReachedViewOrders}
+        onClose={handleLimitReachedClose}
       />
 
       {/* Welcome Modal */}

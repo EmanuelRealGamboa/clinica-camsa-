@@ -4,13 +4,13 @@ import { colors } from '../../styles/colors';
 interface LimitReachedModalProps {
   show: boolean;
   nurseName?: string;
-  onViewOrders: () => void;
+  onClose: () => void;
 }
 
 export const LimitReachedModal: React.FC<LimitReachedModalProps> = ({
   show,
   nurseName,
-  onViewOrders,
+  onClose,
 }) => {
   if (!show) return null;
 
@@ -18,16 +18,16 @@ export const LimitReachedModal: React.FC<LimitReachedModalProps> = ({
     <div style={styles.overlay}>
       <div style={styles.modal}>
         <div style={styles.iconContainer}>
-          <span style={styles.icon}>❤️</span>
+          <span style={styles.icon}>⚠️</span>
         </div>
-        <h2 style={styles.title}>¡Gracias por tu pedido!</h2>
+        <h2 style={styles.title}>Límite Alcanzado</h2>
 
         <div style={styles.messageContainer}>
           <p style={styles.message}>
             Has alcanzado tu límite de productos permitidos.
           </p>
           <p style={styles.message}>
-            Tu pedido está siendo preparado con mucho cuidado.
+            Por favor, contacta a tu enfermera si necesitas más productos.
           </p>
         </div>
 
@@ -38,10 +38,8 @@ export const LimitReachedModal: React.FC<LimitReachedModalProps> = ({
           </div>
         )}
 
-        <p style={styles.enjoyMessage}>¡Disfruta tu estancia!</p>
-
-        <button style={styles.button} onClick={onViewOrders}>
-          Ver Estado del Pedido
+        <button style={styles.button} onClick={onClose}>
+          Entendido
         </button>
       </div>
     </div>

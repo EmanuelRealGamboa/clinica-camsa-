@@ -46,6 +46,7 @@ export const KioskHomePage: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showLimitsIndicator, setShowLimitsIndicator] = useState(false);
   const [showLimitReachedModal, setShowLimitReachedModal] = useState(false);
+  const [activeOrdersItems, setActiveOrdersItems] = useState<Map<string, number>>(new Map());
 
   // Use kiosk state hook for persistent state management
   const { hasSeenWelcome, setHasSeenWelcome, updateActivity } = useKioskState(
@@ -63,15 +64,20 @@ export const KioskHomePage: React.FC = () => {
     try {
       setLoading(true);
 
-      // Check for active orders first - if any exist, redirect to orders page
+      // ALWAYS check for active orders first - if any exist, redirect to orders page
       if (deviceId) {
         try {
           const ordersResponse = await ordersApi.getActiveOrdersPublic(deviceId);
           const activeOrders = ordersResponse.orders || [];
 
-          if (activeOrders.length > 0) {
-            // Patient has active orders, redirect to orders page
-            console.log('Active orders found, redirecting to orders page');
+          // Check if there are any orders that are not yet delivered or cancelled
+          const hasActiveOrders = activeOrders.some((order: any) =>
+            ['PLACED', 'PREPARING', 'READY'].includes(order.status)
+          );
+
+          if (hasActiveOrders) {
+            // Patient has active orders, MUST redirect to orders page
+            console.log('Active orders found (PLACED/PREPARING/READY), redirecting to orders page');
             navigate(`/kiosk/${deviceId}/orders`, { replace: true });
             return; // Stop loading home data
           }
@@ -123,6 +129,31 @@ export const KioskHomePage: React.FC = () => {
       }
       setCategoryProducts(productsMap);
 
+      // Load active orders to track items already ordered (for limit validation)
+      if (deviceId) {
+        try {
+          const ordersResponse = await ordersApi.getActiveOrdersPublic(deviceId);
+          const activeOrders = ordersResponse.orders || [];
+
+          // Count items from active orders (PLACED, PREPARING, READY)
+          const itemsMap = new Map<string, number>();
+          activeOrders
+            .filter((order: any) => ['PLACED', 'PREPARING', 'READY'].includes(order.status))
+            .forEach((order: any) => {
+              order.items?.forEach((item: any) => {
+                const categoryType = item.category_type || 'OTHER';
+                const currentCount = itemsMap.get(categoryType) || 0;
+                itemsMap.set(categoryType, currentCount + item.quantity);
+              });
+            });
+
+          setActiveOrdersItems(itemsMap);
+          console.log('Active orders items count:', Object.fromEntries(itemsMap));
+        } catch (error) {
+          console.error('Error loading active orders for limits:', error);
+        }
+      }
+
     } catch (error) {
       console.error('Error loading home data:', error);
     } finally {
@@ -143,6 +174,11 @@ export const KioskHomePage: React.FC = () => {
     } else if (message.type === 'patient_assigned') {
       console.log('New patient assigned - reloading home data');
       // Reload home data when a new patient is assigned
+      loadHomeData();
+    } else if (message.type === 'order_status_changed') {
+      console.log('Order status changed - reloading active orders for limits');
+      // If an order status changed, we need to recalculate limits
+      // Reload home data to update activeOrdersItems
       loadHomeData();
     }
   }, [deviceId, navigate]);
@@ -189,17 +225,24 @@ export const KioskHomePage: React.FC = () => {
         const limit = limits[categoryType];
         if (limit && limit > 0) {
           // Count how many of this category type are already in cart
-          let currentCount = 0;
+          let cartCount = 0;
           cart.forEach((quantity, prodId) => {
             const cartProduct = allProducts.find(p => p.id === prodId);
             if (cartProduct && cartProduct.category_type === categoryType) {
-              currentCount += quantity;
+              cartCount += quantity;
             }
           });
 
+          // Count how many are in active orders
+          const ordersCount = activeOrdersItems.get(categoryType) || 0;
+
+          // Total count = cart + active orders
+          const totalCount = cartCount + ordersCount;
+
           // Check if adding this would exceed the limit
-          if (currentCount >= limit) {
-            setShowLimitsIndicator(true);
+          if (totalCount >= limit) {
+            console.log(`Limit reached for ${categoryType}: ${totalCount}/${limit}`);
+            setShowLimitReachedModal(true);
             return;
           }
         }

@@ -106,17 +106,22 @@ export const KioskOrdersPage: React.FC = () => {
     loadData();
   }, [deviceId]);
 
-  // Prevent back navigation when there are active orders
+  // Intercept back navigation when there are active orders
   useEffect(() => {
-    if (activeOrders.length > 0) {
-      // Push the current state to prevent going back
-      window.history.pushState(null, '', window.location.href);
+    const hasActiveOrders = activeOrders.some(
+      (order) => ['PLACED', 'PREPARING', 'READY'].includes(order.status)
+    );
 
+    if (hasActiveOrders) {
       const handlePopState = (e: PopStateEvent) => {
-        // Prevent navigation and push state again
+        e.preventDefault();
+        // Prevent going back to menu if there are active orders
         window.history.pushState(null, '', window.location.href);
+        console.log('Cannot navigate back - active orders exist');
       };
 
+      // Push initial state
+      window.history.pushState(null, '', window.location.href);
       window.addEventListener('popstate', handlePopState);
 
       return () => {
@@ -214,6 +219,11 @@ export const KioskOrdersPage: React.FC = () => {
     );
   }
 
+  // Check if there are any truly active orders (not delivered or cancelled)
+  const hasActiveOrders = activeOrders.some(
+    (order) => ['PLACED', 'PREPARING', 'READY'].includes(order.status)
+  );
+
   return (
     <div style={styles.container}>
       {/* Header */}
@@ -245,7 +255,7 @@ export const KioskOrdersPage: React.FC = () => {
               </div>
             </div>
           )}
-          {activeOrders.length === 0 && (
+          {!hasActiveOrders && (
             <button style={styles.viewMenuButton} onClick={handleNewOrder}>
               Ver Menú
             </button>
@@ -257,7 +267,7 @@ export const KioskOrdersPage: React.FC = () => {
       <div style={styles.ordersSection}>
         <div style={styles.ordersHeader}>
           <h2 style={styles.ordersTitle}>Mis pedidos activos</h2>
-          {activeOrders.length === 0 && (
+          {!hasActiveOrders && (
             <button style={styles.newOrderButton} onClick={handleNewOrder}>
               + Hacer nuevo pedido
             </button>

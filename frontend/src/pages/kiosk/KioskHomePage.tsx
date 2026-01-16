@@ -11,6 +11,7 @@ import { AddToCartNotification } from '../../components/kiosk/AddToCartNotificat
 import { OrderLimitsIndicator } from '../../components/kiosk/OrderLimitsIndicator';
 import { LimitReachedModal } from '../../components/kiosk/LimitReachedModal';
 import { WelcomeModal } from '../../components/kiosk/WelcomeModal';
+import { InitialWelcomeScreen } from '../../components/kiosk/InitialWelcomeScreen';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useKioskState } from '../../hooks/useKioskState';
 import { colors } from '../../styles/colors';
@@ -53,6 +54,8 @@ export const KioskHomePage: React.FC = () => {
   );
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(!hasSeenWelcome);
+  const [showInitialWelcome, setShowInitialWelcome] = useState(true);
+  const [checkingPatient, setCheckingPatient] = useState(false);
 
   useEffect(() => {
     loadHomeData();
@@ -97,6 +100,9 @@ export const KioskHomePage: React.FC = () => {
             order_limits: patientData.order_limits || {},
           });
 
+          // Hide initial welcome screen when patient is assigned
+          setShowInitialWelcome(false);
+
           // Show welcome modal only if not seen before (managed by useKioskState)
           if (!hasSeenWelcome) {
             setTimeout(() => setShowWelcomeModal(true), 1000);
@@ -104,6 +110,10 @@ export const KioskHomePage: React.FC = () => {
 
         } catch (error) {
           console.error('Error loading patient data:', error);
+          // No patient assigned - show initial welcome screen
+          setShowInitialWelcome(true);
+          setPatientInfo(null);
+          setPatientId(null);
         }
       }
 
@@ -280,6 +290,25 @@ export const KioskHomePage: React.FC = () => {
     });
   };
 
+  const handleViewMenu = async () => {
+    setCheckingPatient(true);
+    try {
+      if (deviceId) {
+        // Check if patient is assigned
+        const patientData = await kioskApi.getActivePatient(deviceId);
+        if (patientData && patientData.patient) {
+          // Patient is assigned, proceed to menu
+          await loadHomeData();
+        }
+      }
+    } catch (error) {
+      console.log('No patient assigned yet, staying on welcome screen');
+      // Keep showing initial welcome screen
+    } finally {
+      setCheckingPatient(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!deviceId || cart.size === 0) return;
 
@@ -352,6 +381,17 @@ export const KioskHomePage: React.FC = () => {
         <div style={styles.spinner}></div>
         <p>Cargando...</p>
       </div>
+    );
+  }
+
+  // Show initial welcome screen if no patient is assigned
+  if (showInitialWelcome && !patientInfo) {
+    return (
+      <InitialWelcomeScreen
+        deviceUid={deviceId || ''}
+        onViewMenu={handleViewMenu}
+        loading={checkingPatient}
+      />
     );
   }
 

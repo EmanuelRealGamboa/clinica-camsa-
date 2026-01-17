@@ -9,8 +9,6 @@ import KioskPage from './pages/kiosk/KioskPage';
 import { KioskHomePage } from './pages/kiosk/KioskHomePage';
 import { KioskCategoryPage } from './pages/kiosk/KioskCategoryPage';
 import { KioskOrdersPage } from './pages/kiosk/KioskOrdersPage';
-import { CategorySelectionPage } from './pages/kiosk/CategorySelectionPage';
-import { CategoryProductsPage } from './pages/kiosk/CategoryProductsPage';
 
 // Staff Pages
 import LoginPage from './pages/staff/LoginPage';
@@ -33,13 +31,10 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Kiosk Routes - Category Selection Flow */}
-          <Route path="/kiosk/:deviceId" element={<CategorySelectionPage />} />
-          <Route path="/kiosk/:deviceId/products/:categoryId" element={<CategoryProductsPage />} />
-          <Route path="/kiosk/:deviceId/orders" element={<KioskOrdersPage />} />
-          {/* Legacy kiosk routes (carousel design) */}
-          <Route path="/kiosk/:deviceId/legacy" element={<KioskHomePage />} />
+          {/* Kiosk Routes - New Design */}
+          <Route path="/kiosk/:deviceId" element={<KioskHomePage />} />
           <Route path="/kiosk/:deviceId/category/:categoryId" element={<KioskCategoryPage />} />
+          <Route path="/kiosk/:deviceId/orders" element={<KioskOrdersPage />} />
           <Route path="/kiosk" element={<Navigate to="/kiosk/01" replace />} />
 
           {/* Staff Routes */}

@@ -7,14 +7,12 @@ interface ProductCardProps {
   product: Product;
   onAddToCart: (productId: number) => void;
   variant?: 'carousel' | 'grid';
-  showPrice?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
   variant = 'grid',
-  showPrice = false,
 }) => {
   const isOutOfStock = product.is_available === false;
   const mainBenefit = product.benefits && product.benefits.length > 0 ? product.benefits[0] : null;
@@ -72,14 +70,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div style={styles.content}>
         <h3 style={styles.title}>{product.name}</h3>
         <p style={styles.description}>{product.description}</p>
-
-        {/* Price Display for FOOD items */}
-        {showPrice && product.price != null && (
-          <div style={styles.priceContainer}>
-            <span style={styles.priceLabel}>Precio:</span>
-            <span style={styles.priceValue}>${product.price.toFixed(2)} MXN</span>
-          </div>
-        )}
 
         {/* Benefit */}
         {mainBenefit && !isOutOfStock && (
@@ -225,26 +215,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   ratingContainer: {
     marginTop: '12px',
     marginBottom: '8px',
-  },
-  priceContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginTop: '8px',
-    padding: '10px 12px',
-    backgroundColor: '#fff3e0',
-    borderRadius: '8px',
-    border: '1px solid #ffcc80',
-  },
-  priceLabel: {
-    fontSize: '14px',
-    color: '#6d4c41',
-    fontWeight: '500',
-  },
-  priceValue: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    color: '#e65100',
   },
   actions: {
     padding: '0 20px 20px 20px',

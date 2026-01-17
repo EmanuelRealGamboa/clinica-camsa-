@@ -54,6 +54,7 @@ class ProductCategory(models.Model):
     CATEGORY_TYPE_CHOICES = [
         ('DRINK', _('Bebidas')),
         ('SNACK', _('Snacks')),
+        ('FOOD', _('Comida')),
         ('OTHER', _('Otros')),
     ]
 
@@ -154,6 +155,16 @@ class Product(models.Model):
         max_length=50,
         default='unidad',
         help_text=_('Unit label (e.g., "unidad", "pieza", "botella")')
+    )
+
+    # Price (only for FOOD category products)
+    price = models.DecimalField(
+        _('price'),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_('Product price (only for FOOD category items that are paid)')
     )
 
     # Rating and reviews

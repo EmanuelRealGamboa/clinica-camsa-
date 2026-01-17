@@ -39,12 +39,29 @@ export const CartModal: React.FC<CartModalProps> = ({
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Calculate total price for FOOD items only
+  const totalFoodPrice = cartItems.reduce((sum, item) => {
+    if (item.product.category_type === 'FOOD' && item.product.price != null) {
+      return sum + (item.product.price * item.quantity);
+    }
+    return sum;
+  }, 0);
+
+  const hasFoodItems = cartItems.some(item => item.product.category_type === 'FOOD');
+
   const handleIncrement = (productId: number, currentQty: number) => {
     // Find the product to check its category type
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
     const categoryType = product.category_type || 'OTHER';
+
+    // FOOD category has no limits - allow unlimited
+    if (categoryType === 'FOOD') {
+      onUpdateQuantity(productId, currentQty + 1);
+      return;
+    }
+
     const limit = orderLimits[categoryType];
 
     // If there's a limit for this category, validate
@@ -136,6 +153,9 @@ export const CartModal: React.FC<CartModalProps> = ({
                   <div style={styles.itemInfo}>
                     <h3 style={styles.itemName}>{product.name}</h3>
                     <p style={styles.itemUnit}>{product.unit_label}</p>
+                    {product.category_type === 'FOOD' && product.price != null && (
+                      <p style={styles.itemPrice}>${(product.price * quantity).toFixed(2)} MXN</p>
+                    )}
                   </div>
 
                   {/* Quantity Controls */}
@@ -175,6 +195,12 @@ export const CartModal: React.FC<CartModalProps> = ({
               <span style={styles.summaryLabel}>Total de items:</span>
               <span style={styles.summaryValue}>{totalItems}</span>
             </div>
+            {hasFoodItems && totalFoodPrice > 0 && (
+              <div style={styles.foodSummary}>
+                <span style={styles.foodSummaryLabel}>Total comida (pago adicional):</span>
+                <span style={styles.foodSummaryValue}>${totalFoodPrice.toFixed(2)} MXN</span>
+              </div>
+            )}
             <button style={styles.checkoutButton} onClick={onCheckout}>
               Confirmar Orden
             </button>
@@ -308,6 +334,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: colors.gray,
     margin: 0,
   },
+  itemPrice: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    color: '#e65100',
+    margin: '4px 0 0 0',
+  },
   quantityControls: {
     display: 'flex',
     alignItems: 'center',
@@ -369,6 +401,26 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '24px',
     fontWeight: 'bold',
     color: colors.primary,
+  },
+  foodSummary: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '16px',
+    padding: '12px 16px',
+    backgroundColor: '#fff3e0',
+    borderRadius: '8px',
+    border: '1px solid #ffcc80',
+  },
+  foodSummaryLabel: {
+    fontSize: '14px',
+    color: '#6d4c41',
+    fontWeight: '500',
+  },
+  foodSummaryValue: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: '#e65100',
   },
   checkoutButton: {
     width: '100%',

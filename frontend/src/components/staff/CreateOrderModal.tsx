@@ -34,7 +34,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       const inventoryResponse = await apiClient.get('/inventory/balances/all_products/');
       const inventoryData = inventoryResponse.data.results || [];
 
-      // Load catalog data with images
+      // Load catalog data with images and category info
       const catalogResponse = await apiClient.get('/catalog/products/');
       const catalogData = catalogResponse.data.results || catalogResponse.data || [];
 
@@ -48,6 +48,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           id: invProduct.id,
           name: invProduct.name,
           category_name: invProduct.category,
+          category_type: catalogProduct?.category_type || 'OTHER',
+          price: catalogProduct?.price || null,
           image_url_full: catalogProduct?.image_url_full || catalogProduct?.image_url || null,
           available: invProduct.available,
           is_available: invProduct.available > 0,
@@ -117,6 +119,36 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     return Array.from(cart.values()).reduce((sum, qty) => sum + qty, 0);
   };
 
+  const getTotalFoodPrice = () => {
+    let total = 0;
+    cart.forEach((quantity, productId) => {
+      const product = products.find(p => p.id === productId);
+      if (product && product.category_type === 'FOOD' && product.price) {
+        total += product.price * quantity;
+      }
+    });
+    return total;
+  };
+
+  // Group products by category type
+  const groupedProducts = products.reduce((acc: any, product: any) => {
+    const type = product.category_type || 'OTHER';
+    if (!acc[type]) {
+      acc[type] = [];
+    }
+    acc[type].push(product);
+    return acc;
+  }, {});
+
+  const categoryLabels: { [key: string]: string } = {
+    'DRINK': 'Bebidas',
+    'SNACK': 'Snacks',
+    'FOOD': 'Comida (Pago adicional)',
+    'OTHER': 'Otros',
+  };
+
+  const categoryOrder = ['DRINK', 'SNACK', 'FOOD', 'OTHER'];
+
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -142,80 +174,103 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           ) : (
             <>
               <div style={styles.productsSection}>
-                <h3 style={styles.sectionTitle}>Productos Disponibles</h3>
-                <div style={styles.productsGrid}>
-                  {products.map((product) => {
-                    const isOutOfStock = !product.is_available;
-                    const available = product.available || 0;
+                {categoryOrder.map((categoryType) => {
+                  const categoryProducts = groupedProducts[categoryType];
+                  if (!categoryProducts || categoryProducts.length === 0) return null;
 
-                    return (
-                      <div
-                        key={product.id}
-                        style={{
-                          ...styles.productCard,
-                          opacity: isOutOfStock ? 0.6 : 1,
-                          border: isOutOfStock ? '2px solid #e74c3c' : '1px solid #e0e0e0',
-                        }}
-                      >
-                        {product.image_url_full && (
-                          <img
-                            src={product.image_url_full}
-                            alt={product.name}
-                            style={styles.productImage}
-                          />
-                        )}
-                        <div style={styles.productInfo}>
-                          <h4 style={styles.productName}>{product.name}</h4>
-                          <p style={styles.productCategory}>{product.category_name}</p>
-                          <div style={{
-                            ...styles.stockBadge,
-                            backgroundColor: isOutOfStock ? '#e74c3c' : available < 10 ? '#f39c12' : '#27ae60',
-                          }}>
-                            {isOutOfStock ? 'AGOTADO' : `Stock: ${available}`}
-                          </div>
-                        </div>
-                        <div style={styles.productActions}>
-                          {isOutOfStock ? (
-                            <button
-                              disabled
+                  const isFood = categoryType === 'FOOD';
+
+                  return (
+                    <div key={categoryType} style={styles.categorySection}>
+                      <h3 style={{
+                        ...styles.sectionTitle,
+                        ...(isFood ? styles.foodSectionTitle : {}),
+                      }}>
+                        {categoryLabels[categoryType]}
+                        {isFood && <span style={styles.foodBadge}>Pago adicional</span>}
+                      </h3>
+                      <div style={styles.productsGrid}>
+                        {categoryProducts.map((product: any) => {
+                          const isOutOfStock = !product.is_available;
+                          const available = product.available || 0;
+
+                          return (
+                            <div
+                              key={product.id}
                               style={{
-                                ...styles.addButton,
-                                backgroundColor: '#95a5a6',
-                                cursor: 'not-allowed',
+                                ...styles.productCard,
+                                opacity: isOutOfStock ? 0.6 : 1,
+                                border: isOutOfStock ? '2px solid #e74c3c' : isFood ? '2px solid #ff9800' : '1px solid #e0e0e0',
                               }}
                             >
-                              No disponible
-                            </button>
-                          ) : cart.has(product.id) ? (
-                            <div style={styles.quantityControl}>
-                              <button
-                                onClick={() => handleRemoveFromCart(product.id)}
-                                style={styles.quantityButton}
-                              >
-                                -
-                              </button>
-                              <span style={styles.quantity}>{cart.get(product.id)}</span>
-                              <button
-                                onClick={() => handleAddToCart(product.id)}
-                                style={styles.quantityButton}
-                                disabled={cart.get(product.id)! >= available}
-                              >
-                                +
-                              </button>
+                              {product.image_url_full && (
+                                <img
+                                  src={product.image_url_full}
+                                  alt={product.name}
+                                  style={styles.productImage}
+                                />
+                              )}
+                              <div style={styles.productInfo}>
+                                <h4 style={styles.productName}>{product.name}</h4>
+                                <p style={styles.productCategory}>{product.category_name}</p>
+                                {isFood && product.price != null && (
+                                  <p style={styles.productPrice}>${product.price.toFixed(2)} MXN</p>
+                                )}
+                                <div style={{
+                                  ...styles.stockBadge,
+                                  backgroundColor: isOutOfStock ? '#e74c3c' : available < 10 ? '#f39c12' : '#27ae60',
+                                }}>
+                                  {isOutOfStock ? 'AGOTADO' : `Stock: ${available}`}
+                                </div>
+                              </div>
+                              <div style={styles.productActions}>
+                                {isOutOfStock ? (
+                                  <button
+                                    disabled
+                                    style={{
+                                      ...styles.addButton,
+                                      backgroundColor: '#95a5a6',
+                                      cursor: 'not-allowed',
+                                    }}
+                                  >
+                                    No disponible
+                                  </button>
+                                ) : cart.has(product.id) ? (
+                                  <div style={styles.quantityControl}>
+                                    <button
+                                      onClick={() => handleRemoveFromCart(product.id)}
+                                      style={styles.quantityButton}
+                                    >
+                                      -
+                                    </button>
+                                    <span style={styles.quantity}>{cart.get(product.id)}</span>
+                                    <button
+                                      onClick={() => handleAddToCart(product.id)}
+                                      style={styles.quantityButton}
+                                      disabled={cart.get(product.id)! >= available}
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => handleAddToCart(product.id)}
+                                    style={{
+                                      ...styles.addButton,
+                                      ...(isFood ? { backgroundColor: '#ff9800' } : {}),
+                                    }}
+                                  >
+                                    Agregar
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          ) : (
-                            <button
-                              onClick={() => handleAddToCart(product.id)}
-                              style={styles.addButton}
-                            >
-                              Agregar
-                            </button>
-                          )}
-                        </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {cart.size > 0 && (
@@ -223,16 +278,31 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                   <h3 style={styles.sectionTitle}>Resumen de Orden ({getTotalItems()} items)</h3>
                   <div style={styles.cartItems}>
                     {Array.from(cart.entries()).map(([productId, quantity]) => {
-                      const product = products.find(p => p.id === productId);
+                      const product = products.find((p: any) => p.id === productId);
                       if (!product) return null;
+                      const isFood = product.category_type === 'FOOD';
                       return (
-                        <div key={productId} style={styles.cartItem}>
+                        <div key={productId} style={{
+                          ...styles.cartItem,
+                          ...(isFood ? { borderLeft: '3px solid #ff9800' } : {}),
+                        }}>
                           <span style={styles.cartItemName}>{product.name}</span>
-                          <span style={styles.cartItemQty}>x{quantity}</span>
+                          <div style={styles.cartItemRight}>
+                            {isFood && product.price != null && (
+                              <span style={styles.cartItemPrice}>${(product.price * quantity).toFixed(2)}</span>
+                            )}
+                            <span style={styles.cartItemQty}>x{quantity}</span>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
+                  {getTotalFoodPrice() > 0 && (
+                    <div style={styles.foodTotalSection}>
+                      <span style={styles.foodTotalLabel}>Total Comida (Pago adicional):</span>
+                      <span style={styles.foodTotalValue}>${getTotalFoodPrice().toFixed(2)} MXN</span>
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -448,6 +518,58 @@ const styles: { [key: string]: React.CSSProperties } = {
   cartItemQty: {
     fontSize: '14px',
     color: colors.gray,
+  },
+  cartItemRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  cartItemPrice: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    color: '#e65100',
+  },
+  categorySection: {
+    marginBottom: '24px',
+  },
+  foodSectionTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  foodBadge: {
+    backgroundColor: '#ff9800',
+    color: colors.white,
+    padding: '4px 12px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+  },
+  productPrice: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    color: '#e65100',
+    margin: '4px 0 0 0',
+  },
+  foodTotalSection: {
+    marginTop: '16px',
+    padding: '12px 16px',
+    backgroundColor: '#fff3e0',
+    borderRadius: '8px',
+    border: '1px solid #ffcc80',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  foodTotalLabel: {
+    fontSize: '14px',
+    color: '#6d4c41',
+    fontWeight: '500',
+  },
+  foodTotalValue: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: '#e65100',
   },
   footer: {
     padding: '24px',

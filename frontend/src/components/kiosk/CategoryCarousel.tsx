@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, forwardRef } from 'react';
 import type { ProductCategory, Product } from '../../types';
 import { ProductCard } from './ProductCard';
 import { colors } from '../../styles/colors';
@@ -8,14 +8,16 @@ interface CategoryCarouselProps {
   products: Product[];
   onAddToCart: (productId: number) => void;
   onViewAll: (categoryId: number) => void;
+  showViewAllButton?: boolean;
 }
 
-export const CategoryCarousel: React.FC<CategoryCarouselProps> = ({
+export const CategoryCarousel = forwardRef<HTMLDivElement, CategoryCarouselProps>(({
   category,
   products,
   onAddToCart,
   onViewAll,
-}) => {
+  showViewAllButton = true,
+}, ref) => {
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -31,7 +33,7 @@ export const CategoryCarousel: React.FC<CategoryCarouselProps> = ({
   }
 
   return (
-    <div style={styles.container}>
+    <div ref={ref} style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
@@ -47,6 +49,15 @@ export const CategoryCarousel: React.FC<CategoryCarouselProps> = ({
             )}
           </div>
         </div>
+        {showViewAllButton && category.id > 0 && (
+          <button
+            style={styles.viewAllButton}
+            onClick={() => onViewAll(category.id)}
+            className="view-all-button"
+          >
+            Ver todos
+          </button>
+        )}
       </div>
 
       {/* Carousel */}
@@ -85,7 +96,9 @@ export const CategoryCarousel: React.FC<CategoryCarouselProps> = ({
       </div>
     </div>
   );
-};
+});
+
+CategoryCarousel.displayName = 'CategoryCarousel';
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
@@ -169,6 +182,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   arrowRight: {
     right: '0',
   },
+  viewAllButton: {
+    padding: '12px 24px',
+    backgroundColor: colors.primary,
+    color: colors.white,
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
 };
 
 // Hide scrollbar for webkit browsers and add hover effects
@@ -186,6 +210,15 @@ styleSheet.textContent = `
 
   .carousel-arrow:active {
     transform: translateY(-50%) scale(0.95);
+  }
+
+  .view-all-button:hover {
+    background-color: ${colors.primaryDark || '#1976d2'} !important;
+    transform: scale(1.05);
+  }
+
+  .view-all-button:active {
+    transform: scale(0.98);
   }
 `;
 if (!document.head.querySelector('[data-carousel-styles]')) {

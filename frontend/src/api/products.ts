@@ -31,6 +31,11 @@ export const productsApi = {
     return response.data;
   },
 
+  getMostOrderedByCategory: async (categoryId: number, limit: number = 5): Promise<Product[]> => {
+    const response = await axios.get(`${API_BASE_URL}/api/public/categories/${categoryId}/most-ordered/?limit=${limit}`);
+    return response.data;
+  },
+
   getCarouselCategories: async (): Promise<ProductCategory[]> => {
     const response = await axios.get(`${API_BASE_URL}/api/public/categories/carousel/`);
     return response.data;

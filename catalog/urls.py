@@ -9,6 +9,7 @@ from .views import (
     get_featured_product,
     get_products_by_category,
     get_most_ordered_products,
+    get_most_ordered_by_category,
     get_carousel_categories
 )
 
@@ -28,6 +29,7 @@ public_custom_patterns = [
     path('products/featured/', get_featured_product, name='featured-product'),
     path('products/most-ordered/', get_most_ordered_products, name='most-ordered-products'),
     path('categories/<int:category_id>/products/', get_products_by_category, name='category-products'),
+    path('categories/<int:category_id>/most-ordered/', get_most_ordered_by_category, name='category-most-ordered'),
     path('categories/carousel/', get_carousel_categories, name='carousel-categories'),
 ]
 

@@ -17,10 +17,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const isOutOfStock = product.is_available === false;
   const mainBenefit = product.benefits && product.benefits.length > 0 ? product.benefits[0] : null;
   const mainTag = product.tags && product.tags.length > 0 ? product.tags[0] : null;
+  const isFood = product.category_type === 'FOOD';
+  const hasPrice = isFood && product.price !== undefined && product.price !== null && product.price > 0;
 
   const cardStyles = variant === 'carousel'
     ? { ...styles.card, ...styles.carouselCard }
     : styles.card;
+
+  // Format price as Mexican Pesos
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+    }).format(price);
+  };
 
   return (
     <div
@@ -58,6 +68,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
 
+        {/* Food Badge (for paid items) */}
+        {isFood && !isOutOfStock && !mainTag && (
+          <div style={styles.foodBadge}>
+            Pago adicional
+          </div>
+        )}
+
         {/* Out of Stock Badge */}
         {isOutOfStock && (
           <div style={styles.outOfStockBadge}>
@@ -70,6 +87,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div style={styles.content}>
         <h3 style={styles.title}>{product.name}</h3>
         <p style={styles.description}>{product.description}</p>
+
+        {/* Price for FOOD items */}
+        {hasPrice && (
+          <div style={styles.priceContainer}>
+            <span style={styles.priceLabel}>Precio:</span>
+            <span style={styles.price}>{formatPrice(product.price!)}</span>
+          </div>
+        )}
 
         {/* Benefit */}
         {mainBenefit && !isOutOfStock && (
@@ -106,10 +131,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </button>
         ) : (
           <button
-            style={styles.addButton}
+            style={{
+              ...styles.addButton,
+              ...(isFood ? styles.foodButton : {}),
+            }}
             onClick={() => onAddToCart(product.id)}
           >
-            Agregar a la Orden
+            {isFood ? 'Agregar (Pago adicional)' : 'Agregar a la Orden'}
           </button>
         )}
       </div>
@@ -236,6 +264,39 @@ const styles: { [key: string]: React.CSSProperties } = {
   disabledButton: {
     backgroundColor: colors.grayLight,
     cursor: 'not-allowed',
+  },
+  foodBadge: {
+    position: 'absolute',
+    top: '12px',
+    right: '12px',
+    backgroundColor: '#ff9800',
+    color: colors.white,
+    padding: '6px 12px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+  },
+  priceContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backgroundColor: '#fff3e0',
+    padding: '10px 14px',
+    borderRadius: '8px',
+    marginTop: '8px',
+  },
+  priceLabel: {
+    fontSize: '14px',
+    color: '#e65100',
+    fontWeight: '500',
+  },
+  price: {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#e65100',
+  },
+  foodButton: {
+    backgroundColor: '#ff9800',
   },
 };
 

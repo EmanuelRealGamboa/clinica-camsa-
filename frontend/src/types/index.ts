@@ -94,12 +94,13 @@ export interface Product {
   id: number;
   category: number;
   category_name: string;
-  category_type?: 'DRINK' | 'SNACK' | 'OTHER';
+  category_type?: 'DRINK' | 'SNACK' | 'FOOD' | 'OTHER';
   name: string;
   description: string;
   image_url?: string;
   image_url_full?: string;
   unit_label: string;
+  price?: number | null; // Price for FOOD items (paid separately)
   is_active: boolean;
   available?: number | null; // Available inventory quantity (null means unlimited)
   is_available?: boolean; // Whether product is available for ordering
@@ -120,6 +121,7 @@ export interface ProductCategory {
   name: string;
   icon?: string;
   description?: string;
+  category_type?: 'DRINK' | 'SNACK' | 'FOOD' | 'OTHER';
   sort_order: number;
   show_in_carousel?: boolean;
   carousel_order?: number;

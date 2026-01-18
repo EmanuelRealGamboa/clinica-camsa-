@@ -1,22 +1,94 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { productsApi } from '../../api/products';
+import { ordersApi } from '../../api/orders';
+import { kioskApi } from '../../api/kiosk';
 import type { Product, ProductCategory } from '../../types';
 import { ProductCard } from '../../components/kiosk/ProductCard';
+import { CartModal } from '../../components/kiosk/CartModal';
+import { AddToCartNotification } from '../../components/kiosk/AddToCartNotification';
+import { LimitReachedModal } from '../../components/kiosk/LimitReachedModal';
 import { colors } from '../../styles/colors';
+
+// Storage key for cart persistence
+const CART_STORAGE_KEY = 'kiosk_cart';
+
+interface LocationState {
+  cart?: [number, number][];
+  orderLimits?: { DRINK?: number; SNACK?: number };
+  activeOrdersItems?: [string, number][];
+}
 
 export const KioskCategoryPage: React.FC = () => {
   const { deviceId, categoryId } = useParams<{ deviceId: string; categoryId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<ProductCategory | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [cart, setCart] = useState<Map<number, number>>(new Map());
+  const [patientInfo, setPatientInfo] = useState<{
+    full_name: string;
+    room_code: string;
+    staff_name: string;
+    order_limits?: { DRINK?: number; SNACK?: number };
+  } | null>(null);
+
+  // Initialize cart from location state or localStorage
+  const [cart, setCart] = useState<Map<number, number>>(() => {
+    const navState = location.state as LocationState | null;
+    if (navState?.cart) {
+      return new Map(navState.cart);
+    }
+    try {
+      const stored = localStorage.getItem(`${CART_STORAGE_KEY}_${deviceId}`);
+      if (stored) {
+        return new Map(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Error loading cart from localStorage:', e);
+    }
+    return new Map();
+  });
+
+  // Initialize order limits and active orders from location state
+  const [orderLimits, setOrderLimits] = useState<{ DRINK?: number; SNACK?: number }>(() => {
+    const navState = location.state as LocationState | null;
+    return navState?.orderLimits || {};
+  });
+
+  const [activeOrdersItems, setActiveOrdersItems] = useState<Map<string, number>>(() => {
+    const navState = location.state as LocationState | null;
+    if (navState?.activeOrdersItems) {
+      return new Map(navState.activeOrdersItems);
+    }
+    return new Map();
+  });
+
+  const [showCart, setShowCart] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [lastAddedProduct, setLastAddedProduct] = useState<string>('');
+  const [showLimitReachedModal, setShowLimitReachedModal] = useState(false);
 
   useEffect(() => {
     loadCategoryData();
   }, [categoryId]);
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    if (deviceId && cart.size > 0) {
+      try {
+        localStorage.setItem(
+          `${CART_STORAGE_KEY}_${deviceId}`,
+          JSON.stringify(Array.from(cart.entries()))
+        );
+      } catch (e) {
+        console.error('Error saving cart to localStorage:', e);
+      }
+    } else if (deviceId && cart.size === 0) {
+      localStorage.removeItem(`${CART_STORAGE_KEY}_${deviceId}`);
+    }
+  }, [cart, deviceId]);
 
   const loadCategoryData = async () => {
     if (!categoryId) return;
@@ -24,14 +96,51 @@ export const KioskCategoryPage: React.FC = () => {
     try {
       setLoading(true);
 
+      // Load patient info if not passed in state
+      if (deviceId && !patientInfo) {
+        try {
+          const patientData = await kioskApi.getActivePatient(deviceId);
+          setPatientInfo({
+            full_name: patientData.patient.full_name,
+            room_code: patientData.room.code,
+            staff_name: patientData.staff.full_name,
+            order_limits: patientData.order_limits || {},
+          });
+          setOrderLimits(patientData.order_limits || {});
+        } catch (error) {
+          console.error('Error loading patient data:', error);
+        }
+      }
+
       // Load category details
       const categories = await productsApi.getPublicCategories();
       const categoryData = categories.results?.find((c: ProductCategory) => c.id === parseInt(categoryId)) || null;
       setCategory(categoryData);
 
-      // Load products for this category
+      // Load ALL products for this category (not just most ordered)
       const productsData = await productsApi.getProductsByCategory(parseInt(categoryId));
       setProducts(productsData);
+
+      // Load active orders if not passed in state
+      if (deviceId && activeOrdersItems.size === 0) {
+        try {
+          const ordersResponse = await ordersApi.getActiveOrdersPublic(deviceId);
+          const activeOrders = ordersResponse.orders || [];
+          const itemsMap = new Map<string, number>();
+          activeOrders
+            .filter((order: any) => ['PLACED', 'PREPARING', 'READY'].includes(order.status))
+            .forEach((order: any) => {
+              order.items?.forEach((item: any) => {
+                const categoryType = item.category_type || 'OTHER';
+                const currentCount = itemsMap.get(categoryType) || 0;
+                itemsMap.set(categoryType, currentCount + item.quantity);
+              });
+            });
+          setActiveOrdersItems(itemsMap);
+        } catch (error) {
+          console.error('Error loading active orders:', error);
+        }
+      }
 
     } catch (error) {
       console.error('Error loading category data:', error);
@@ -41,6 +150,48 @@ export const KioskCategoryPage: React.FC = () => {
   };
 
   const handleAddToCart = (productId: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    // Check if we have order limits configured
+    const limits = orderLimits || patientInfo?.order_limits;
+    if (limits) {
+      const categoryType = product.category_type;
+
+      // Only validate if product has a category type with a limit (DRINK or SNACK)
+      // FOOD has no limit
+      if (categoryType && (categoryType === 'DRINK' || categoryType === 'SNACK')) {
+        const limit = limits[categoryType];
+        if (limit && limit > 0) {
+          // Count how many of this category type are already in cart
+          let cartCount = 0;
+          cart.forEach((quantity, prodId) => {
+            const cartProduct = products.find(p => p.id === prodId);
+            if (cartProduct && cartProduct.category_type === categoryType) {
+              cartCount += quantity;
+            }
+          });
+
+          // Count how many are in active orders
+          const ordersCount = activeOrdersItems.get(categoryType) || 0;
+
+          // Total count = cart + active orders
+          const totalCount = cartCount + ordersCount;
+
+          // Check if adding this would exceed the limit
+          if (totalCount >= limit) {
+            console.log(`Limit reached for ${categoryType}: ${totalCount}/${limit}`);
+            setShowLimitReachedModal(true);
+            return;
+          }
+        }
+      }
+    }
+
+    // Add to cart
+    setLastAddedProduct(product.name);
+    setShowNotification(true);
+
     setCart((prev) => {
       const newCart = new Map(prev);
       newCart.set(productId, (newCart.get(productId) || 0) + 1);
@@ -48,12 +199,74 @@ export const KioskCategoryPage: React.FC = () => {
     });
   };
 
+  const handleUpdateQuantity = (productId: number, quantity: number) => {
+    setCart((prev) => {
+      const newCart = new Map(prev);
+      if (quantity <= 0) {
+        newCart.delete(productId);
+      } else {
+        newCart.set(productId, quantity);
+      }
+      return newCart;
+    });
+  };
+
   const handleBack = () => {
-    navigate(`/kiosk/${deviceId}`);
+    // Navigate back to home and pass cart state
+    navigate(`/kiosk/${deviceId}`, {
+      state: {
+        cart: Array.from(cart.entries()),
+      }
+    });
   };
 
   const handleViewOrders = () => {
     navigate(`/kiosk/${deviceId}/orders`);
+  };
+
+  const handleCheckout = async () => {
+    if (!deviceId || cart.size === 0) return;
+
+    try {
+      const items = Array.from(cart.entries()).map(([product_id, quantity]) => ({
+        product_id,
+        quantity,
+      }));
+
+      const orderData = {
+        device_uid: deviceId,
+        items,
+      };
+
+      console.log('Sending order data:', orderData);
+      const response = await ordersApi.createOrderPublic(orderData);
+      console.log('Order created successfully:', response);
+
+      // Clear cart and close modal
+      setCart(new Map());
+      localStorage.removeItem(`${CART_STORAGE_KEY}_${deviceId}`);
+      setShowCart(false);
+
+      // Redirect to orders page
+      navigate(`/kiosk/${deviceId}/orders`, { replace: true });
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      const errorData = error.response?.data;
+
+      if (errorData?.limit_reached) {
+        setCart(new Map());
+        setShowCart(false);
+        setShowLimitReachedModal(true);
+      } else {
+        const errorMessage = errorData?.error || 'Error al confirmar la orden. Por favor intenta de nuevo.';
+        alert(errorMessage);
+      }
+    }
+  };
+
+  // Get all products including those in cart from other categories
+  const getAllProducts = (): Product[] => {
+    return products;
   };
 
   const cartTotal = Array.from(cart.values()).reduce((sum, qty) => sum + qty, 0);
@@ -80,7 +293,9 @@ export const KioskCategoryPage: React.FC = () => {
               {category?.icon && <span style={styles.categoryIcon}>{category.icon}</span>}
               {category?.name || 'Productos'}
             </h1>
-            <p style={styles.headerSubtitle}>Habitación: 001</p>
+            <p style={styles.headerSubtitle}>
+              {patientInfo ? `Habitación: ${patientInfo.room_code}` : `Dispositivo: ${deviceId}`}
+            </p>
           </div>
         </div>
         <div style={styles.headerRight}>
@@ -88,7 +303,7 @@ export const KioskCategoryPage: React.FC = () => {
             Mis Órdenes
           </button>
           {cartTotal > 0 && (
-            <button style={styles.cartButton}>
+            <button style={styles.cartButton} onClick={() => setShowCart(true)}>
               🛒 Carrito ({cartTotal})
             </button>
           )}
@@ -117,6 +332,34 @@ export const KioskCategoryPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Cart Modal */}
+      {showCart && (
+        <CartModal
+          cart={cart}
+          products={getAllProducts()}
+          onClose={() => setShowCart(false)}
+          onUpdateQuantity={handleUpdateQuantity}
+          onCheckout={handleCheckout}
+          orderLimits={orderLimits || patientInfo?.order_limits || {}}
+          activeOrdersItems={activeOrdersItems}
+          onLimitReached={() => setShowLimitReachedModal(true)}
+        />
+      )}
+
+      {/* Add to Cart Notification */}
+      <AddToCartNotification
+        show={showNotification}
+        productName={lastAddedProduct}
+        onHide={() => setShowNotification(false)}
+      />
+
+      {/* Limit Reached Modal */}
+      <LimitReachedModal
+        show={showLimitReachedModal}
+        nurseName={patientInfo?.staff_name}
+        onClose={() => setShowLimitReachedModal(false)}
+      />
     </div>
   );
 };
@@ -191,7 +434,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   ordersButton: {
     padding: '12px 24px',
-    backgroundColor: colors.primary,
+    backgroundColor: '#ff9800',
     color: colors.white,
     border: 'none',
     borderRadius: '8px',
@@ -201,7 +444,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   cartButton: {
     padding: '12px 24px',
-    backgroundColor: colors.success,
+    backgroundColor: '#ff9800',
     color: colors.white,
     border: 'none',
     borderRadius: '8px',

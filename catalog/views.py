@@ -195,3 +195,24 @@ def get_carousel_categories(request):
 
     serializer = PublicProductCategorySerializer(categories, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_most_ordered_by_category(request, category_id):
+    """
+    Get the most ordered products for a specific category
+    Returns top 5 products ordered by number of times they appear in orders
+    """
+    limit = int(request.query_params.get('limit', 5))
+
+    products = Product.objects.select_related('category').prefetch_related('tags').filter(
+        is_active=True,
+        category_id=category_id,
+        category__is_active=True
+    ).annotate(
+        order_count=Count('order_items')
+    ).order_by('-order_count', 'product_sort_order', 'name')[:limit]
+
+    serializer = PublicProductSerializer(products, many=True, context={'request': request})
+    return Response(serializer.data)

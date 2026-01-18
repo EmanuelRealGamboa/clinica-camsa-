@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { productsApi } from '../../api/products';
 import { ordersApi } from '../../api/orders';
 import { kioskApi } from '../../api/kiosk';
 import type { Product, ProductCategory } from '../../types';
 import { HeroSection } from '../../components/kiosk/HeroSection';
 import { CategoryCarousel } from '../../components/kiosk/CategoryCarousel';
+import { CategoryQuickNav } from '../../components/kiosk/CategoryQuickNav';
 import { CartModal } from '../../components/kiosk/CartModal';
 import { AddToCartNotification } from '../../components/kiosk/AddToCartNotification';
 import { OrderLimitsIndicator } from '../../components/kiosk/OrderLimitsIndicator';
@@ -28,9 +29,16 @@ interface PatientInfo {
   };
 }
 
+// Storage key for cart persistence
+const CART_STORAGE_KEY = 'kiosk_cart';
+
 export const KioskHomePage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Refs for category carousels (for scroll targeting)
+  const categoryRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
 
   const [loading, setLoading] = useState(true);
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
@@ -39,7 +47,26 @@ export const KioskHomePage: React.FC = () => {
   const [carouselCategories, setCarouselCategories] = useState<ProductCategory[]>([]);
   const [categoryProducts, setCategoryProducts] = useState<Map<number, Product[]>>(new Map());
   const [mostOrderedProducts, setMostOrderedProducts] = useState<Product[]>([]);
-  const [cart, setCart] = useState<Map<number, number>>(new Map());
+
+  // Initialize cart from localStorage or from navigation state
+  const [cart, setCart] = useState<Map<number, number>>(() => {
+    // Check if we have cart state from navigation (returning from category page)
+    const navState = location.state as { cart?: Map<number, number> } | null;
+    if (navState?.cart) {
+      return new Map(navState.cart);
+    }
+    // Otherwise try localStorage
+    try {
+      const stored = localStorage.getItem(`${CART_STORAGE_KEY}_${deviceId}`);
+      if (stored) {
+        return new Map(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Error loading cart from localStorage:', e);
+    }
+    return new Map();
+  });
+
   const [showCart, setShowCart] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [lastAddedProduct, setLastAddedProduct] = useState<string>('');
@@ -61,6 +88,59 @@ export const KioskHomePage: React.FC = () => {
   useEffect(() => {
     loadHomeData();
   }, [deviceId]);
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    if (deviceId && cart.size > 0) {
+      try {
+        localStorage.setItem(
+          `${CART_STORAGE_KEY}_${deviceId}`,
+          JSON.stringify(Array.from(cart.entries()))
+        );
+      } catch (e) {
+        console.error('Error saving cart to localStorage:', e);
+      }
+    } else if (deviceId && cart.size === 0) {
+      localStorage.removeItem(`${CART_STORAGE_KEY}_${deviceId}`);
+    }
+  }, [cart, deviceId]);
+
+  // Function to scroll to a category carousel
+  const scrollToCategory = (categoryId: number) => {
+    const element = categoryRefs.current.get(categoryId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Get all products for cart modal, notifications, and limit calculations
+  const allProducts: Product[] = [
+    ...(featuredProduct ? [featuredProduct] : []),
+    ...mostOrderedProducts,
+    ...Array.from(categoryProducts.values()).flat(),
+  ];
+
+  // Calculate current counts for category limits (cart + active orders)
+  const getCurrentCounts = useCallback(() => {
+    const counts = new Map<string, number>();
+
+    // Add items from cart
+    cart.forEach((quantity, productId) => {
+      const product = allProducts.find(p => p.id === productId);
+      if (product?.category_type) {
+        const current = counts.get(product.category_type) || 0;
+        counts.set(product.category_type, current + quantity);
+      }
+    });
+
+    // Add items from active orders
+    activeOrdersItems.forEach((quantity, categoryType) => {
+      const current = counts.get(categoryType) || 0;
+      counts.set(categoryType, current + quantity);
+    });
+
+    return counts;
+  }, [cart, activeOrdersItems, allProducts]);
 
   // Check for patient assignment periodically when on initial welcome screen
   useEffect(() => {
@@ -157,10 +237,11 @@ export const KioskHomePage: React.FC = () => {
       const mostOrdered = await productsApi.getMostOrderedProducts();
       setMostOrderedProducts(mostOrdered);
 
-      // Load products for each category
+      // Load MOST ORDERED products for each category (for carousels)
       const productsMap = new Map<number, Product[]>();
       for (const category of categories) {
-        const products = await productsApi.getProductsByCategory(category.id);
+        // Load most ordered products for this category (limit 5 for carousel)
+        const products = await productsApi.getMostOrderedByCategory(category.id, 5);
         productsMap.set(category.id, products);
       }
       setCategoryProducts(productsMap);
@@ -251,13 +332,6 @@ export const KioskHomePage: React.FC = () => {
       console.error('⚠️ Kiosk Home WebSocket error:', error);
     },
   });
-
-  // Get all products for cart modal and notifications
-  const allProducts: Product[] = [
-    ...(featuredProduct ? [featuredProduct] : []),
-    ...mostOrderedProducts,
-    ...Array.from(categoryProducts.values()).flat(),
-  ];
 
   const handleAddToCart = (productId: number) => {
     // Update activity timestamp
@@ -396,7 +470,14 @@ export const KioskHomePage: React.FC = () => {
   };
 
   const handleViewAll = (categoryId: number) => {
-    navigate(`/kiosk/${deviceId}/category/${categoryId}`);
+    // Pass cart state to category page to maintain session
+    navigate(`/kiosk/${deviceId}/category/${categoryId}`, {
+      state: {
+        cart: Array.from(cart.entries()),
+        orderLimits: patientInfo?.order_limits,
+        activeOrdersItems: Array.from(activeOrdersItems.entries()),
+      }
+    });
   };
 
   const handleViewOrders = () => {
@@ -468,6 +549,16 @@ export const KioskHomePage: React.FC = () => {
         <HeroSection product={featuredProduct} onAddToCart={handleAddToCart} />
       )}
 
+      {/* Category Quick Navigation */}
+      {carouselCategories.length > 0 && (
+        <CategoryQuickNav
+          categories={carouselCategories}
+          onCategoryClick={scrollToCategory}
+          orderLimits={patientInfo?.order_limits}
+          currentCounts={getCurrentCounts()}
+        />
+      )}
+
       {/* Most Ordered Products Carousel */}
       {mostOrderedProducts.length > 0 && (
         <CategoryCarousel
@@ -484,6 +575,7 @@ export const KioskHomePage: React.FC = () => {
           products={mostOrderedProducts}
           onAddToCart={handleAddToCart}
           onViewAll={() => {}}
+          showViewAllButton={false}
         />
       )}
 
@@ -495,6 +587,7 @@ export const KioskHomePage: React.FC = () => {
         return (
           <CategoryCarousel
             key={category.id}
+            ref={(el) => categoryRefs.current.set(category.id, el)}
             category={category}
             products={products}
             onAddToCart={handleAddToCart}

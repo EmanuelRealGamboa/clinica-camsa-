@@ -585,14 +585,19 @@ export const KioskHomePage: React.FC = () => {
         if (products.length === 0) return null;
 
         return (
-          <CategoryCarousel
+          <div
             key={category.id}
-            ref={(el) => categoryRefs.current.set(category.id, el)}
-            category={category}
-            products={products}
-            onAddToCart={handleAddToCart}
-            onViewAll={handleViewAll}
-          />
+            ref={(el) => {
+              if (el) categoryRefs.current.set(category.id, el);
+            }}
+          >
+            <CategoryCarousel
+              category={category}
+              products={products}
+              onAddToCart={handleAddToCart}
+              onViewAll={handleViewAll}
+            />
+          </div>
         );
       })}
 

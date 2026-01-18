@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef } from 'react';
+import React, { useRef } from 'react';
 import type { ProductCategory, Product } from '../../types';
 import { ProductCard } from './ProductCard';
 import { colors } from '../../styles/colors';
@@ -11,13 +11,13 @@ interface CategoryCarouselProps {
   showViewAllButton?: boolean;
 }
 
-export const CategoryCarousel = forwardRef<HTMLDivElement, CategoryCarouselProps>(({
+export const CategoryCarousel: React.FC<CategoryCarouselProps> = ({
   category,
   products,
   onAddToCart,
   onViewAll,
   showViewAllButton = true,
-}, ref) => {
+}) => {
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -33,7 +33,7 @@ export const CategoryCarousel = forwardRef<HTMLDivElement, CategoryCarouselProps
   }
 
   return (
-    <div ref={ref} style={styles.container}>
+    <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
@@ -96,9 +96,7 @@ export const CategoryCarousel = forwardRef<HTMLDivElement, CategoryCarouselProps
       </div>
     </div>
   );
-});
-
-CategoryCarousel.displayName = 'CategoryCarousel';
+};
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {

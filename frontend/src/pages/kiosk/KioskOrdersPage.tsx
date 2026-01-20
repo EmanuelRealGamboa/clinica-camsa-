@@ -134,10 +134,14 @@ export const KioskOrdersPage: React.FC = () => {
         }
       }
     } else if (message.type === 'session_ended') {
-      console.log('Patient session ended by staff - redirecting to home page');
-      // When staff ends the session, redirect to the home page (shows welcome screen)
+      console.log('Patient session ended - closing modals and redirecting to home page');
+      // When session ends (either by staff or after feedback), close all modals and redirect
+      setShowWaitingForSurveyModal(false);
+      setShowCompleteSurveyModal(false);
+      setShowThankYouModal(false);
+      // Redirect to the home page (shows welcome screen)
       if (deviceId) {
-        navigate(`/kiosk/${deviceId}/home`, { replace: true });
+        navigate(`/kiosk/${deviceId}`, { replace: true });
       }
     } else if (message.type === 'limits_updated') {
       console.log('Order limits updated:', message);
@@ -237,10 +241,15 @@ export const KioskOrdersPage: React.FC = () => {
           }
           
           // Check if survey is enabled - show complete survey modal immediately
-          // Don't check for feedback_completed as we rely on backend validation
+          // Only show if survey is enabled and patient assignment is still active
+          // (If feedback was already submitted, backend will end the session)
           if (patientData.survey_enabled) {
-            setShowWaitingForSurveyModal(false);
-            setShowCompleteSurveyModal(true);
+            // Check if there are delivered orders to rate
+            const deliveredOrders = (ordersResponse.orders || []).filter((order: Order) => order.status === 'DELIVERED');
+            if (deliveredOrders.length > 0) {
+              setShowWaitingForSurveyModal(false);
+              setShowCompleteSurveyModal(true);
+            }
           }
         } catch (error) {
           console.error('Error loading patient data:', error);

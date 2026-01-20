@@ -97,6 +97,27 @@ class PublicFeedbackViewSet(viewsets.ViewSet):
                     stay_rating=stay_rating,
                     comment=comment if comment else None
                 )
+                
+                # Automatically end patient assignment session after feedback is submitted
+                patient_assignment.end_care()
+                
+                # Broadcast session ended to kiosk via WebSocket
+                try:
+                    if patient_assignment.device:
+                        from channels.layers import get_channel_layer
+                        from asgiref.sync import async_to_sync
+                        channel_layer = get_channel_layer()
+                        async_to_sync(channel_layer.group_send)(
+                            f'device_{patient_assignment.device.id}',
+                            {
+                                'type': 'session_ended',
+                                'assignment_id': patient_assignment.id,
+                                'ended_at': patient_assignment.ended_at.isoformat(),
+                            }
+                        )
+                except Exception as ws_error:
+                    # Log but don't fail the request
+                    print(f'WebSocket broadcast failed: {ws_error}')
 
                 # Calculate and update product ratings averages
                 self._update_product_ratings(product_ratings)

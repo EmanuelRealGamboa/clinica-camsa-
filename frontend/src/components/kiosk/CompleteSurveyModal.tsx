@@ -106,6 +106,11 @@ const CompleteSurveyModal: React.FC<CompleteSurveyModalProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Prevent duplicate submissions
+    if (submitting) {
+      return;
+    }
+
     // Validate all product ratings are set (greater than 0)
     for (const order of orders) {
       for (const item of order.items) {
@@ -136,10 +141,19 @@ const CompleteSurveyModal: React.FC<CompleteSurveyModalProps> = ({
         stay_rating: stayRating,
         comment: comment || undefined,
       });
+      // Feedback submitted successfully - session will be ended automatically by backend
+      // Call onComplete to close modal and show thank you message
       onComplete();
     } catch (error: any) {
       console.error('Error submitting feedback:', error);
       const errorMessage = error.response?.data?.error || 'Error al enviar la encuesta. Por favor intenta de nuevo.';
+      
+      // If feedback was already submitted, close modal and show thank you
+      if (error.response?.status === 400 && errorMessage.includes('already submitted')) {
+        onComplete();
+        return;
+      }
+      
       alert(errorMessage);
     } finally {
       setSubmitting(false);

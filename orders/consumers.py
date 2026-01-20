@@ -202,6 +202,18 @@ class KioskOrderConsumer(AsyncWebsocketConsumer):
             'order_limits': event['order_limits'],
         }))
 
+    async def survey_enabled(self, event):
+        """
+        Handle survey_enabled event from channel layer
+        Notifies kiosk that survey has been enabled by staff
+        """
+        await self.send(text_data=json.dumps({
+            'type': 'survey_enabled',
+            'assignment_id': event['assignment_id'],
+            'patient_id': event.get('patient_id'),
+            'survey_enabled': event.get('survey_enabled', True),
+        }))
+
     async def session_ended(self, event):
         """
         Handle session_ended event from channel layer

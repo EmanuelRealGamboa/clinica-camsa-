@@ -14,7 +14,7 @@ interface Order {
   status: string;
   items: Array<{
     id: number;
-    product_id: number;
+    product: number; // This is the product ID from the serializer
     product_name: string;
     quantity: number;
     unit_label: string;
@@ -57,7 +57,8 @@ const CompleteSurveyModal: React.FC<CompleteSurveyModalProps> = ({
           deliveredOrders.forEach((order: Order) => {
             initialRatings[order.id.toString()] = {};
             order.items.forEach((item) => {
-              initialRatings[order.id.toString()][item.product_id.toString()] = 0;
+              // Use item.product which is the product ID
+              initialRatings[order.id.toString()][item.product.toString()] = 0;
             });
           });
           setProductRatings(initialRatings);
@@ -79,7 +80,8 @@ const CompleteSurveyModal: React.FC<CompleteSurveyModalProps> = ({
             deliveredOrders.forEach((order: Order) => {
               initialRatings[order.id.toString()] = {};
               order.items.forEach((item) => {
-                initialRatings[order.id.toString()][item.product_id.toString()] = 0;
+                // Use item.product which is the product ID
+                initialRatings[order.id.toString()][item.product.toString()] = 0;
               });
             });
             setProductRatings(initialRatings);
@@ -104,12 +106,12 @@ const CompleteSurveyModal: React.FC<CompleteSurveyModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    // Validate all product ratings are set (at least 0)
+    // Validate all product ratings are set (greater than 0)
     for (const order of orders) {
       for (const item of order.items) {
-        const rating = productRatings[order.id.toString()]?.[item.product_id.toString()];
-        if (rating === undefined || rating === null) {
-          alert('Por favor califica todos los productos');
+        const rating = productRatings[order.id.toString()]?.[item.product.toString()];
+        if (rating === undefined || rating === null || rating === 0) {
+          alert('Por favor califica todos los productos (mínimo 1 estrella)');
           return;
         }
       }
@@ -220,8 +222,8 @@ const CompleteSurveyModal: React.FC<CompleteSurveyModalProps> = ({
                     </span>
                   </div>
                   <StarRating
-                    value={productRatings[order.id.toString()]?.[item.product_id.toString()] || 0}
-                    onChange={(rating) => handleProductRating(order.id, item.product_id, rating)}
+                    value={productRatings[order.id.toString()]?.[item.product.toString()] || 0}
+                    onChange={(rating) => handleProductRating(order.id, item.product, rating)}
                     label=""
                   />
                 </div>

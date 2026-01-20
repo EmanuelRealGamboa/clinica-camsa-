@@ -96,27 +96,42 @@ export const KioskOrdersPage: React.FC = () => {
         }
       }
     } else if (message.type === 'survey_enabled') {
-      console.log('Survey enabled:', message);
-      // When survey is enabled, show complete survey modal
+      console.log('Survey enabled via WebSocket:', message);
+      // When survey is enabled, show complete survey modal immediately
       setShowWaitingForSurveyModal(false);
-      // Update patient info with assignment_id from message
+      
+      // Get assignment_id from message
       const assignmentId = message.assignment_id;
-      setPatientInfo(prev => prev ? { 
-        ...prev, 
-        survey_enabled: true,
-        patient_assignment_id: assignmentId || prev.patient_assignment_id
-      } : null);
-      // Show complete survey modal immediately - assignment_id will be available from message or previous state
-      if (assignmentId) {
-        setShowCompleteSurveyModal(true);
-      } else {
-        // If assignment_id not in message, try to get it from current patientInfo
-        setPatientInfo(prev => {
-          if (prev?.patient_assignment_id) {
+      
+      // Reload patient data to ensure we have the latest info
+      if (deviceId) {
+        try {
+          const patientData = await kioskApi.getActivePatient(deviceId);
+          setPatientInfo({
+            full_name: patientData.patient.full_name,
+            room_code: patientData.room.code,
+            staff_name: patientData.staff.full_name,
+            survey_enabled: true,
+            can_patient_order: patientData.can_patient_order !== false,
+            patient_assignment_id: patientData.id || assignmentId,
+          });
+          
+          // Show complete survey modal after updating patient info
+          setTimeout(() => {
+            setShowCompleteSurveyModal(true);
+          }, 100);
+        } catch (error) {
+          console.error('Error reloading patient data after survey enabled:', error);
+          // Fallback: use assignment_id from message if available
+          if (assignmentId) {
+            setPatientInfo(prev => prev ? {
+              ...prev,
+              survey_enabled: true,
+              patient_assignment_id: assignmentId
+            } : null);
             setShowCompleteSurveyModal(true);
           }
-          return prev;
-        });
+        }
       }
     } else if (message.type === 'session_ended') {
       console.log('Patient session ended by staff - redirecting to home page');

@@ -66,6 +66,14 @@ class PublicOrderViewSet(viewsets.ViewSet):
                         'error': 'No active patient assigned to this device'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+                # Check if patient can create orders
+                if not patient_assignment.can_patient_order:
+                    return Response({
+                        'error': 'No puedes crear nuevas órdenes. Espera la confirmación de encuesta.',
+                        'survey_enabled': patient_assignment.survey_enabled,
+                        'can_patient_order': False
+                    }, status=status.HTTP_403_FORBIDDEN)
+
                 # Update device last_seen_at
                 device.last_seen_at = timezone.now()
                 device.save(update_fields=['last_seen_at'])

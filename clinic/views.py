@@ -280,9 +280,10 @@ class PatientAssignmentViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-        # Update limits
+        # Update limits and reactivate patient orders
         assignment.order_limits = order_limits
-        assignment.save(update_fields=['order_limits', 'updated_at'])
+        assignment.can_patient_order = True  # Reactivate patient orders when limits are updated
+        assignment.save(update_fields=['order_limits', 'can_patient_order', 'updated_at'])
 
         # Broadcast limits update to kiosk
         try:
@@ -294,6 +295,58 @@ class PatientAssignmentViewSet(viewsets.ModelViewSet):
                         'type': 'limits_updated',
                         'assignment_id': assignment.id,
                         'order_limits': order_limits,
+                        'can_patient_order': True,
+                    }
+                )
+        except Exception as ws_error:
+            # Log but don't fail the request
+            print(f'WebSocket broadcast failed: {ws_error}')
+
+        serializer = self.get_serializer(assignment)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def enable_survey(self, request, pk=None):
+        """
+        Enable survey for a patient assignment
+        POST /api/clinic/patient-assignments/{id}/enable_survey/
+        This will block patient from creating new orders until survey is completed
+        """
+        from django.utils import timezone
+        
+        assignment = self.get_object()
+
+        # Check if assignment is active
+        if not assignment.is_active:
+            return Response(
+                {'detail': 'Cannot enable survey for an ended assignment'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if current user is the assigned staff
+        if assignment.staff != request.user and not request.user.is_superuser:
+            return Response(
+                {'detail': 'You can only enable survey for your own patient assignments'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Enable survey and block patient orders
+        assignment.survey_enabled = True
+        assignment.survey_enabled_at = timezone.now()
+        assignment.can_patient_order = False  # Block patient from creating new orders
+        assignment.save(update_fields=['survey_enabled', 'survey_enabled_at', 'can_patient_order', 'updated_at'])
+
+        # Broadcast survey enabled to kiosk
+        try:
+            if assignment.device:
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f'device_{assignment.device.id}',
+                    {
+                        'type': 'survey_enabled',
+                        'assignment_id': assignment.id,
+                        'patient_id': assignment.patient.id,
+                        'survey_enabled': True,
                     }
                 )
         except Exception as ws_error:

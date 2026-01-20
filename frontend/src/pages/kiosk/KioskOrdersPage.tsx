@@ -5,6 +5,8 @@ import { kioskApi } from '../../api/kiosk';
 import { OrderStatusProgress } from '../../components/kiosk/OrderStatusProgress';
 import { SatisfactionModal } from '../../components/kiosk/SatisfactionModal';
 import { ThankYouModal } from '../../components/kiosk/ThankYouModal';
+import WaitingForSurveyModal from '../../components/kiosk/WaitingForSurveyModal';
+import CompleteSurveyModal from '../../components/kiosk/CompleteSurveyModal';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
@@ -16,6 +18,9 @@ interface PatientInfo {
   full_name: string;
   room_code: string;
   staff_name: string;
+  survey_enabled?: boolean;
+  can_patient_order?: boolean;
+  patient_assignment_id?: number;
 }
 
 interface OrderItem {
@@ -48,6 +53,8 @@ export const KioskOrdersPage: React.FC = () => {
     orderId: number | null;
   }>({ show: false, orderId: null });
   const [showThankYouModal, setShowThankYouModal] = useState(false);
+  const [showWaitingForSurveyModal, setShowWaitingForSurveyModal] = useState(false);
+  const [showCompleteSurveyModal, setShowCompleteSurveyModal] = useState(false);
 
   // WebSocket message handler
   const handleWebSocketMessage = useCallback(async (message: any) => {
@@ -56,12 +63,15 @@ export const KioskOrdersPage: React.FC = () => {
     if (message.type === 'order_status_changed') {
       console.log('Order status changed:', message);
 
-      // If order was marked as delivered, show satisfaction modal
+      // If order was marked as delivered, show waiting for survey modal
       if (message.status === 'DELIVERED') {
-        setSatisfactionModal({
-          show: true,
-          orderId: message.order_id,
-        });
+        // Check if there are any delivered orders
+        const hasDeliveredOrders = activeOrders.some(order => order.status === 'DELIVERED');
+        if (hasDeliveredOrders || message.status === 'DELIVERED') {
+          setShowWaitingForSurveyModal(true);
+          // Update can_patient_order to false
+          setPatientInfo(prev => prev ? { ...prev, can_patient_order: false } : null);
+        }
       }
 
       // Reload active orders to update the list
@@ -85,12 +95,23 @@ export const KioskOrdersPage: React.FC = () => {
           console.error('Failed to reload orders:', error);
         }
       }
+    } else if (message.type === 'survey_enabled') {
+      console.log('Survey enabled:', message);
+      // When survey is enabled, show complete survey modal
+      setShowWaitingForSurveyModal(false);
+      setShowCompleteSurveyModal(true);
+      setPatientInfo(prev => prev ? { ...prev, survey_enabled: true } : null);
     } else if (message.type === 'session_ended') {
       console.log('Patient session ended by staff - redirecting to home page');
       // When staff ends the session, redirect to the home page (shows welcome screen)
       if (deviceId) {
         navigate(`/kiosk/${deviceId}/home`, { replace: true });
       }
+    } else if (message.type === 'limits_updated') {
+      console.log('Order limits updated:', message);
+      // When limits are updated, reactivate patient orders
+      setPatientInfo(prev => prev ? { ...prev, can_patient_order: message.can_patient_order ?? true } : null);
+      setShowWaitingForSurveyModal(false);
     }
   }, [deviceId, navigate]);
 
@@ -151,7 +172,22 @@ export const KioskOrdersPage: React.FC = () => {
             full_name: patientData.patient.full_name,
             room_code: patientData.room.code,
             staff_name: patientData.staff.full_name,
+            survey_enabled: patientData.survey_enabled || false,
+            can_patient_order: patientData.can_patient_order !== false, // Default to true
+            patient_assignment_id: patientData.id,
           });
+          
+          // Check if there are delivered orders and survey is not enabled
+          const ordersResponse = await ordersApi.getActiveOrdersPublic(deviceId);
+          const deliveredOrders = (ordersResponse.orders || []).filter(order => order.status === 'DELIVERED');
+          if (deliveredOrders.length > 0 && !patientData.survey_enabled) {
+            setShowWaitingForSurveyModal(true);
+          }
+          
+          // Check if survey is enabled and not yet completed
+          if (patientData.survey_enabled && !patientData.feedback_completed) {
+            setShowCompleteSurveyModal(true);
+          }
         } catch (error) {
           console.error('Error loading patient data:', error);
         }
@@ -382,7 +418,30 @@ export const KioskOrdersPage: React.FC = () => {
         )}
       </div>
 
-      {/* Satisfaction Modal */}
+      {/* Waiting for Survey Modal */}
+      {showWaitingForSurveyModal && (
+        <WaitingForSurveyModal
+          onReturnToMenu={() => {
+            setShowWaitingForSurveyModal(false);
+            navigate(`/kiosk/${deviceId}/home`);
+          }}
+        />
+      )}
+
+      {/* Complete Survey Modal */}
+      {showCompleteSurveyModal && patientInfo?.patient_assignment_id && deviceId && (
+        <CompleteSurveyModal
+          patientAssignmentId={patientInfo.patient_assignment_id}
+          deviceUid={deviceId}
+          onComplete={() => {
+            setShowCompleteSurveyModal(false);
+            setShowThankYouModal(true);
+            loadData();
+          }}
+        />
+      )}
+
+      {/* Satisfaction Modal (deprecated - kept for backward compatibility) */}
       <SatisfactionModal
         show={satisfactionModal.show}
         orderId={satisfactionModal.orderId || 0}

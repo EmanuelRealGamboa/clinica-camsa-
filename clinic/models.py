@@ -62,6 +62,12 @@ class Patient(models.Model):
         validators=[phone_regex],
         help_text=_('Phone in E.164 format (e.g., +1234567890)')
     )
+    email = models.EmailField(
+        _('email'),
+        blank=True,
+        null=True,
+        help_text=_('Patient email address (optional)')
+    )
     is_active = models.BooleanField(
         _('is active'),
         default=True,
@@ -183,6 +189,22 @@ class PatientAssignment(models.Model):
         default=get_default_order_limits,
         blank=True,
         help_text=_('Order limits by category type (e.g., {"DRINK": 1, "SNACK": 1})')
+    )
+    survey_enabled = models.BooleanField(
+        _('survey enabled'),
+        default=False,
+        help_text=_('Whether survey is enabled for this patient assignment')
+    )
+    survey_enabled_at = models.DateTimeField(
+        _('survey enabled at'),
+        null=True,
+        blank=True,
+        help_text=_('When the survey was enabled')
+    )
+    can_patient_order = models.BooleanField(
+        _('can patient order'),
+        default=True,
+        help_text=_('Whether patient can create new orders')
     )
     is_active = models.BooleanField(
         _('is active'),

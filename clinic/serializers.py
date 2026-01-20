@@ -18,7 +18,7 @@ class PatientSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Patient
-        fields = ['id', 'full_name', 'phone_e164', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'full_name', 'phone_e164', 'email', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate_phone_e164(self, value):
@@ -107,6 +107,9 @@ class PatientAssignmentSerializer(serializers.ModelSerializer):
             'room',
             'room_details',
             'order_limits',
+            'survey_enabled',
+            'survey_enabled_at',
+            'can_patient_order',
             'is_active',
             'started_at',
             'ended_at',

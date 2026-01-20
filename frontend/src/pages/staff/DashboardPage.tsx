@@ -214,10 +214,17 @@ const DashboardPage: React.FC = () => {
 
     try {
       // Create patient with phone in E.164 format (+52 for Mexico)
-      const patientResponse = await apiClient.post('/clinic/patients/', {
+      const patientData: any = {
         full_name: patientForm.full_name,
         phone_e164: `+52${patientForm.phone_e164}`
-      });
+      };
+      
+      // Add email if provided
+      if (patientForm.email && patientForm.email.trim()) {
+        patientData.email = patientForm.email.trim();
+      }
+      
+      const patientResponse = await apiClient.post('/clinic/patients/', patientData);
       const patient = patientResponse.data;
 
       // Create patient assignment
@@ -230,7 +237,7 @@ const DashboardPage: React.FC = () => {
 
       showModal('¡Éxito!', '¡Paciente registrado y asignado exitosamente!', 'success');
       setShowPatientModal(false);
-      setPatientForm({ full_name: '', phone_e164: '' });
+      setPatientForm({ full_name: '', phone_e164: '', email: '' });
 
       // Reload data to show new assignment
       loadData();
@@ -269,13 +276,33 @@ const DashboardPage: React.FC = () => {
 
     try {
       await apiClient.patch(`/clinic/patient-assignments/${activeAssignment.id}/update_limits/`, limits);
-      showModal('¡Éxito!', 'Límites de orden actualizados exitosamente', 'success');
+      showModal('¡Éxito!', 'Límites de orden actualizados exitosamente. El paciente ahora puede ordenar nuevamente.', 'success');
       setShowLimitsConfigurator(false);
       loadData(); // Reload to show updated limits
     } catch (err: any) {
       console.error('Failed to update limits:', err);
       showModal('Error', err.response?.data?.detail || 'Error al actualizar límites de orden', 'error');
     }
+  };
+
+  const handleEnableSurvey = async () => {
+    if (!activeAssignment) return;
+
+    showModal(
+      'Habilitar Encuesta',
+      `¿Deseas habilitar la encuesta para ${activeAssignment.patient_details.full_name}? El paciente podrá calificar su experiencia.`,
+      'confirm',
+      async () => {
+        try {
+          await apiClient.post(`/clinic/patient-assignments/${activeAssignment.id}/enable_survey/`);
+          showModal('¡Éxito!', 'Encuesta habilitada exitosamente. El paciente ahora puede responder la encuesta.', 'success');
+          loadData();
+        } catch (err: any) {
+          console.error('Failed to enable survey:', err);
+          showModal('Error', err.response?.data?.detail || 'Error al habilitar la encuesta', 'error');
+        }
+      }
+    );
   };
 
   return (
@@ -396,6 +423,11 @@ const DashboardPage: React.FC = () => {
                     <button onClick={() => setShowLimitsConfigurator(true)} style={styles.configureLimitsButton} className="configure-limits-button">
                       ⚙️ Configurar Límites
                     </button>
+                    {activeAssignment && !activeAssignment.survey_enabled && !activeAssignment.can_patient_order && (
+                      <button onClick={handleEnableSurvey} style={styles.enableSurveyButton} className="enable-survey-button">
+                        📝 Habilitar Encuesta
+                      </button>
+                    )}
                     <button onClick={handleEndCare} style={styles.endCareButton} className="end-care-button">
                       Finalizar Atención
                     </button>
@@ -569,6 +601,16 @@ const DashboardPage: React.FC = () => {
                 <small style={{ color: '#666', fontSize: '12px' }}>
                   Ingresa 10 dígitos (ej. 5551234567). El sistema agregará +52 automáticamente.
                 </small>
+              </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Correo Electrónico (Opcional)</label>
+                <input
+                  type="email"
+                  value={patientForm.email}
+                  onChange={(e) => setPatientForm({...patientForm, email: e.target.value})}
+                  style={styles.input}
+                  placeholder="juan.perez@example.com"
+                />
               </div>
               <div style={styles.formActions}>
                 <button type="button" onClick={() => setShowPatientModal(false)} style={styles.cancelButton}>
@@ -1139,6 +1181,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   createOrderButton: {
     padding: '12px 24px',
     backgroundColor: colors.primary,
+    color: colors.white,
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  enableSurveyButton: {
+    padding: '12px 24px',
+    backgroundColor: colors.primaryDark,
     color: colors.white,
     border: 'none',
     borderRadius: '8px',

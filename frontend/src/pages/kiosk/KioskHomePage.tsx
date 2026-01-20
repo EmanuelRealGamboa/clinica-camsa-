@@ -29,6 +29,8 @@ interface PatientInfo {
     DRINK?: number;
     SNACK?: number;
   };
+  can_patient_order?: boolean;
+  survey_enabled?: boolean;
 }
 
 // Storage key for cart persistence
@@ -209,6 +211,8 @@ export const KioskHomePage: React.FC = () => {
             room_code: patientData.room.code,
             staff_name: patientData.staff.full_name,
             order_limits: patientData.order_limits || {},
+            can_patient_order: patientData.can_patient_order !== false, // Default to true
+            survey_enabled: patientData.survey_enabled || false,
           });
 
           // Hide initial welcome screen when patient is assigned
@@ -324,8 +328,13 @@ export const KioskHomePage: React.FC = () => {
       loadHomeData();
     } else if (message.type === 'limits_updated') {
       console.log('Order limits updated by staff - reloading patient data');
-      // When staff updates limits, reload patient data to get new limits
+      // When staff updates limits, reload patient data to get new limits and reactivate orders
       loadHomeData();
+      setPatientInfo(prev => prev ? { ...prev, can_patient_order: message.can_patient_order ?? true } : null);
+    } else if (message.type === 'survey_enabled') {
+      console.log('Survey enabled - blocking patient orders');
+      // When survey is enabled, block patient orders
+      setPatientInfo(prev => prev ? { ...prev, can_patient_order: false, survey_enabled: true } : null);
     } else if (message.type === 'session_ended') {
       console.log('Patient session ended by staff - returning to welcome screen');
       // Reset all state to show initial welcome screen
@@ -357,6 +366,12 @@ export const KioskHomePage: React.FC = () => {
   });
 
   const handleAddToCart = (productId: number) => {
+    // Check if patient can order
+    if (patientInfo && patientInfo.can_patient_order === false) {
+      alert('No puedes realizar nuevas órdenes. Espera la confirmación de encuesta o que tu enfermera cree órdenes por ti.');
+      return;
+    }
+
     // Update activity timestamp
     updateActivity();
 

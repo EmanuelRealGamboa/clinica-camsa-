@@ -51,10 +51,18 @@ const DashboardPage: React.FC = () => {
     url: wsUrl,
     onMessage: (message: any) => {
       if (message.type === 'new_order') {
-        console.log('🔔 New order notification:', message.order_id);
+        console.log('🔔 New order notification recibida:', message.order_id);
+        console.log('Mensaje completo:', message);
         addNotification(message.order_id);
+        
+        // Reproducir sonido inmediatamente
         playNotificationSound();
-        sendBrowserNotification(message.order_id);
+        
+        // Enviar notificación del navegador
+        sendBrowserNotification(message.order_id).catch(err => {
+          console.error('Error enviando notificación:', err);
+        });
+        
         // Reload stats to show updated numbers
         loadData();
       } else if (message.type === 'order_updated') {
@@ -174,24 +182,35 @@ const DashboardPage: React.FC = () => {
   };
 
   const playNotificationSound = () => {
-    // Si no está habilitado, no reproducir
-    if (!soundEnabled) {
-      return;
-    }
-
-    // Si no hay audioContext pero está habilitado, inicializar uno
+    console.log('🔊 Intentando reproducir sonido. soundEnabled:', soundEnabled, 'audioContext:', !!audioContext);
+    
+    // Intentar reproducir siempre, incluso si no está explícitamente habilitado
+    // (el usuario puede haber dado permisos anteriormente)
+    
+    // Si no hay audioContext, intentar crear uno
     if (!audioContext) {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      setAudioContext(ctx);
-      // Esperar un poco y reproducir
-      setTimeout(() => {
-        playBeepSoundWithContext(ctx);
-      }, 100);
-      return;
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        setAudioContext(ctx);
+        setSoundEnabled(true); // Auto-habilitar si logramos crear el contexto
+        console.log('✅ AudioContext creado automáticamente');
+        // Esperar un poco y reproducir
+        setTimeout(() => {
+          playBeepSoundWithContext(ctx);
+        }, 100);
+        return;
+      } catch (error) {
+        console.error('❌ Error creando AudioContext:', error);
+        return;
+      }
     }
 
     // Reproducir con el contexto existente
-    playBeepSoundWithContext(audioContext);
+    if (soundEnabled || audioContext) {
+      playBeepSoundWithContext(audioContext);
+    } else {
+      console.log('⚠️ Sonido no habilitado y no hay contexto disponible');
+    }
   };
 
   // Función auxiliar para reproducir sonido con manejo de contexto suspendido
@@ -246,25 +265,43 @@ const DashboardPage: React.FC = () => {
 
   // Enviar notificación usando Service Worker (funciona incluso con la página cerrada)
   const sendBrowserNotification = async (orderId: number) => {
+    console.log('📢 Enviando notificación para orden #', orderId);
+    console.log('Permisos de notificación:', Notification.permission);
+    console.log('Service Worker disponible:', 'serviceWorker' in navigator);
+    
     try {
       // Intentar usar Service Worker primero (funciona incluso con página cerrada)
       if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.ready;
-        if (registration && Notification.permission === 'granted') {
-          // Enviar mensaje al Service Worker
-          registration.active?.postMessage({
-            type: 'NOTIFY',
-            orderId: orderId,
-            title: 'Nueva Orden Recibida',
-            body: `Orden #${orderId} ha sido recibida - ¡Revisa el panel de órdenes!`,
-          });
-          console.log('Notificación enviada al Service Worker');
-          return;
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          console.log('Service Worker ready:', registration);
+          console.log('Service Worker active:', registration.active);
+          
+          if (registration && Notification.permission === 'granted') {
+            // Enviar mensaje al Service Worker
+            if (registration.active) {
+              registration.active.postMessage({
+                type: 'NOTIFY',
+                orderId: orderId,
+                title: 'Nueva Orden Recibida',
+                body: `Orden #${orderId} ha sido recibida - ¡Revisa el panel de órdenes!`,
+              });
+              console.log('✅ Notificación enviada al Service Worker');
+              return;
+            } else {
+              console.log('⚠️ Service Worker no está activo aún');
+            }
+          } else {
+            console.log('⚠️ Permisos de notificación no concedidos:', Notification.permission);
+          }
+        } catch (swError) {
+          console.error('❌ Error con Service Worker:', swError);
         }
       }
 
       // Fallback: notificación directa si Service Worker no está disponible
       if ('Notification' in window && Notification.permission === 'granted') {
+        console.log('📬 Usando notificación directa (fallback)');
         const notificationOptions: NotificationOptions = {
           body: `Orden #${orderId} ha sido recibida - ¡Revisa el panel de órdenes!`,
           icon: '/vite.svg',
@@ -298,9 +335,23 @@ const DashboardPage: React.FC = () => {
         setTimeout(() => {
           notification.close();
         }, 8000);
+        console.log('✅ Notificación directa mostrada');
+      } else {
+        console.log('⚠️ No se pueden mostrar notificaciones - Permiso:', Notification.permission);
+        // Si no hay permisos, intentar solicitarlos nuevamente
+        if (Notification.permission === 'default') {
+          console.log('📋 Solicitando permisos de notificación...');
+          Notification.requestPermission().then(permission => {
+            console.log('Permiso obtenido:', permission);
+            if (permission === 'granted') {
+              // Reintentar mostrar la notificación
+              setTimeout(() => sendBrowserNotification(orderId), 500);
+            }
+          });
+        }
       }
     } catch (error) {
-      console.error('Failed to send browser notification:', error);
+      console.error('❌ Error al enviar notificación:', error);
     }
   };
 

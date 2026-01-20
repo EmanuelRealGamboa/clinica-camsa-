@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Product } from '../../types';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 
 interface CartItem {
@@ -28,6 +29,7 @@ export const CartModal: React.FC<CartModalProps> = ({
   activeOrdersItems = new Map(),
   onLimitReached,
 }) => {
+  const { isMobile } = useWindowSize();
   const cartItems: CartItem[] = [];
 
   cart.forEach((quantity, productId) => {
@@ -93,13 +95,18 @@ export const CartModal: React.FC<CartModalProps> = ({
     onUpdateQuantity(productId, 0);
   };
 
+  const modalStyles = {
+    ...styles.modal,
+    ...(isMobile && responsiveStyles.modal),
+  };
+
   return (
     <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div style={modalStyles} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div style={styles.header}>
-          <h2 style={styles.title}>🛒 Tu Carrito</h2>
-          <button style={styles.closeButton} onClick={onClose} className="cart-close-btn">
+        <div style={{ ...styles.header, ...(isMobile && responsiveStyles.header) }}>
+          <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>🛒 Tu Carrito</h2>
+          <button style={{ ...styles.closeButton, ...(isMobile && responsiveStyles.closeButton) }} onClick={onClose} className="cart-close-btn">
             ✕
           </button>
         </div>
@@ -395,6 +402,30 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'all 0.2s',
+  },
+};
+
+// Responsive styles for mobile
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  modal: {
+    width: '100%',
+    maxWidth: '100%',
+    height: '100vh',
+    maxHeight: '100vh',
+    borderRadius: 0,
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  header: {
+    padding: '16px',
+  },
+  title: {
+    fontSize: '20px',
+  },
+  closeButton: {
+    width: '40px',
+    height: '40px',
   },
 };
 

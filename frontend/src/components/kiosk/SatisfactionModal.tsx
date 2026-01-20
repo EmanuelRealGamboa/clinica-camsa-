@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 
 interface SatisfactionModalProps {
@@ -14,11 +15,17 @@ export const SatisfactionModal: React.FC<SatisfactionModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const { isMobile } = useWindowSize();
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [showCommentStep, setShowCommentStep] = useState(false);
   const [comment, setComment] = useState('');
 
   if (!show) return null;
+
+  const modalStyles = {
+    ...styles.modal,
+    ...(isMobile && responsiveStyles.modal),
+  };
 
   const handleRatingSelect = (rating: number) => {
     setSelectedRating(rating);
@@ -56,14 +63,14 @@ export const SatisfactionModal: React.FC<SatisfactionModalProps> = ({
 
   return (
     <div style={styles.overlay} onClick={handleClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h2 style={styles.title}>¡Pedido entregado!</h2>
-        <p style={styles.subtitle}>Su pedido n° {orderId} ha sido entregado</p>
+      <div style={modalStyles} onClick={(e) => e.stopPropagation()}>
+        <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>¡Pedido entregado!</h2>
+        <p style={{ ...styles.subtitle, ...(isMobile && responsiveStyles.subtitle) }}>Su pedido n° {orderId} ha sido entregado</p>
 
         {!showCommentStep ? (
           <>
-            <p style={styles.question}>¿Qué tan satisfecho está usted con su pedido?</p>
-            <div style={styles.ratingsContainer}>
+            <p style={{ ...styles.question, ...(isMobile && responsiveStyles.question) }}>¿Qué tan satisfecho está usted con su pedido?</p>
+            <div style={{ ...styles.ratingsContainer, ...(isMobile && responsiveStyles.ratingsContainer) }}>
               {ratings.map((rating) => (
                 <button
                   key={rating.value}
@@ -87,7 +94,7 @@ export const SatisfactionModal: React.FC<SatisfactionModalProps> = ({
               ))}
             </div>
             <button 
-              style={styles.skipButton} 
+              style={{ ...styles.skipButton, ...(isMobile && responsiveStyles.button) }} 
               onClick={handleClose}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = colors.primary;
@@ -103,9 +110,9 @@ export const SatisfactionModal: React.FC<SatisfactionModalProps> = ({
           </>
         ) : (
           <>
-            <p style={styles.commentLabel}>Comentarios adicionales (opcionales)</p>
+            <p style={{ ...styles.commentLabel, ...(isMobile && responsiveStyles.commentLabel) }}>Comentarios adicionales (opcionales)</p>
             <textarea
-              style={styles.textarea}
+              style={{ ...styles.textarea, ...(isMobile && responsiveStyles.textarea) }}
               placeholder="Cuéntanos más sobre tu experiencia..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -118,9 +125,9 @@ export const SatisfactionModal: React.FC<SatisfactionModalProps> = ({
                 e.currentTarget.style.borderColor = colors.primaryMuted;
               }}
             />
-            <div style={styles.commentButtons}>
+            <div style={{ ...styles.commentButtons, ...(isMobile && responsiveStyles.commentButtons) }}>
               <button
-                style={styles.submitWithoutCommentButton}
+                style={{ ...styles.submitWithoutCommentButton, ...(isMobile && responsiveStyles.button) }}
                 onClick={handleSubmitWithoutComment}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = colors.primary;
@@ -131,10 +138,10 @@ export const SatisfactionModal: React.FC<SatisfactionModalProps> = ({
                   e.currentTarget.style.color = colors.primary;
                 }}
               >
-                Enviar sin comentario
+                {isMobile ? 'Sin comentario' : 'Enviar sin comentario'}
               </button>
               <button
-                style={styles.submitWithCommentButton}
+                style={{ ...styles.submitWithCommentButton, ...(isMobile && responsiveStyles.button) }}
                 onClick={handleSubmitWithComment}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = colors.primaryDark;
@@ -145,7 +152,7 @@ export const SatisfactionModal: React.FC<SatisfactionModalProps> = ({
                   e.currentTarget.style.borderColor = colors.primary;
                 }}
               >
-                Enviar con comentario
+                {isMobile ? 'Con comentario' : 'Enviar con comentario'}
               </button>
             </div>
           </>

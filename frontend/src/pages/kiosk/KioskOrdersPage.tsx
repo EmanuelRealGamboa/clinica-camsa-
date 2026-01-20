@@ -99,8 +99,25 @@ export const KioskOrdersPage: React.FC = () => {
       console.log('Survey enabled:', message);
       // When survey is enabled, show complete survey modal
       setShowWaitingForSurveyModal(false);
-      setShowCompleteSurveyModal(true);
-      setPatientInfo(prev => prev ? { ...prev, survey_enabled: true } : null);
+      // Update patient info with assignment_id from message
+      const assignmentId = message.assignment_id;
+      setPatientInfo(prev => prev ? { 
+        ...prev, 
+        survey_enabled: true,
+        patient_assignment_id: assignmentId || prev.patient_assignment_id
+      } : null);
+      // Show complete survey modal immediately - assignment_id will be available from message or previous state
+      if (assignmentId) {
+        setShowCompleteSurveyModal(true);
+      } else {
+        // If assignment_id not in message, try to get it from current patientInfo
+        setPatientInfo(prev => {
+          if (prev?.patient_assignment_id) {
+            setShowCompleteSurveyModal(true);
+          }
+          return prev;
+        });
+      }
     } else if (message.type === 'session_ended') {
       console.log('Patient session ended by staff - redirecting to home page');
       // When staff ends the session, redirect to the home page (shows welcome screen)

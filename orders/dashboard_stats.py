@@ -77,19 +77,31 @@ def dashboard_stats(request):
     # Panel 4: Customer Satisfaction
     feedbacks_last_7d = Feedback.objects.filter(created_at__gte=last_7d)
 
-    satisfaction_distribution = feedbacks_last_7d.values('satisfaction_rating').annotate(
-        count=Count('id')
-    ).order_by('satisfaction_rating')
+    # Calculate average satisfaction from staff_rating and stay_rating
+    # Use staff_rating as primary metric (or average of both if needed)
+    satisfaction_distribution = []
+    for rating in range(1, 6):
+        count = feedbacks_last_7d.filter(staff_rating=rating).count()
+        if count > 0:
+            satisfaction_distribution.append({
+                'satisfaction_rating': rating,
+                'count': count
+            })
 
-    avg_satisfaction = feedbacks_last_7d.aggregate(avg=Avg('satisfaction_rating'))['avg'] or 0
+    # Calculate average satisfaction from staff_rating
+    avg_satisfaction = feedbacks_last_7d.aggregate(avg=Avg('staff_rating'))['avg'] or 0
+    if avg_satisfaction is None:
+        avg_satisfaction = 0
 
+    # Satisfaction trend based on staff_rating
     satisfaction_trend = feedbacks_last_7d.annotate(
         date=TruncDate('created_at')
     ).values('date').annotate(
-        avg_rating=Avg('satisfaction_rating'),
+        avg_rating=Avg('staff_rating'),
         count=Count('id')
     ).order_by('date')
 
+    # Top staff based on staff_rating
     top_staff = Feedback.objects.filter(
         staff__isnull=False,
         created_at__gte=last_7d
@@ -97,7 +109,7 @@ def dashboard_stats(request):
         'staff__id',
         'staff__full_name'
     ).annotate(
-        avg_rating=Avg('satisfaction_rating'),
+        avg_rating=Avg('staff_rating'),
         count=Count('id')
     ).order_by('-avg_rating')[:3]
 

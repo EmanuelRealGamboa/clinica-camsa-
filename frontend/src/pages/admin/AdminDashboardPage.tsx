@@ -56,8 +56,8 @@ const NewAdminDashboardPage: React.FC = () => {
   })) || [];
 
   const satisfactionDistData = stats?.satisfaction?.distribution?.map((item: any) => ({
-    stars: `${item.satisfaction_rating} ⭐`,
-    cantidad: item.count,
+    stars: `${item.satisfaction_rating || item.rating || 0} ⭐`,
+    cantidad: item.count || 0,
   })) || [];
 
   const topProductsData = stats?.products?.top_requested?.map((item: any) => ({
@@ -174,7 +174,13 @@ const NewAdminDashboardPage: React.FC = () => {
             <h3 style={styles.panelTitle}>⭐ Satisfacción del Cliente</h3>
             <div style={styles.kpiRow}>
               <div style={styles.kpi}>
-                <div style={styles.kpiValue}>{stats?.satisfaction?.average || 0}</div>
+                <div style={styles.kpiValue}>
+                  {stats?.satisfaction?.average 
+                    ? typeof stats.satisfaction.average === 'number' 
+                      ? stats.satisfaction.average.toFixed(2) 
+                      : stats.satisfaction.average 
+                    : '0.00'}
+                </div>
                 <div style={styles.kpiLabel}>Promedio (de 5)</div>
               </div>
               <div style={styles.kpi}>

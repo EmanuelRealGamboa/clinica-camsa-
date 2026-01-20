@@ -51,18 +51,9 @@ const DashboardPage: React.FC = () => {
     url: wsUrl,
     onMessage: (message: any) => {
       if (message.type === 'new_order') {
-        console.log('🔔 New order notification recibida:', message.order_id);
-        console.log('Mensaje completo:', message);
+        console.log('🔔 New order notification:', message.order_id);
         addNotification(message.order_id);
-        
-        // Reproducir sonido inmediatamente
         playNotificationSound();
-        
-        // Enviar notificación del navegador
-        sendBrowserNotification(message.order_id).catch(err => {
-          console.error('Error enviando notificación:', err);
-        });
-        
         // Reload stats to show updated numbers
         loadData();
       } else if (message.type === 'order_updated') {
@@ -118,291 +109,26 @@ const DashboardPage: React.FC = () => {
     setActiveNotifications(prev => prev.filter(n => n.orderId !== orderId));
   };
 
-  // Estado para AudioContext (necesario para iOS/Safari)
-  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
-
-  // Inicializar AudioContext cuando el usuario interactúa por primera vez
-  const initializeAudio = () => {
-    if (!audioContext) {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        setAudioContext(ctx);
-        setSoundEnabled(true);
-        // Intentar reproducir un sonido corto para "activar" el audio en iOS
-        playTestSound(ctx);
-        return true;
-      } catch (error) {
-        console.error('Failed to initialize audio:', error);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Sonido de prueba para activar audio en iOS
-  const playTestSound = (ctx?: AudioContext) => {
+  const playNotificationSound = () => {
+    // Create a simple beep sound using Web Audio API
     try {
-      const context = ctx || audioContext;
-      if (!context) return;
-
-      // Resumir el contexto si está suspendido (requerido en iOS)
-      if (context.state === 'suspended') {
-        context.resume().then(() => {
-          playBeepSound(context);
-        });
-      } else {
-        playBeepSound(context);
-      }
-    } catch (error) {
-      console.error('Failed to play test sound:', error);
-    }
-  };
-
-  // Función para reproducir sonido beep
-  const playBeepSound = (ctx: AudioContext) => {
-    try {
-      const oscillator = ctx.createOscillator();
-      const gainNode = ctx.createGain();
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
+      gainNode.connect(audioContext.destination);
 
       oscillator.frequency.value = 800; // Frequency in Hz
       oscillator.type = 'sine';
 
-      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
 
-      oscillator.start(ctx.currentTime);
-      oscillator.stop(ctx.currentTime + 0.5);
-    } catch (error) {
-      console.error('Failed to play beep sound:', error);
-    }
-  };
-
-  const playNotificationSound = () => {
-    console.log('🔊 Intentando reproducir sonido. soundEnabled:', soundEnabled, 'audioContext:', !!audioContext);
-    
-    // Intentar reproducir siempre, incluso si no está explícitamente habilitado
-    // (el usuario puede haber dado permisos anteriormente)
-    
-    // Si no hay audioContext, intentar crear uno
-    if (!audioContext) {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        setAudioContext(ctx);
-        setSoundEnabled(true); // Auto-habilitar si logramos crear el contexto
-        console.log('✅ AudioContext creado automáticamente');
-        // Esperar un poco y reproducir
-        setTimeout(() => {
-          playBeepSoundWithContext(ctx);
-        }, 100);
-        return;
-      } catch (error) {
-        console.error('❌ Error creando AudioContext:', error);
-        return;
-      }
-    }
-
-    // Reproducir con el contexto existente
-    if (soundEnabled || audioContext) {
-      playBeepSoundWithContext(audioContext);
-    } else {
-      console.log('⚠️ Sonido no habilitado y no hay contexto disponible');
-    }
-  };
-
-  // Función auxiliar para reproducir sonido con manejo de contexto suspendido
-  const playBeepSoundWithContext = (ctx: AudioContext) => {
-    try {
-      // Resumir el contexto si está suspendido (requerido en iOS/Safari)
-      if (ctx.state === 'suspended') {
-        ctx.resume().then(() => {
-          playBeepSound(ctx);
-        }).catch((error) => {
-          console.error('Failed to resume audio context:', error);
-          // Intentar reproducir de todos modos
-          try {
-            playBeepSound(ctx);
-          } catch (e) {
-            console.error('Failed to play beep after resume:', e);
-          }
-        });
-      } else {
-        playBeepSound(ctx);
-      }
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
     } catch (error) {
       console.error('Failed to play notification sound:', error);
-    }
-  };
-
-  // Detectar si es iOS/Safari
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  
-  // Estado para controlar si mostrar el banner de permisos
-  const [showPermissionBanner, setShowPermissionBanner] = useState(false);
-
-  // Registrar Service Worker y solicitar permisos de notificación
-  useEffect(() => {
-    const registerServiceWorker = async () => {
-      if ('serviceWorker' in navigator) {
-        try {
-          const registration = await navigator.serviceWorker.register('/service-worker.js');
-          console.log('Service Worker registrado:', registration.scope);
-          
-          // Verificar si es iOS y mostrar banner si no hay permisos
-          if (isIOS && Notification.permission === 'default') {
-            setShowPermissionBanner(true);
-          }
-        } catch (error) {
-          console.error('Error registrando Service Worker:', error);
-          // En iOS, el Service Worker puede no estar disponible sin HTTPS o sin PWA instalada
-          if (isIOS) {
-            setShowPermissionBanner(true);
-          }
-        }
-      } else {
-        console.log('Service Worker no disponible');
-        if (isIOS) {
-          setShowPermissionBanner(true);
-        }
-      }
-    };
-
-    registerServiceWorker();
-  }, []);
-  
-  // Solicitar permisos explícitamente cuando el usuario lo solicite
-  const requestNotificationPermission = async () => {
-    if (!('Notification' in window)) {
-      alert('Tu navegador no soporta notificaciones del sistema.');
-      return;
-    }
-
-    try {
-      const permission = await Notification.requestPermission();
-      console.log('Permiso de notificación:', permission);
-      
-      if (permission === 'granted') {
-        setShowPermissionBanner(false);
-        alert('✅ Notificaciones activadas. Ahora recibirás alertas cuando lleguen nuevas órdenes.');
-        
-        // Probar enviando una notificación de prueba
-        try {
-          if ('serviceWorker' in navigator) {
-            const registration = await navigator.serviceWorker.ready;
-            if (registration.active) {
-              registration.active.postMessage({
-                type: 'NOTIFY',
-                orderId: 0,
-                title: 'Notificación de Prueba',
-                body: '¡Las notificaciones están funcionando correctamente!',
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error enviando notificación de prueba:', error);
-        }
-      } else if (permission === 'denied') {
-        alert('❌ Permisos de notificación denegados. Por favor, habilita las notificaciones en la configuración de tu navegador.');
-      }
-    } catch (error) {
-      console.error('Error solicitando permisos:', error);
-      alert('Error al solicitar permisos de notificación.');
-    }
-  };
-
-  // Enviar notificación usando Service Worker (funciona incluso con la página cerrada)
-  const sendBrowserNotification = async (orderId: number) => {
-    console.log('📢 Enviando notificación para orden #', orderId);
-    console.log('Permisos de notificación:', Notification.permission);
-    console.log('Service Worker disponible:', 'serviceWorker' in navigator);
-    
-    try {
-      // Intentar usar Service Worker primero (funciona incluso con página cerrada)
-      if ('serviceWorker' in navigator) {
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          console.log('Service Worker ready:', registration);
-          console.log('Service Worker active:', registration.active);
-          
-          if (registration && Notification.permission === 'granted') {
-            // Enviar mensaje al Service Worker
-            if (registration.active) {
-              registration.active.postMessage({
-                type: 'NOTIFY',
-                orderId: orderId,
-                title: 'Nueva Orden Recibida',
-                body: `Orden #${orderId} ha sido recibida - ¡Revisa el panel de órdenes!`,
-              });
-              console.log('✅ Notificación enviada al Service Worker');
-              return;
-            } else {
-              console.log('⚠️ Service Worker no está activo aún');
-            }
-          } else {
-            console.log('⚠️ Permisos de notificación no concedidos:', Notification.permission);
-          }
-        } catch (swError) {
-          console.error('❌ Error con Service Worker:', swError);
-        }
-      }
-
-      // Fallback: notificación directa si Service Worker no está disponible
-      if ('Notification' in window && Notification.permission === 'granted') {
-        console.log('📬 Usando notificación directa (fallback)');
-        const notificationOptions: NotificationOptions = {
-          body: `Orden #${orderId} ha sido recibida - ¡Revisa el panel de órdenes!`,
-          icon: '/vite.svg',
-          badge: '/vite.svg',
-          tag: `order-${orderId}`,
-          requireInteraction: false,
-          data: {
-            orderId: orderId,
-            url: '/staff/orders',
-          },
-        };
-        
-        // Agregar vibrate si está disponible (solo en algunos navegadores)
-        if ('vibrate' in navigator) {
-          (notificationOptions as any).vibrate = [200, 100, 200];
-        }
-        
-        const notification = new Notification('Nueva Orden Recibida', notificationOptions);
-
-        // Click en notificación
-        notification.onclick = (event) => {
-          event.preventDefault();
-          window.focus();
-          if (notification.data?.url) {
-            window.location.href = notification.data.url;
-          }
-          notification.close();
-        };
-
-        // Cerrar la notificación después de 8 segundos
-        setTimeout(() => {
-          notification.close();
-        }, 8000);
-        console.log('✅ Notificación directa mostrada');
-      } else {
-        console.log('⚠️ No se pueden mostrar notificaciones - Permiso:', Notification.permission);
-        // Si no hay permisos, intentar solicitarlos nuevamente
-        if (Notification.permission === 'default') {
-          console.log('📋 Solicitando permisos de notificación...');
-          Notification.requestPermission().then(permission => {
-            console.log('Permiso obtenido:', permission);
-            if (permission === 'granted') {
-              // Reintentar mostrar la notificación
-              setTimeout(() => sendBrowserNotification(orderId), 500);
-            }
-          });
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error al enviar notificación:', error);
     }
   };
 
@@ -577,36 +303,8 @@ const DashboardPage: React.FC = () => {
         }}>
           {/* Notification Bell */}
           <div style={styles.notificationBellContainer}>
-            {!soundEnabled && (
-              <button
-                onClick={async () => {
-                  initializeAudio();
-                  // Reproducir sonido de confirmación
-                  setTimeout(() => playNotificationSound(), 200);
-                  // Solicitar permisos de notificación si no están concedidos
-                  if ('Notification' in window && Notification.permission === 'default') {
-                    await Notification.requestPermission();
-                  }
-                }}
-                style={{
-                  ...styles.enableSoundButton,
-                  padding: isMobile ? '6px 10px' : '8px 12px',
-                  fontSize: isMobile ? '12px' : '14px',
-                  marginRight: '8px'
-                }}
-                title="Activar Sonidos y Notificaciones - Recibirás alertas incluso con el iPad apagado"
-              >
-                🔔 Activar Notificaciones
-              </button>
-            )}
             <button
-              onClick={() => {
-                setShowNotificationsDropdown(!showNotificationsDropdown);
-                // Solicitar permisos de notificación si no están concedidos
-                if ('Notification' in window && Notification.permission === 'default') {
-                  Notification.requestPermission();
-                }
-              }}
+              onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
               style={{
                 ...styles.notificationBell,
                 padding: isMobile ? '6px 10px' : '8px 12px',
@@ -680,40 +378,6 @@ const DashboardPage: React.FC = () => {
           </button>
         </div>
       </header>
-
-      {/* Banner de permisos para iOS/iPad */}
-      {showPermissionBanner && (Notification.permission === 'default' || Notification.permission === 'denied') && (
-        <div style={styles.permissionBanner}>
-          <div style={styles.permissionBannerContent}>
-            <div style={styles.permissionBannerIcon}>🔔</div>
-            <div style={styles.permissionBannerText}>
-              <strong>Activa las Notificaciones</strong>
-              <p>
-                {isIOS 
-                  ? 'Para recibir notificaciones en tu iPad, primero agrega esta app a tu pantalla de inicio y luego haz clic en el botón de abajo.'
-                  : 'Para recibir notificaciones cuando lleguen nuevas órdenes, por favor activa los permisos.'}
-              </p>
-              {isIOS && (
-                <p style={{ fontSize: '12px', marginTop: '8px', color: colors.textSecondary }}>
-                  📱 Instrucciones: Compartir → Agregar a Pantalla de Inicio → Luego activa las notificaciones
-                </p>
-              )}
-            </div>
-            <button 
-              onClick={requestNotificationPermission}
-              style={styles.permissionButton}
-            >
-              {Notification.permission === 'denied' ? 'Abrir Configuración' : 'Activar Notificaciones'}
-            </button>
-            <button
-              onClick={() => setShowPermissionBanner(false)}
-              style={styles.closeBannerButton}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
 
       <div style={styles.content}>
         {loading ? (
@@ -1022,17 +686,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   notificationBellContainer: {
     position: 'relative',
-  },
-  enableSoundButton: {
-    background: colors.primary,
-    border: 'none',
-    color: colors.white,
-    fontSize: '14px',
-    cursor: 'pointer',
-    padding: '8px 12px',
-    borderRadius: '8px',
-    fontWeight: '600',
-    transition: 'all 0.2s',
   },
   notificationBell: {
     background: 'rgba(255,255,255,0.1)',
@@ -1492,58 +1145,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
     fontWeight: 'bold',
     cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  permissionBanner: {
-    backgroundColor: colors.primary,
-    color: colors.white,
-    padding: '16px 20px',
-    boxShadow: colors.shadowGold,
-    borderBottom: `2px solid ${colors.primaryDark}`,
-  },
-  permissionBannerContent: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    position: 'relative',
-  },
-  permissionBannerIcon: {
-    fontSize: '32px',
-    flexShrink: 0,
-  },
-  permissionBannerText: {
-    flex: 1,
-    minWidth: 0,
-  },
-  permissionButton: {
-    padding: '12px 24px',
-    backgroundColor: colors.white,
-    color: colors.primary,
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    whiteSpace: 'nowrap',
-  },
-  closeBannerButton: {
-    position: 'absolute',
-    top: '-8px',
-    right: '-8px',
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    color: colors.white,
-    border: 'none',
-    fontSize: '20px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     transition: 'all 0.2s',
   },
 };

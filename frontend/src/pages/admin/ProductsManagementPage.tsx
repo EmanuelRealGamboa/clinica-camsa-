@@ -785,11 +785,9 @@ const ProductsManagementPage: React.FC = () => {
                   <thead>
                     <tr>
                       <th style={styles.th}>Vista Previa</th>
-                      <th style={styles.th}>ID</th>
                       <th style={styles.th}>Nombre</th>
                       <th style={styles.th}>Color</th>
                       <th style={styles.th}>Ícono</th>
-                      <th style={styles.th}>Orden</th>
                       <th style={styles.th}>Estado</th>
                       <th style={styles.th}>Acciones</th>
                     </tr>
@@ -805,7 +803,6 @@ const ProductsManagementPage: React.FC = () => {
                             {tag.icon && `${tag.icon} `}{tag.name}
                           </span>
                         </td>
-                        <td style={styles.td}>{tag.id}</td>
                         <td style={styles.td}>{tag.name}</td>
                         <td style={styles.td}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -822,7 +819,6 @@ const ProductsManagementPage: React.FC = () => {
                         <td style={styles.td}>
                           <span style={{ fontSize: '20px' }}>{tag.icon || '-'}</span>
                         </td>
-                        <td style={styles.td}>{tag.sort_order}</td>
                         <td style={styles.td}>
                           <span style={{
                             ...styles.statusBadge,
@@ -907,20 +903,20 @@ const ProductsManagementPage: React.FC = () => {
 
               <div style={styles.formRow}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>SKU (Optional)</label>
+                  <label style={styles.label}>SKU (Opcional)</label>
                   <input
                     type="text"
                     value={productForm.sku}
                     onChange={(e) => setProductForm({...productForm, sku: e.target.value})}
                     style={styles.input}
-                    placeholder="Auto-generated if empty"
+                    placeholder="Se generará automáticamente si está vacío"
                   />
                   <small style={styles.helpText}>
-                    Leave empty to auto-generate (e.g., BEB-0001)
+                    Déjalo vacío para generar automáticamente (ej: BEB-0001)
                   </small>
                 </div>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Unit Label</label>
+                  <label style={styles.label}>Etiqueta de Unidad</label>
                   <input
                     type="text"
                     value={productForm.unit_label}
@@ -931,14 +927,14 @@ const ProductsManagementPage: React.FC = () => {
                 </div>
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Category *</label>
+                <label style={styles.label}>Categoría *</label>
                 <select
                   value={productForm.category}
                   onChange={(e) => setProductForm({...productForm, category: e.target.value})}
                   style={styles.input}
                   required
                 >
-                  <option value="">Select a category</option>
+                  <option value="">Selecciona una categoría</option>
                   {categories.filter(c => c.is_active).map(cat => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
@@ -946,7 +942,7 @@ const ProductsManagementPage: React.FC = () => {
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Rating</label>
+                <label style={styles.label}>Calificación</label>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <span
@@ -976,14 +972,14 @@ const ProductsManagementPage: React.FC = () => {
                       marginLeft: '10px',
                     }}
                   >
-                    Clear
+                    Limpiar
                   </button>
                 </div>
-                <small style={styles.helpText}>Click stars to set rating: {productForm.rating > 0 ? `${productForm.rating} star${productForm.rating > 1 ? 's' : ''}` : 'No rating'}</small>
+                <small style={styles.helpText}>Haz clic en las estrellas para establecer la calificación: {productForm.rating > 0 ? `${productForm.rating} estrella${productForm.rating > 1 ? 's' : ''}` : 'Sin calificación'}</small>
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Rating Count</label>
+                <label style={styles.label}>Número de Reseñas</label>
                 <input
                   type="number"
                   min="0"
@@ -991,11 +987,11 @@ const ProductsManagementPage: React.FC = () => {
                   onChange={(e) => setProductForm({...productForm, rating_count: parseInt(e.target.value) || 0})}
                   style={styles.input}
                 />
-                <small style={styles.helpText}>Number of reviews (e.g., 125)</small>
+                <small style={styles.helpText}>Número de reseñas (ej: 125)</small>
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Tags</label>
+                <label style={styles.label}>Etiquetas</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', minHeight: '50px' }}>
                   {tags.filter(t => t.is_active).length > 0 ? (
                     tags.filter(t => t.is_active).map(tag => (
@@ -1022,15 +1018,15 @@ const ProductsManagementPage: React.FC = () => {
                     ))
                   ) : (
                     <div style={{ color: '#666', fontStyle: 'italic', padding: '10px' }}>
-                      No active tags available. Create tags in the "Tags" tab first.
+                      No hay etiquetas activas disponibles. Crea etiquetas en la pestaña "Etiquetas" primero.
                     </div>
                   )}
                 </div>
-                <small style={styles.helpText}>Select tags to show as badges on the product card</small>
+                <small style={styles.helpText}>Selecciona etiquetas para mostrar como badges en la tarjeta del producto</small>
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Benefits</label>
+                <label style={styles.label}>Beneficios</label>
                 <div style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '10px' }}>
                   {benefitsList.map((benefit, index) => (
                     <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '10px', alignItems: 'center' }}>
@@ -1054,7 +1050,7 @@ const ProductsManagementPage: React.FC = () => {
                           setBenefitsList(newList);
                         }}
                         style={{ ...styles.input, flex: 1 }}
-                        placeholder="Benefit text"
+                        placeholder="Texto del beneficio"
                       />
                       <button
                         type="button"
@@ -1071,7 +1067,7 @@ const ProductsManagementPage: React.FC = () => {
                           cursor: 'pointer',
                         }}
                       >
-                        Remove
+                        Eliminar
                       </button>
                     </div>
                   ))}
@@ -1089,23 +1085,23 @@ const ProductsManagementPage: React.FC = () => {
                       marginTop: '10px',
                     }}
                   >
-                    + Add Benefit
+                    + Agregar Beneficio
                   </button>
                 </div>
                 <small style={styles.helpText}>
-                  Add benefits to show on the product card. Common icons: 🔥 ⚡ ❤️ 🌱 💪 ✨ 🎯 💯
+                  Agrega beneficios para mostrar en la tarjeta del producto. Íconos comunes: 🔥 ⚡ ❤️ 🌱 💪 ✨ 🎯 💯
                 </small>
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Product Sort Order</label>
+                <label style={styles.label}>Orden del Producto</label>
                 <input
                   type="number"
                   value={productForm.product_sort_order}
                   onChange={(e) => setProductForm({...productForm, product_sort_order: parseInt(e.target.value) || 0})}
                   style={styles.input}
                 />
-                <small style={styles.helpText}>Lower numbers appear first</small>
+                <small style={styles.helpText}>Los números más bajos aparecen primero</small>
               </div>
 
               <div style={styles.formGroup}>
@@ -1116,30 +1112,30 @@ const ProductsManagementPage: React.FC = () => {
                     onChange={(e) => setProductForm({...productForm, is_featured: e.target.checked})}
                     style={{marginRight: '8px'}}
                   />
-                  Featured Product (Product of the Month/Week)
+                  Producto Destacado (Producto del Mes/Semana)
                 </label>
-                <small style={styles.helpText}>Featured products appear in the hero section on the kiosk home page</small>
+                <small style={styles.helpText}>Los productos destacados aparecen en la sección hero de la página principal del kiosco</small>
               </div>
 
               {productForm.is_featured && (
                 <>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Featured Title (Optional)</label>
+                    <label style={styles.label}>Título Destacado (Opcional)</label>
                     <input
                       type="text"
                       value={productForm.featured_title}
                       onChange={(e) => setProductForm({...productForm, featured_title: e.target.value})}
                       style={styles.input}
-                      placeholder="Leave blank to use product name"
+                      placeholder="Déjalo vacío para usar el nombre del producto"
                     />
                   </div>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Featured Description (Optional)</label>
+                    <label style={styles.label}>Descripción Destacada (Opcional)</label>
                     <textarea
                       value={productForm.featured_description}
                       onChange={(e) => setProductForm({...productForm, featured_description: e.target.value})}
                       style={{...styles.input, minHeight: '60px'}}
-                      placeholder="Leave blank to use product description"
+                      placeholder="Déjalo vacío para usar la descripción del producto"
                     />
                   </div>
                 </>
@@ -1153,7 +1149,7 @@ const ProductsManagementPage: React.FC = () => {
                     onChange={(e) => setProductForm({...productForm, is_active: e.target.checked})}
                     style={{marginRight: '8px'}}
                   />
-                  Active
+                  Activo
                 </label>
               </div>
               <div style={styles.formActions}>
@@ -1162,10 +1158,10 @@ const ProductsManagementPage: React.FC = () => {
                   setSelectedImageFile(null);
                   setImagePreview(null);
                 }} style={styles.cancelButton}>
-                  Cancel
+                  Cancelar
                 </button>
                 <button type="submit" style={styles.submitButton}>
-                  {editingProduct ? 'Update' : 'Create'}
+                  {editingProduct ? 'Actualizar' : 'Crear'}
                 </button>
               </div>
             </form>
@@ -1177,10 +1173,10 @@ const ProductsManagementPage: React.FC = () => {
       {showCategoryModal && (
         <div style={styles.modalOverlay} onClick={() => setShowCategoryModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2>{editingCategory ? 'Edit Category' : 'Add New Category'}</h2>
+            <h2>{editingCategory ? 'Editar Categoría' : 'Agregar Nueva Categoría'}</h2>
             <form onSubmit={handleCategorySubmit} style={styles.form}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Name *</label>
+                <label style={styles.label}>Nombre *</label>
                 <input
                   type="text"
                   value={categoryForm.name}
@@ -1190,7 +1186,7 @@ const ProductsManagementPage: React.FC = () => {
                 />
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Icon (Emoji)</label>
+                <label style={styles.label}>Ícono (Emoji)</label>
                 <input
                   type="text"
                   value={categoryForm.icon}
@@ -1198,17 +1194,17 @@ const ProductsManagementPage: React.FC = () => {
                   style={styles.input}
                   placeholder="🍔 🥤 🍰 🥗 🍕 🌮 🍜 ☕"
                 />
-                <small style={styles.helpText}>Use food emojis like 🍔 🥤 🍰 🥗 🍕 🌮 🍜 ☕ 🥐 🍱</small>
+                <small style={styles.helpText}>Usa emojis de comida como 🍔 🥤 🍰 🥗 🍕 🌮 🍜 ☕ 🥐 🍱</small>
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Sort Order</label>
+                <label style={styles.label}>Orden</label>
                 <input
                   type="number"
                   value={categoryForm.sort_order}
                   onChange={(e) => setCategoryForm({...categoryForm, sort_order: parseInt(e.target.value) || 0})}
                   style={styles.input}
                 />
-                <small style={styles.helpText}>Lower numbers appear first</small>
+                <small style={styles.helpText}>Los números más bajos aparecen primero</small>
               </div>
               <div style={styles.formGroup}>
                 <label style={styles.label}>
@@ -1218,20 +1214,20 @@ const ProductsManagementPage: React.FC = () => {
                     onChange={(e) => setCategoryForm({...categoryForm, show_in_carousel: e.target.checked})}
                     style={{marginRight: '8px'}}
                   />
-                  Show in Carousel
+                  Mostrar en Carrusel
                 </label>
-                <small style={styles.helpText}>Display this category in the kiosk home carousel</small>
+                <small style={styles.helpText}>Mostrar esta categoría en el carrusel de la página principal del kiosco</small>
               </div>
               {categoryForm.show_in_carousel && (
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Carousel Order</label>
+                  <label style={styles.label}>Orden en Carrusel</label>
                   <input
                     type="number"
                     value={categoryForm.carousel_order}
                     onChange={(e) => setCategoryForm({...categoryForm, carousel_order: parseInt(e.target.value) || 0})}
                     style={styles.input}
                   />
-                  <small style={styles.helpText}>Lower numbers appear first in the carousel</small>
+                  <small style={styles.helpText}>Los números más bajos aparecen primero en el carrusel</small>
                 </div>
               )}
               <div style={styles.formGroup}>
@@ -1242,15 +1238,15 @@ const ProductsManagementPage: React.FC = () => {
                     onChange={(e) => setCategoryForm({...categoryForm, is_active: e.target.checked})}
                     style={{marginRight: '8px'}}
                   />
-                  Active
+                  Activo
                 </label>
               </div>
               <div style={styles.formActions}>
                 <button type="button" onClick={() => setShowCategoryModal(false)} style={styles.cancelButton}>
-                  Cancel
+                  Cancelar
                 </button>
                 <button type="submit" style={styles.submitButton}>
-                  {editingCategory ? 'Update' : 'Create'}
+                  {editingCategory ? 'Actualizar' : 'Crear'}
                 </button>
               </div>
             </form>
@@ -1262,19 +1258,19 @@ const ProductsManagementPage: React.FC = () => {
       {showTagModal && (
         <div style={styles.modalOverlay} onClick={() => setShowTagModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2>{editingTag ? 'Edit Tag' : 'Add New Tag'}</h2>
+            <h2>{editingTag ? 'Editar Etiqueta' : 'Agregar Nueva Etiqueta'}</h2>
             <form onSubmit={handleTagSubmit} style={styles.form}>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Name *</label>
+                <label style={styles.label}>Nombre *</label>
                 <input
                   type="text"
                   value={tagForm.name}
                   onChange={(e) => setTagForm({...tagForm, name: e.target.value})}
                   style={styles.input}
                   required
-                  placeholder="e.g., Más Popular, Orgánico, Nuevo"
+                  placeholder="Ej: Más Popular, Orgánico, Nuevo"
                 />
-                <small style={styles.helpText}>Create tags to categorize products</small>
+                <small style={styles.helpText}>Crea etiquetas para categorizar productos</small>
               </div>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Color</label>
@@ -1291,10 +1287,10 @@ const ProductsManagementPage: React.FC = () => {
                   style={styles.input}
                   placeholder="#D97706"
                 />
-                <small style={styles.helpText}>Use hex colors like #D97706 (orange), #4CAF50 (green), #2196F3 (blue)</small>
+                <small style={styles.helpText}>Usa colores hexadecimales como #D97706 (naranja), #4CAF50 (verde), #2196F3 (azul)</small>
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Icon (Emoji)</label>
+                <label style={styles.label}>Ícono (Emoji)</label>
                 <input
                   type="text"
                   value={tagForm.icon}
@@ -1302,26 +1298,26 @@ const ProductsManagementPage: React.FC = () => {
                   style={styles.input}
                   placeholder="⭐ 🌱 ✨ 🔥 ❤️ 🎉"
                 />
-                <small style={styles.helpText}>Use emojis like ⭐ 🌱 ✨ 🔥 ❤️ 🎉</small>
+                <small style={styles.helpText}>Usa emojis como ⭐ 🌱 ✨ 🔥 ❤️ 🎉</small>
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Sort Order</label>
+                <label style={styles.label}>Orden</label>
                 <input
                   type="number"
                   value={tagForm.sort_order}
                   onChange={(e) => setTagForm({...tagForm, sort_order: parseInt(e.target.value) || 0})}
                   style={styles.input}
                 />
-                <small style={styles.helpText}>Lower numbers appear first</small>
+                <small style={styles.helpText}>Los números más bajos aparecen primero</small>
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Preview</label>
+                <label style={styles.label}>Vista Previa</label>
                 <div>
                   <span style={{
                     ...styles.tagBadge,
                     backgroundColor: tagForm.color || '#D97706'
                   }}>
-                    {tagForm.icon && `${tagForm.icon} `}{tagForm.name || 'Tag Name'}
+                    {tagForm.icon && `${tagForm.icon} `}{tagForm.name || 'Nombre de Etiqueta'}
                   </span>
                 </div>
               </div>
@@ -1334,17 +1330,17 @@ const ProductsManagementPage: React.FC = () => {
                     style={{marginRight: '8px', width: '18px', height: '18px', cursor: 'pointer'}}
                   />
                   <span style={{fontWeight: 'bold', color: tagForm.is_active ? '#155724' : '#721c24'}}>
-                    {tagForm.is_active ? '✓ Active - Tag will be visible' : '✗ Inactive - Tag will be hidden'}
+                    {tagForm.is_active ? '✓ Activo - La etiqueta será visible' : '✗ Inactivo - La etiqueta estará oculta'}
                   </span>
                 </label>
-                <small style={styles.helpText}>Active tags can be assigned to products and will be visible in the kiosk</small>
+                <small style={styles.helpText}>Las etiquetas activas pueden asignarse a productos y serán visibles en el kiosco</small>
               </div>
               <div style={styles.formActions}>
                 <button type="button" onClick={() => setShowTagModal(false)} style={styles.cancelButton}>
-                  Cancel
+                  Cancelar
                 </button>
                 <button type="submit" style={styles.submitButton}>
-                  {editingTag ? 'Update' : 'Create'}
+                  {editingTag ? 'Actualizar' : 'Crear'}
                 </button>
               </div>
             </form>

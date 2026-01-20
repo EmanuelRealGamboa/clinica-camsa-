@@ -265,18 +265,24 @@ const DashboardPage: React.FC = () => {
 
       // Fallback: notificación directa si Service Worker no está disponible
       if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification('Nueva Orden Recibida', {
+        const notificationOptions: NotificationOptions = {
           body: `Orden #${orderId} ha sido recibida - ¡Revisa el panel de órdenes!`,
           icon: '/vite.svg',
           badge: '/vite.svg',
           tag: `order-${orderId}`,
           requireInteraction: false,
-          vibrate: [200, 100, 200], // Vibrar en dispositivos móviles
           data: {
             orderId: orderId,
             url: '/staff/orders',
           },
-        });
+        };
+        
+        // Agregar vibrate si está disponible (solo en algunos navegadores)
+        if ('vibrate' in navigator) {
+          (notificationOptions as any).vibrate = [200, 100, 200];
+        }
+        
+        const notification = new Notification('Nueva Orden Recibida', notificationOptions);
 
         // Click en notificación
         notification.onclick = (event) => {

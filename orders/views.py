@@ -251,6 +251,47 @@ class PublicOrderViewSet(viewsets.ViewSet):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['get'], url_path='by-assignment/(?P<assignment_id>[^/.]+)')
+    def orders_by_assignment(self, request, assignment_id=None):
+        """
+        Get all delivered orders for a patient assignment
+        GET /api/public/orders/by-assignment/{assignment_id}/
+        """
+        try:
+            from clinic.models import PatientAssignment
+            
+            # Get patient assignment
+            assignment = PatientAssignment.objects.select_related(
+                'patient', 'device', 'room'
+            ).get(id=assignment_id, is_active=True)
+            
+            # Get all delivered orders for this assignment
+            orders = Order.objects.filter(
+                patient_assignment=assignment,
+                status='DELIVERED'
+            ).prefetch_related('items', 'items__product').order_by('-delivered_at')
+            
+            serializer = PublicOrderSerializer(orders, many=True)
+            
+            return Response({
+                'success': True,
+                'count': orders.count(),
+                'orders': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except PatientAssignment.DoesNotExist:
+            return Response({
+                'error': 'Patient assignment not found or not active'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except ValueError:
+            return Response({
+                'error': 'Invalid assignment ID'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
     """

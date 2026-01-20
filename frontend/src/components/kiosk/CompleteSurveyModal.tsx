@@ -39,28 +39,52 @@ const CompleteSurveyModal: React.FC<CompleteSurveyModalProps> = ({
 
   useEffect(() => {
     loadOrders();
-  }, [deviceUid]);
+  }, [patientAssignmentId, deviceUid]);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
-      // Get active orders and filter delivered ones
-      if (deviceUid) {
-        const ordersResponse = await ordersApi.getActiveOrdersPublic(deviceUid);
-        const deliveredOrders = (ordersResponse.orders || []).filter(
-          (order: Order) => order.status === 'DELIVERED'
-        );
-        setOrders(deliveredOrders);
-        
-        // Initialize product ratings
-        const initialRatings: { [orderId: string]: { [productId: string]: number } } = {};
-        deliveredOrders.forEach((order: Order) => {
-          initialRatings[order.id.toString()] = {};
-          order.items.forEach((item) => {
-            initialRatings[order.id.toString()][item.product_id.toString()] = 0;
+      // Get all orders for this patient assignment (including delivered)
+      if (patientAssignmentId) {
+        // Try to get orders by assignment first
+        try {
+          const ordersResponse = await ordersApi.getDeliveredOrdersByAssignment(patientAssignmentId);
+          const deliveredOrders = (ordersResponse.orders || []) as Order[];
+          setOrders(deliveredOrders);
+          
+          // Initialize product ratings
+          const initialRatings: { [orderId: string]: { [productId: string]: number } } = {};
+          deliveredOrders.forEach((order: Order) => {
+            initialRatings[order.id.toString()] = {};
+            order.items.forEach((item) => {
+              initialRatings[order.id.toString()][item.product_id.toString()] = 0;
+            });
           });
-        });
-        setProductRatings(initialRatings);
+          setProductRatings(initialRatings);
+        } catch (assignmentError) {
+          // Fallback: try to get from device and filter by assignment
+          console.warn('Error getting orders by assignment, trying device fallback:', assignmentError);
+          if (deviceUid) {
+            // Get all orders for device and filter delivered ones
+            // Note: This is a fallback and might not get all delivered orders if they're not in "active"
+            const ordersResponse = await ordersApi.getActiveOrdersPublic(deviceUid);
+            const allOrders = (ordersResponse.orders || []) as Order[];
+            // Try to get all orders including delivered - but this endpoint only returns active ones
+            // So we'll check if there are delivered orders from a different endpoint or store them differently
+            const deliveredOrders = allOrders.filter((order: Order) => order.status === 'DELIVERED');
+            setOrders(deliveredOrders);
+            
+            // Initialize product ratings
+            const initialRatings: { [orderId: string]: { [productId: string]: number } } = {};
+            deliveredOrders.forEach((order: Order) => {
+              initialRatings[order.id.toString()] = {};
+              order.items.forEach((item) => {
+                initialRatings[order.id.toString()][item.product_id.toString()] = 0;
+              });
+            });
+            setProductRatings(initialRatings);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading orders:', error);

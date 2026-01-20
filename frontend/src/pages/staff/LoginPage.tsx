@@ -9,6 +9,7 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -65,23 +66,33 @@ const LoginPage: React.FC = () => {
           </div>
           <div style={styles.formGroup}>
             <label style={styles.label}>Contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = colors.primary;
-                e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primaryMuted}`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = colors.primaryMuted;
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-              style={styles.input}
-              required
-              autoComplete="current-password"
-              placeholder="••••••••"
-            />
+            <div style={styles.passwordInputContainer}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = colors.primary;
+                  e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.primaryMuted}`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = colors.primaryMuted;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                style={{...styles.input, ...styles.passwordInput}}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={styles.passwordToggle}
+                title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
           {error && <div style={styles.error}>{error}</div>}
           <button 
@@ -190,6 +201,32 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: colors.white,
     color: colors.textPrimary,
     outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+  },
+  passwordInputContainer: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+  },
+  passwordInput: {
+    paddingRight: '50px',
+  },
+  passwordToggle: {
+    position: 'absolute',
+    right: '12px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '20px',
+    padding: '4px 8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '4px',
+    transition: 'background 0.2s',
+    zIndex: 1,
   },
   button: {
     padding: '16px',

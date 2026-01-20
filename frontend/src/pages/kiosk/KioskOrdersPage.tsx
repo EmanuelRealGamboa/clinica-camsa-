@@ -6,6 +6,7 @@ import { OrderStatusProgress } from '../../components/kiosk/OrderStatusProgress'
 import { SatisfactionModal } from '../../components/kiosk/SatisfactionModal';
 import { ThankYouModal } from '../../components/kiosk/ThankYouModal';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
@@ -36,6 +37,7 @@ interface Order {
 export const KioskOrdersPage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
+  const { isMobile } = useWindowSize();
 
   const [loading, setLoading] = useState(true);
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
@@ -231,25 +233,40 @@ export const KioskOrdersPage: React.FC = () => {
     (order) => ['PLACED', 'PREPARING', 'READY'].includes(order.status)
   );
 
+  const headerStyles = {
+    ...styles.header,
+    ...(isMobile && responsiveStyles.header),
+  };
+  
+  const headerLeftStyles = {
+    ...styles.headerLeft,
+    ...(isMobile && responsiveStyles.headerLeft),
+  };
+  
+  const headerInfoStyles = {
+    ...styles.headerInfo,
+    ...(isMobile && responsiveStyles.headerInfo),
+  };
+
   return (
     <div style={styles.container}>
       {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <img src={logoHorizontal} alt="Clínica CAMSA" style={styles.logo} />
-          <div style={styles.headerDivider} />
-          <div>
-            <h1 style={styles.headerTitle}>Servicio a Habitación</h1>
+      <header style={headerStyles}>
+        <div style={headerLeftStyles}>
+          <img src={logoHorizontal} alt="Clínica CAMSA" style={{ ...styles.logo, ...(isMobile && responsiveStyles.logo) }} />
+          {!isMobile && <div style={styles.headerDivider} />}
+          <div style={isMobile ? responsiveStyles.headerText : {}}>
+            <h1 style={{ ...styles.headerTitle, ...(isMobile && responsiveStyles.headerTitle) }}>Servicio a Habitación</h1>
             {patientInfo && (
               <>
-                <p style={styles.welcomeText}>Bienvenido, {patientInfo.full_name}</p>
-                <p style={styles.nurseText}>Tu enfermera: {patientInfo.staff_name}</p>
+                <p style={{ ...styles.welcomeText, ...(isMobile && responsiveStyles.welcomeText) }}>Bienvenido, {patientInfo.full_name}</p>
+                {!isMobile && <p style={styles.nurseText}>Tu enfermera: {patientInfo.staff_name}</p>}
               </>
             )}
           </div>
         </div>
-        <div style={styles.headerInfo}>
-          {patientInfo && (
+        <div style={headerInfoStyles}>
+          {patientInfo && !isMobile && (
             <div style={styles.roomInfo}>
               <div style={styles.roomLabel}>Habitación: {patientInfo.room_code}</div>
               <div style={styles.deviceLabel}>
@@ -268,7 +285,7 @@ export const KioskOrdersPage: React.FC = () => {
           )}
           {!hasActiveOrders && (
             <button 
-              style={styles.viewMenuButton} 
+              style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }} 
               onClick={handleNewOrder}
               className="kiosk-btn-outline"
             >
@@ -279,12 +296,12 @@ export const KioskOrdersPage: React.FC = () => {
       </header>
 
       {/* Orders Section */}
-      <div style={styles.ordersSection}>
-        <div style={styles.ordersHeader}>
-          <h2 style={styles.ordersTitle}>Mis pedidos activos</h2>
+      <div style={{ ...styles.ordersSection, ...(isMobile && responsiveStyles.ordersSection) }}>
+        <div style={{ ...styles.ordersHeader, ...(isMobile && responsiveStyles.ordersHeader) }}>
+          <h2 style={{ ...styles.ordersTitle, ...(isMobile && responsiveStyles.ordersTitle) }}>Mis pedidos activos</h2>
           {!hasActiveOrders && (
-            <button style={styles.newOrderButton} onClick={handleNewOrder}>
-              + Hacer nuevo pedido
+            <button style={{ ...styles.newOrderButton, ...(isMobile && responsiveStyles.button) }} onClick={handleNewOrder}>
+              {isMobile ? '+ Nuevo pedido' : '+ Hacer nuevo pedido'}
             </button>
           )}
         </div>
@@ -303,12 +320,12 @@ export const KioskOrdersPage: React.FC = () => {
             {activeOrders.map((order) => {
               const isExpanded = expandedOrders.has(order.id);
               return (
-                <div key={order.id} style={styles.orderCard}>
+                <div key={order.id} style={{ ...styles.orderCard, ...(isMobile && responsiveStyles.orderCard) }}>
                   {/* Order Header */}
-                  <div style={styles.orderCardHeader}>
+                  <div style={{ ...styles.orderCardHeader, ...(isMobile && responsiveStyles.orderCardHeader) }}>
                     <div>
-                      <h3 style={styles.orderNumber}>Orden #{order.id}</h3>
-                      <p style={styles.orderTime}>
+                      <h3 style={{ ...styles.orderNumber, ...(isMobile && responsiveStyles.orderNumber) }}>Orden #{order.id}</h3>
+                      <p style={{ ...styles.orderTime, ...(isMobile && responsiveStyles.orderTime) }}>
                         Realizada: {new Date(order.placed_at).toLocaleString('es-MX', {
                           month: 'short',
                           day: 'numeric',
@@ -318,10 +335,10 @@ export const KioskOrdersPage: React.FC = () => {
                       </p>
                     </div>
                     <button
-                      style={styles.detailsButton}
+                      style={{ ...styles.detailsButton, ...(isMobile && responsiveStyles.detailsButton) }}
                       onClick={() => toggleOrderDetails(order.id)}
                     >
-                      {isExpanded ? 'Ocultar Detalles ▲' : 'Ver Detalles ▼'}
+                      {isExpanded ? (isMobile ? 'Ocultar ▲' : 'Ocultar Detalles ▲') : (isMobile ? 'Ver ▼' : 'Ver Detalles ▼')}
                     </button>
                   </div>
 
@@ -637,6 +654,76 @@ const styles: { [key: string]: React.CSSProperties } = {
   deliveredTime: {
     fontSize: '14px',
     color: colors.success,
+  },
+};
+
+// Responsive styles for mobile
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  header: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    padding: '12px 16px',
+    gap: '12px',
+  },
+  headerLeft: {
+    flexDirection: 'column',
+    gap: '12px',
+    width: '100%',
+  },
+  headerText: {
+    width: '100%',
+  },
+  headerTitle: {
+    fontSize: '18px',
+    marginBottom: '4px',
+  },
+  welcomeText: {
+    fontSize: '13px',
+  },
+  headerInfo: {
+    flexDirection: 'column',
+    width: '100%',
+    gap: '12px',
+    alignItems: 'stretch',
+  },
+  logo: {
+    height: '40px',
+  },
+  button: {
+    width: '100%',
+    padding: '12px 16px',
+    fontSize: '14px',
+  },
+  ordersSection: {
+    padding: '16px',
+  },
+  ordersHeader: {
+    flexDirection: 'column',
+    gap: '12px',
+    alignItems: 'stretch',
+    marginBottom: '20px',
+  },
+  ordersTitle: {
+    fontSize: '24px',
+  },
+  orderCard: {
+    marginBottom: '16px',
+  },
+  orderCardHeader: {
+    flexDirection: 'column',
+    gap: '12px',
+    padding: '16px 20px',
+  },
+  orderNumber: {
+    fontSize: '18px',
+  },
+  orderTime: {
+    fontSize: '13px',
+  },
+  detailsButton: {
+    width: '100%',
+    padding: '10px 16px',
+    fontSize: '13px',
   },
 };
 

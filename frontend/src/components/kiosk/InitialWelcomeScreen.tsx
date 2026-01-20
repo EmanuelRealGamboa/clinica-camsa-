@@ -1,5 +1,7 @@
 import React from 'react';
 import { colors } from '../../styles/colors';
+import { useWindowSize } from '../../utils/responsive';
+import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
 interface InitialWelcomeScreenProps {
   deviceUid: string;
@@ -14,45 +16,50 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
   loading = false,
   patientAssigned = false,
 }) => {
+  const { isMobile } = useWindowSize();
   const isButtonDisabled = !patientAssigned || loading;
+  
+  const responsiveStyles = getResponsiveStyles(isMobile);
+  
   return (
-    <div style={styles.container}>
+    <div style={{ ...styles.container, ...responsiveStyles.container }}>
       {/* Logo Section */}
-      <div style={styles.logoContainer}>
-        {/* Placeholder para el logo - puedes reemplazar con <img> cuando tengas el logo */}
-        <div style={styles.logoPlaceholder}>
-          <h1 style={styles.logoText}>CLÍNICA CAMSA</h1>
+      <div style={{ ...styles.logoContainer, ...responsiveStyles.logoContainer }}>
+        <div style={{ ...styles.logoPlaceholder, ...responsiveStyles.logoPlaceholder }}>
+          <img src={logoHorizontal} alt="Clínica CAMSA" style={styles.logoImage} />
         </div>
       </div>
 
       {/* Welcome Content */}
       <div style={styles.content}>
-        <h1 style={styles.title}>¡Bienvenido!</h1>
+        <h1 style={{ ...styles.title, ...responsiveStyles.title }}>¡Bienvenido!</h1>
 
-        <div style={styles.messageContainer}>
-          <div style={styles.messageCard}>
-            <div style={styles.iconCircle}>
-              <span style={styles.icon}>🎁</span>
+        <div style={{ ...styles.messageContainer, ...responsiveStyles.messageContainer }}>
+          <div style={{ ...styles.messageCard, ...responsiveStyles.messageCard }}>
+            <div style={{ ...styles.iconCircle, ...responsiveStyles.iconCircle }}>
+              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🎁</span>
             </div>
-            <h2 style={styles.messageTitle}>Cortesías Gratuitas</h2>
-            <p style={styles.messageText}>
+            <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Cortesías Gratuitas</h2>
+            <p style={{ ...styles.messageText, ...responsiveStyles.messageText }}>
               Durante tu consulta, disfruta de bebidas y snacks completamente gratis.
             </p>
           </div>
 
-          <div style={styles.messageCard}>
-            <div style={styles.iconCircle}>
-              <span style={styles.icon}>🍽️</span>
+          <div style={{ ...styles.messageCard, ...responsiveStyles.messageCard }}>
+            <div style={{ ...styles.iconCircle, ...responsiveStyles.iconCircle }}>
+              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🍽️</span>
             </div>
-            <h2 style={styles.messageTitle}>Ordena Comida</h2>
-            <p style={styles.messageText}>
+            <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Ordena Comida</h2>
+            <p style={{ ...styles.messageText, ...responsiveStyles.messageText }}>
               También puedes ordenar alimentos adicionales desde nuestro menú.
             </p>
           </div>
         </div>
 
         <button
-          style={isButtonDisabled ? styles.buttonDisabled : styles.button}
+          style={isButtonDisabled 
+            ? { ...styles.buttonDisabled, ...responsiveStyles.button } 
+            : { ...styles.button, ...responsiveStyles.button }}
           onClick={onViewMenu}
           disabled={isButtonDisabled}
         >
@@ -60,12 +67,12 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
         </button>
 
         {!patientAssigned && (
-          <p style={styles.waitingMessage}>
+          <p style={{ ...styles.waitingMessage, ...responsiveStyles.waitingMessage }}>
             Por favor espera a que tu enfermera te registre en el sistema
           </p>
         )}
 
-        <p style={styles.footer}>
+        <p style={{ ...styles.footer, ...responsiveStyles.footer }}>
           Dispositivo: {deviceUid}
         </p>
       </div>
@@ -95,13 +102,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+    padding: '20px',
   },
-  logoText: {
-    fontSize: '32px',
-    fontWeight: 'bold',
-    color: colors.primary,
-    margin: 0,
-    letterSpacing: '2px',
+  logoImage: {
+    maxWidth: '100%',
+    maxHeight: '100%',
+    height: 'auto',
+    width: 'auto',
+    objectFit: 'contain',
   },
   content: {
     textAlign: 'center',
@@ -192,6 +200,69 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'rgba(255, 255, 255, 0.9)',
     fontStyle: 'italic',
   },
+};
+
+// Responsive styles helper
+const getResponsiveStyles = (isMobile: boolean) => {
+  if (!isMobile) {
+    return {};
+  }
+  
+  return {
+    container: {
+      padding: '20px 16px',
+    },
+    logoContainer: {
+      marginBottom: '30px',
+    },
+    logoPlaceholder: {
+      width: '100%',
+      maxWidth: '280px',
+      height: '100px',
+      padding: '15px',
+    },
+    title: {
+      fontSize: '36px',
+      marginBottom: '30px',
+    },
+    messageContainer: {
+      gridTemplateColumns: '1fr',
+      gap: '20px',
+      marginBottom: '30px',
+    },
+    messageCard: {
+      padding: '24px 20px',
+    },
+    iconCircle: {
+      width: '80px',
+      height: '80px',
+      marginBottom: '16px',
+    },
+    icon: {
+      fontSize: '40px',
+    },
+    messageTitle: {
+      fontSize: '22px',
+      marginBottom: '12px',
+    },
+    messageText: {
+      fontSize: '15px',
+    },
+    button: {
+      padding: '18px 32px',
+      fontSize: '18px',
+      width: '100%',
+      maxWidth: '100%',
+    },
+    waitingMessage: {
+      fontSize: '15px',
+      marginTop: '16px',
+    },
+    footer: {
+      fontSize: '12px',
+      marginTop: '24px',
+    },
+  };
 };
 
 // Add hover effect

@@ -291,3 +291,45 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: 'all 0.2s ease',
   },
 };
+
+// Responsive styles for mobile
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  modal: {
+    width: '100%',
+    maxWidth: '100%',
+    padding: '32px 20px',
+    borderRadius: 0,
+  },
+  title: {
+    fontSize: '24px',
+    marginBottom: '8px',
+  },
+  subtitle: {
+    fontSize: '16px',
+    marginBottom: '24px',
+  },
+  question: {
+    fontSize: '18px',
+    marginBottom: '24px',
+  },
+  ratingsContainer: {
+    gap: '8px',
+    marginBottom: '24px',
+  },
+  commentLabel: {
+    fontSize: '16px',
+    marginBottom: '12px',
+  },
+  textarea: {
+    marginBottom: '16px',
+    fontSize: '15px',
+  },
+  commentButtons: {
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  button: {
+    width: '100%',
+    fontSize: '14px',
+  },
+};

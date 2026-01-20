@@ -15,27 +15,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='feedback',
-            name='order',
-        ),
-        migrations.RemoveField(
-            model_name='feedback',
-            name='satisfaction_rating',
-        ),
-        migrations.RemoveField(
-            model_name='feedback',
-            name='order',
-        ),
-        migrations.RemoveField(
-            model_name='feedback',
-            name='satisfaction_rating',
-        ),
+        # First, add new fields with null=True to allow existing data
         migrations.AddField(
             model_name='feedback',
             name='patient_assignment',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='feedbacks', to='clinic.patientassignment', verbose_name='patient assignment'),
-            preserve_default=False,
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='feedbacks', to='clinic.patientassignment', verbose_name='patient assignment'),
         ),
         migrations.AddField(
             model_name='feedback',
@@ -45,11 +29,26 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='feedback',
             name='staff_rating',
-            field=models.IntegerField(help_text='Rating for staff interaction (0-5 stars)', null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(5)], verbose_name='staff rating'),
+            field=models.IntegerField(blank=True, help_text='Rating for staff interaction (0-5 stars)', null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(5)], verbose_name='staff rating'),
         ),
         migrations.AddField(
             model_name='feedback',
             name='stay_rating',
-            field=models.IntegerField(help_text='Rating for stay experience (0-5 stars)', null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(5)], verbose_name='stay rating'),
+            field=models.IntegerField(blank=True, help_text='Rating for stay experience (0-5 stars)', null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(5)], verbose_name='stay rating'),
+        ),
+        # Then remove old fields
+        migrations.RemoveField(
+            model_name='feedback',
+            name='order',
+        ),
+        migrations.RemoveField(
+            model_name='feedback',
+            name='satisfaction_rating',
+        ),
+        # Finally, make patient_assignment required (non-null)
+        migrations.AlterField(
+            model_name='feedback',
+            name='patient_assignment',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='feedbacks', to='clinic.patientassignment', verbose_name='patient assignment'),
         ),
     ]

@@ -76,8 +76,8 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           ¡Disfruta tu estancia y que te recuperes pronto!
         </p>
 
-        <button style={styles.button} onClick={onClose}>
-          OK
+        <button style={styles.button} onClick={onClose} className="welcome-btn">
+          Comenzar
         </button>
       </div>
     </div>
@@ -91,7 +91,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: colors.overlay,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -99,49 +99,61 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   modal: {
     backgroundColor: colors.white,
-    borderRadius: '20px',
+    borderRadius: '24px',
     padding: '48px 40px',
     maxWidth: '600px',
     width: '90%',
     textAlign: 'center',
-    boxShadow: '0 12px 48px rgba(0, 0, 0, 0.3)',
+    boxShadow: `0 12px 48px ${colors.shadowGold}`,
+    border: `2px solid ${colors.primaryMuted}`,
   },
   iconContainer: {
     marginBottom: '24px',
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    backgroundColor: colors.primaryMuted,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 24px auto',
+    border: `3px solid ${colors.primary}`,
   },
   icon: {
-    fontSize: '80px',
+    fontSize: '56px',
   },
   title: {
     fontSize: '32px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.textPrimary,
     margin: '0 0 24px 0',
   },
   message: {
     fontSize: '18px',
-    color: colors.gray,
+    color: colors.textSecondary,
     lineHeight: '1.6',
     margin: '0 0 32px 0',
   },
   limitsContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '16px',
     marginBottom: '32px',
     padding: '24px',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.cream,
     borderRadius: '16px',
+    border: `1px solid ${colors.primaryMuted}`,
   },
   limitItem: {
     display: 'flex',
     alignItems: 'center',
     gap: '20px',
-    padding: '16px',
+    padding: '16px 20px',
     backgroundColor: colors.white,
     borderRadius: '12px',
     textAlign: 'left',
-    border: '2px solid #e0e0e0',
+    border: `2px solid ${colors.primary}`,
+    boxShadow: `0 2px 8px ${colors.shadow}`,
   },
   limitIcon: {
     fontSize: '48px',
@@ -149,29 +161,49 @@ const styles: { [key: string]: React.CSSProperties } = {
   limitLabel: {
     fontSize: '20px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.textPrimary,
     marginBottom: '4px',
   },
   limitDescription: {
     fontSize: '14px',
-    color: colors.gray,
+    color: colors.textSecondary,
   },
   enjoyMessage: {
     fontSize: '18px',
     fontWeight: '600',
-    color: '#4caf50',
+    color: colors.primary,
     margin: '0 0 32px 0',
   },
   button: {
     padding: '16px 64px',
-    backgroundColor: '#4caf50',
-    color: colors.white,
-    border: 'none',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
     borderRadius: '12px',
     fontSize: '18px',
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'all 0.3s',
-    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+    boxShadow: `0 4px 12px ${colors.shadowGold}`,
   },
 };
+
+// Add hover effects
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  .welcome-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px ${colors.shadowGold} !important;
+  }
+
+  .welcome-btn:active {
+    background-color: ${colors.primaryDark} !important;
+    transform: scale(0.98);
+  }
+`;
+if (!document.head.querySelector('[data-welcome-modal-styles]')) {
+  styleSheet.setAttribute('data-welcome-modal-styles', 'true');
+  document.head.appendChild(styleSheet);
+}

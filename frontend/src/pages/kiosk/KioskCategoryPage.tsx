@@ -314,7 +314,7 @@ export const KioskCategoryPage: React.FC = () => {
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
-          <button style={styles.backButton} onClick={handleBack}>
+          <button style={styles.backButton} onClick={handleBack} className="cat-back-btn">
             ← Volver
           </button>
           <div>
@@ -328,11 +328,11 @@ export const KioskCategoryPage: React.FC = () => {
           </div>
         </div>
         <div style={styles.headerRight}>
-          <button style={styles.ordersButton} onClick={handleViewOrders}>
+          <button style={styles.ordersButton} onClick={handleViewOrders} className="cat-orders-btn">
             Mis Órdenes
           </button>
           {cartTotal > 0 && (
-            <button style={styles.cartButton} onClick={() => setShowCart(true)}>
+            <button style={styles.cartButton} onClick={() => setShowCart(true)} className="cat-cart-btn">
               🛒 Carrito ({cartTotal})
             </button>
           )}
@@ -344,7 +344,7 @@ export const KioskCategoryPage: React.FC = () => {
         {products.length === 0 ? (
           <div style={styles.emptyState}>
             <p style={styles.emptyText}>No hay productos disponibles en esta categoría</p>
-            <button style={styles.emptyButton} onClick={handleBack}>
+            <button style={styles.emptyButton} onClick={handleBack} className="cat-empty-btn">
               Volver al inicio
             </button>
           </div>
@@ -396,7 +396,7 @@ export const KioskCategoryPage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: colors.grayBg,
+    backgroundColor: colors.ivory,
     paddingBottom: '40px',
   },
   loading: {
@@ -405,12 +405,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: colors.grayBg,
+    backgroundColor: colors.ivory,
+    color: colors.textSecondary,
   },
   spinner: {
     width: '48px',
     height: '48px',
-    border: `4px solid ${colors.grayLight}`,
+    border: `4px solid ${colors.primaryMuted}`,
     borderTop: `4px solid ${colors.primary}`,
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
@@ -421,8 +422,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: `0 2px 8px ${colors.shadow}`,
+    boxShadow: `0 2px 12px ${colors.shadowGold}`,
     marginBottom: '32px',
+    borderBottom: `2px solid ${colors.primaryMuted}`,
   },
   headerLeft: {
     display: 'flex',
@@ -431,7 +433,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   backButton: {
     padding: '10px 20px',
-    backgroundColor: 'transparent',
+    backgroundColor: colors.white,
     color: colors.primary,
     border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
@@ -443,7 +445,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   headerTitle: {
     fontSize: '28px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.textPrimary,
     margin: 0,
     display: 'flex',
     alignItems: 'center',
@@ -454,7 +456,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   headerSubtitle: {
     fontSize: '16px',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: '8px 0 0 0',
   },
   headerRight: {
@@ -463,23 +465,25 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   ordersButton: {
     padding: '12px 24px',
-    backgroundColor: '#ff9800',
-    color: colors.white,
-    border: 'none',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: 'bold',
     cursor: 'pointer',
+    transition: 'all 0.2s',
   },
   cartButton: {
     padding: '12px 24px',
-    backgroundColor: '#ff9800',
+    backgroundColor: colors.primary,
     color: colors.white,
-    border: 'none',
+    border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: 'bold',
     cursor: 'pointer',
+    transition: 'all 0.2s',
   },
   content: {
     padding: '0 40px',
@@ -492,20 +496,59 @@ const styles: { [key: string]: React.CSSProperties } = {
   emptyState: {
     textAlign: 'center',
     padding: '80px 20px',
+    backgroundColor: colors.white,
+    borderRadius: '16px',
+    border: `1px solid ${colors.primaryMuted}`,
   },
   emptyText: {
     fontSize: '18px',
-    color: colors.gray,
+    color: colors.textSecondary,
     marginBottom: '24px',
   },
   emptyButton: {
     padding: '14px 32px',
-    backgroundColor: colors.primary,
-    color: colors.white,
-    border: 'none',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: 'bold',
     cursor: 'pointer',
+    transition: 'all 0.2s',
   },
 };
+
+// Add hover effects
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .cat-back-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+  }
+
+  .cat-orders-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+    transform: scale(1.02);
+  }
+
+  .cat-cart-btn:hover {
+    background-color: ${colors.primaryDark} !important;
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px ${colors.shadowGold};
+  }
+
+  .cat-empty-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+  }
+`;
+if (!document.head.querySelector('[data-category-page-styles]')) {
+  styleSheet.setAttribute('data-category-page-styles', 'true');
+  document.head.appendChild(styleSheet);
+}

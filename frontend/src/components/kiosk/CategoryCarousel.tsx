@@ -100,14 +100,20 @@ export const CategoryCarousel: React.FC<CategoryCarouselProps> = ({
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    marginBottom: '48px',
+    marginBottom: '40px',
+    padding: '24px 0',
+    backgroundColor: colors.white,
+    borderRadius: '16px',
+    margin: '0 20px 24px 20px',
+    boxShadow: `0 2px 8px ${colors.shadow}`,
+    border: `1px solid ${colors.primaryMuted}`,
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '24px',
-    padding: '0 20px',
+    marginBottom: '20px',
+    padding: '0 24px',
   },
   headerLeft: {
     display: 'flex',
@@ -115,40 +121,40 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '16px',
   },
   iconContainer: {
-    width: '64px',
-    height: '64px',
+    width: '56px',
+    height: '56px',
     borderRadius: '12px',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryMuted,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: `0 4px 12px ${colors.shadow}`,
+    border: `2px solid ${colors.primary}`,
   },
   icon: {
-    fontSize: '32px',
+    fontSize: '28px',
   },
   title: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    color: colors.black,
+    fontSize: '22px',
+    fontWeight: '600',
+    color: colors.textPrimary,
     margin: 0,
   },
   description: {
     fontSize: '14px',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: '4px 0 0 0',
   },
   carouselWrapper: {
     position: 'relative',
-    padding: '0 60px',
+    padding: '0 50px',
   },
   carousel: {
     display: 'flex',
-    gap: '20px',
+    gap: '16px',
     overflowX: 'scroll',
     overflowY: 'hidden',
     scrollBehavior: 'smooth',
-    padding: '10px 20px',
+    padding: '8px 16px',
     scrollbarWidth: 'none', // Firefox
     msOverflowStyle: 'none', // IE/Edge
     WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
@@ -158,36 +164,36 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: 'absolute',
     top: '50%',
     transform: 'translateY(-50%)',
-    width: '48px',
-    height: '48px',
+    width: '44px',
+    height: '44px',
     borderRadius: '50%',
     backgroundColor: colors.white,
     color: colors.primary,
     border: `2px solid ${colors.primary}`,
-    fontSize: '32px',
+    fontSize: '28px',
     fontWeight: 'bold',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
-    boxShadow: `0 4px 12px ${colors.shadow}`,
+    boxShadow: `0 2px 8px ${colors.shadowGold}`,
     transition: 'all 0.2s',
   },
   arrowLeft: {
-    left: '0',
+    left: '8px',
   },
   arrowRight: {
-    right: '0',
+    right: '8px',
   },
   viewAllButton: {
-    padding: '12px 24px',
-    backgroundColor: colors.primary,
-    color: colors.white,
-    border: 'none',
+    padding: '10px 20px',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    fontSize: '14px',
+    fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
@@ -203,19 +209,23 @@ styleSheet.textContent = `
   .carousel-arrow:hover {
     background-color: ${colors.primary} !important;
     color: ${colors.white} !important;
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.08);
+    box-shadow: 0 4px 12px ${colors.shadowGold} !important;
   }
 
   .carousel-arrow:active {
     transform: translateY(-50%) scale(0.95);
+    background-color: ${colors.primaryDark} !important;
   }
 
   .view-all-button:hover {
-    background-color: ${colors.primaryDark || '#1976d2'} !important;
-    transform: scale(1.05);
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+    transform: scale(1.02);
   }
 
   .view-all-button:active {
+    background-color: ${colors.primaryDark} !important;
     transform: scale(0.98);
   }
 `;

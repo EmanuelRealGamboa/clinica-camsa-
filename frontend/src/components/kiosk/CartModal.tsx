@@ -99,7 +99,7 @@ export const CartModal: React.FC<CartModalProps> = ({
         {/* Header */}
         <div style={styles.header}>
           <h2 style={styles.title}>🛒 Tu Carrito</h2>
-          <button style={styles.closeButton} onClick={onClose}>
+          <button style={styles.closeButton} onClick={onClose} className="cart-close-btn">
             ✕
           </button>
         </div>
@@ -143,6 +143,7 @@ export const CartModal: React.FC<CartModalProps> = ({
                     <button
                       style={styles.quantityButton}
                       onClick={() => handleDecrement(product.id, quantity)}
+                      className="cart-qty-btn"
                     >
                       −
                     </button>
@@ -150,6 +151,7 @@ export const CartModal: React.FC<CartModalProps> = ({
                     <button
                       style={styles.quantityButton}
                       onClick={() => handleIncrement(product.id, quantity)}
+                      className="cart-qty-btn"
                     >
                       +
                     </button>
@@ -159,6 +161,7 @@ export const CartModal: React.FC<CartModalProps> = ({
                   <button
                     style={styles.removeButton}
                     onClick={() => handleRemove(product.id)}
+                    className="cart-remove-btn"
                   >
                     🗑️
                   </button>
@@ -175,7 +178,7 @@ export const CartModal: React.FC<CartModalProps> = ({
               <span style={styles.summaryLabel}>Total de items:</span>
               <span style={styles.summaryValue}>{totalItems}</span>
             </div>
-            <button style={styles.checkoutButton} onClick={onCheckout}>
+            <button style={styles.checkoutButton} onClick={onCheckout} className="cart-checkout-btn">
               Confirmar Orden
             </button>
           </div>
@@ -200,34 +203,37 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   modal: {
     backgroundColor: colors.white,
-    borderRadius: '16px',
+    borderRadius: '20px',
     maxWidth: '600px',
     width: '90%',
     maxHeight: '80vh',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: `0 20px 60px ${colors.shadowDark}`,
+    boxShadow: `0 20px 60px ${colors.shadowGold}`,
+    border: `2px solid ${colors.primaryMuted}`,
   },
   header: {
     padding: '24px',
-    borderBottom: `1px solid ${colors.grayBg}`,
+    borderBottom: `2px solid ${colors.primaryMuted}`,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: colors.cream,
+    borderRadius: '18px 18px 0 0',
   },
   title: {
     fontSize: '24px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.textPrimary,
     margin: 0,
   },
   closeButton: {
-    width: '36px',
-    height: '36px',
+    width: '40px',
+    height: '40px',
     borderRadius: '50%',
-    border: 'none',
-    backgroundColor: colors.grayBg,
-    color: colors.gray,
+    border: `2px solid ${colors.primary}`,
+    backgroundColor: colors.white,
+    color: colors.primary,
     fontSize: '20px',
     cursor: 'pointer',
     display: 'flex',
@@ -239,6 +245,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flex: 1,
     overflowY: 'auto',
     padding: '16px 24px',
+    backgroundColor: colors.ivory,
   },
   emptyCart: {
     display: 'flex',
@@ -250,17 +257,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   emptyIcon: {
     fontSize: '64px',
     marginBottom: '16px',
-    opacity: 0.3,
+    opacity: 0.5,
   },
   emptyText: {
     fontSize: '18px',
     fontWeight: 'bold',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: '0 0 8px 0',
   },
   emptySubtext: {
     fontSize: '14px',
-    color: colors.grayLight,
+    color: colors.textMuted,
     margin: 0,
   },
   cartItem: {
@@ -268,20 +275,24 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     gap: '16px',
     padding: '16px',
-    backgroundColor: colors.grayBg,
+    backgroundColor: colors.white,
     borderRadius: '12px',
     marginBottom: '12px',
+    border: `1px solid ${colors.primaryMuted}`,
+    boxShadow: `0 2px 8px ${colors.shadow}`,
   },
   itemImage: {
     width: '80px',
     height: '80px',
     flexShrink: 0,
+    borderRadius: '10px',
+    overflow: 'hidden',
+    border: `1px solid ${colors.primaryMuted}`,
   },
   image: {
     width: '100%',
     height: '100%',
     objectFit: 'contain',
-    borderRadius: '8px',
   },
   noImage: {
     width: '100%',
@@ -289,40 +300,40 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderRadius: '8px',
+    backgroundColor: colors.cream,
     fontSize: '12px',
-    color: colors.grayLight,
+    color: colors.textMuted,
   },
   itemInfo: {
     flex: 1,
   },
   itemName: {
     fontSize: '16px',
-    fontWeight: 'bold',
-    color: colors.black,
+    fontWeight: '600',
+    color: colors.textPrimary,
     margin: '0 0 4px 0',
   },
   itemUnit: {
     fontSize: '14px',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: 0,
   },
   quantityControls: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    backgroundColor: colors.white,
-    borderRadius: '8px',
-    padding: '4px',
+    backgroundColor: colors.primaryMuted,
+    borderRadius: '10px',
+    padding: '6px',
+    border: `1px solid ${colors.primary}`,
   },
   quantityButton: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '6px',
+    width: '34px',
+    height: '34px',
+    borderRadius: '8px',
     border: 'none',
-    backgroundColor: colors.primary,
-    color: colors.white,
+    backgroundColor: colors.white,
+    color: colors.primary,
     fontSize: '18px',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -334,23 +345,25 @@ const styles: { [key: string]: React.CSSProperties } = {
   quantity: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.primaryDark,
     minWidth: '32px',
     textAlign: 'center',
   },
   removeButton: {
     width: '40px',
     height: '40px',
-    borderRadius: '8px',
-    border: 'none',
+    borderRadius: '10px',
+    border: `1px solid ${colors.error}`,
     backgroundColor: 'transparent',
-    fontSize: '20px',
+    fontSize: '18px',
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
   footer: {
     padding: '24px',
-    borderTop: `1px solid ${colors.grayBg}`,
+    borderTop: `2px solid ${colors.primaryMuted}`,
+    backgroundColor: colors.cream,
+    borderRadius: '0 0 18px 18px',
   },
   summary: {
     display: 'flex',
@@ -358,12 +371,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     marginBottom: '16px',
     padding: '16px',
-    backgroundColor: colors.grayBg,
-    borderRadius: '8px',
+    backgroundColor: colors.white,
+    borderRadius: '12px',
+    border: `1px solid ${colors.primaryMuted}`,
   },
   summaryLabel: {
     fontSize: '16px',
-    color: colors.gray,
+    color: colors.textSecondary,
   },
   summaryValue: {
     fontSize: '24px',
@@ -373,9 +387,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   checkoutButton: {
     width: '100%',
     padding: '16px',
-    backgroundColor: colors.primary,
-    color: colors.white,
-    border: 'none',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
     borderRadius: '12px',
     fontSize: '18px',
     fontWeight: 'bold',
@@ -383,3 +397,46 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: 'all 0.2s',
   },
 };
+
+// Add hover effects for buttons
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  .cart-close-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+    transform: scale(1.05);
+  }
+
+  .cart-qty-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+    transform: scale(1.08);
+  }
+
+  .cart-qty-btn:active {
+    background-color: ${colors.primaryDark} !important;
+    transform: scale(0.95);
+  }
+
+  .cart-remove-btn:hover {
+    background-color: ${colors.error} !important;
+    border-color: ${colors.error} !important;
+    transform: scale(1.05);
+  }
+
+  .cart-checkout-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px ${colors.shadowGold} !important;
+  }
+
+  .cart-checkout-btn:active {
+    background-color: ${colors.primaryDark} !important;
+    transform: scale(0.98);
+  }
+`;
+if (!document.head.querySelector('[data-cart-modal-styles]')) {
+  styleSheet.setAttribute('data-cart-modal-styles', 'true');
+  document.head.appendChild(styleSheet);
+}

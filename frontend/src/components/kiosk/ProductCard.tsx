@@ -155,6 +155,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: 'column',
     transition: 'all 0.3s ease',
     cursor: 'pointer',
+    border: `1px solid ${colors.primaryMuted}`,
   },
   carouselCard: {
     minWidth: '280px',
@@ -164,7 +165,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: 'relative',
     width: '100%',
     height: '200px',
-    backgroundColor: colors.grayBg,
+    backgroundColor: colors.cream,
+    borderBottom: `1px solid ${colors.primaryMuted}`,
   },
   image: {
     width: '100%',
@@ -207,15 +209,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '8px',
   },
   title: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    color: colors.black,
+    fontSize: '17px',
+    fontWeight: '600',
+    color: colors.textPrimary,
     margin: 0,
-    marginBottom: '8px',
+    marginBottom: '6px',
   },
   description: {
     fontSize: '14px',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: 0,
     lineHeight: '1.4',
     display: '-webkit-box',
@@ -227,17 +229,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    backgroundColor: `${colors.primary}15`,
+    backgroundColor: colors.primaryMuted,
     padding: '8px 12px',
     borderRadius: '8px',
     marginTop: '4px',
+    border: `1px solid ${colors.primary}`,
   },
   benefitIcon: {
     fontSize: '16px',
   },
   benefitText: {
     fontSize: '13px',
-    color: colors.primary,
+    color: colors.primaryDark,
     fontWeight: '600',
   },
   ratingContainer: {
@@ -250,26 +253,28 @@ const styles: { [key: string]: React.CSSProperties } = {
   addButton: {
     width: '100%',
     padding: '14px',
-    backgroundColor: colors.primary,
-    color: colors.white,
-    border: 'none',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    fontSize: '15px',
+    fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s',
     position: 'relative',
     overflow: 'hidden',
   },
   disabledButton: {
-    backgroundColor: colors.grayLight,
+    backgroundColor: colors.grayBg,
+    color: colors.grayLight,
+    borderColor: colors.grayLight,
     cursor: 'not-allowed',
   },
   foodBadge: {
     position: 'absolute',
     top: '12px',
     right: '12px',
-    backgroundColor: '#ff9800',
+    backgroundColor: colors.primary,
     color: colors.white,
     padding: '6px 12px',
     borderRadius: '20px',
@@ -280,27 +285,29 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    backgroundColor: '#fff3e0',
+    backgroundColor: colors.primaryMuted,
     padding: '10px 14px',
     borderRadius: '8px',
     marginTop: '8px',
+    border: `1px solid ${colors.primary}`,
   },
   priceLabel: {
     fontSize: '14px',
-    color: '#e65100',
+    color: colors.primaryDark,
     fontWeight: '500',
   },
   price: {
     fontSize: '20px',
     fontWeight: 'bold',
-    color: '#e65100',
+    color: colors.primary,
   },
   foodButton: {
-    backgroundColor: '#ff9800',
+    backgroundColor: colors.primary,
+    color: colors.white,
   },
 };
 
-// Add CSS animations for button click effect
+// Add CSS animations for button click effect and card hover
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   @keyframes buttonPulse {
@@ -309,7 +316,22 @@ styleSheet.textContent = `
     100% { transform: scale(1); }
   }
 
-  button:active {
+  /* Product card hover */
+  [style*="border-radius: 16px"][style*="cursor: pointer"]:hover {
+    border-color: ${colors.primary} !important;
+    box-shadow: 0 4px 16px ${colors.shadowGold} !important;
+    transform: translateY(-2px);
+  }
+
+  /* Add button hover - white to gold */
+  [style*="border: 2px solid"][style*="${colors.primary}"]:not(:disabled):hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+  }
+
+  [style*="border: 2px solid"][style*="${colors.primary}"]:not(:disabled):active {
+    background-color: ${colors.primaryDark} !important;
+    border-color: ${colors.primaryDark} !important;
     animation: buttonPulse 0.3s ease;
   }
 `;

@@ -42,7 +42,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ product, onAddToCart }
 
         {/* CTA Button */}
         {!isOutOfStock ? (
-          <button style={styles.ctaButton} onClick={() => onAddToCart(product.id)}>
+          <button
+            style={styles.ctaButton}
+            onClick={() => onAddToCart(product.id)}
+            className="hero-cta-button"
+          >
             Ordenar Ahora
           </button>
         ) : (
@@ -88,8 +92,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '80px',
-    boxShadow: `0 8px 24px ${colors.shadowDark}`,
+    boxShadow: `0 8px 32px ${colors.shadowGold}`,
     minHeight: '450px',
+    border: `2px solid ${colors.primaryLight}`,
   },
   content: {
     flex: 1,
@@ -97,14 +102,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   badge: {
     display: 'inline-block',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    color: colors.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    color: colors.primaryDark,
     padding: '10px 20px',
     borderRadius: '24px',
     fontSize: '14px',
     fontWeight: 'bold',
     marginBottom: '20px',
-    backdropFilter: 'blur(10px)',
+    boxShadow: `0 2px 8px ${colors.shadowGold}`,
   },
   title: {
     fontSize: '52px',
@@ -112,6 +117,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: colors.white,
     margin: '0 0 16px 0',
     lineHeight: '1.1',
+    textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
   },
   description: {
     fontSize: '19px',
@@ -126,8 +132,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: '32px',
   },
   benefitPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    color: colors.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    color: colors.primaryDark,
     padding: '12px 20px',
     borderRadius: '28px',
     fontSize: '15px',
@@ -135,8 +141,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    boxShadow: `0 2px 8px ${colors.shadowGold}`,
+    border: `1px solid ${colors.primaryLight}`,
   },
   benefitIcon: {
     fontSize: '18px',
@@ -148,10 +154,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '12px',
     fontSize: '18px',
     fontWeight: 'bold',
-    border: 'none',
+    border: `2px solid ${colors.white}`,
     cursor: 'pointer',
     transition: 'all 0.3s',
-    boxShadow: `0 4px 16px ${colors.shadowDark}`,
+    boxShadow: `0 4px 16px ${colors.shadowGold}`,
   },
   ctaButtonDisabled: {
     backgroundColor: colors.grayLight,
@@ -179,17 +185,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     maxHeight: '100%',
     objectFit: 'cover',
     borderRadius: '24px',
-    boxShadow: `0 0 0 8px rgba(255, 255, 255, 0.2),
-                 0 0 0 16px rgba(255, 255, 255, 0.1),
-                 0 20px 40px rgba(0, 0, 0, 0.3)`,
-    border: '4px solid rgba(255, 255, 255, 0.3)',
+    boxShadow: `0 0 0 6px rgba(255, 255, 255, 0.3),
+                 0 0 0 12px rgba(255, 255, 255, 0.15),
+                 0 20px 40px ${colors.shadowGold}`,
+    border: `4px solid ${colors.white}`,
   },
   outOfStockOverlay: {
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     padding: '16px 32px',
     borderRadius: '12px',
   },
@@ -223,4 +229,25 @@ if (mediaQuery.matches) {
     maxWidth: '100%',
     height: '300px',
   };
+}
+
+// Add hover effects for CTA button
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  .hero-cta-button:hover {
+    background-color: ${colors.primaryDark} !important;
+    color: ${colors.white} !important;
+    border-color: ${colors.primaryDark} !important;
+    transform: scale(1.03);
+    box-shadow: 0 6px 24px ${colors.shadowGold} !important;
+  }
+
+  .hero-cta-button:active {
+    transform: scale(0.98);
+    background-color: ${colors.gold} !important;
+  }
+`;
+if (!document.head.querySelector('[data-hero-styles]')) {
+  styleSheet.setAttribute('data-hero-styles', 'true');
+  document.head.appendChild(styleSheet);
 }

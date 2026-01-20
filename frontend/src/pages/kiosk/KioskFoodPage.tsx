@@ -128,7 +128,7 @@ export const KioskFoodPage: React.FC = () => {
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
-          <button style={styles.backButton} onClick={handleBack}>
+          <button style={styles.backButton} onClick={handleBack} className="food-back-btn">
             ← Volver
           </button>
           <div>
@@ -142,7 +142,7 @@ export const KioskFoodPage: React.FC = () => {
           </div>
         </div>
         <div style={styles.headerRight}>
-          <button style={styles.ordersButton} onClick={handleViewOrders}>
+          <button style={styles.ordersButton} onClick={handleViewOrders} className="food-orders-btn">
             Mis Órdenes
           </button>
         </div>
@@ -234,7 +234,7 @@ export const KioskFoodPage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: colors.grayBg,
+    backgroundColor: colors.ivory,
     paddingBottom: '40px',
   },
   loading: {
@@ -243,12 +243,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: colors.grayBg,
+    backgroundColor: colors.ivory,
+    color: colors.textSecondary,
   },
   spinner: {
     width: '48px',
     height: '48px',
-    border: `4px solid ${colors.grayLight}`,
+    border: `4px solid ${colors.primaryMuted}`,
     borderTop: `4px solid ${colors.primary}`,
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
@@ -259,8 +260,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: `0 2px 8px ${colors.shadow}`,
+    boxShadow: `0 2px 12px ${colors.shadowGold}`,
     marginBottom: '24px',
+    borderBottom: `2px solid ${colors.primaryMuted}`,
   },
   headerLeft: {
     display: 'flex',
@@ -269,7 +271,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   backButton: {
     padding: '10px 20px',
-    backgroundColor: 'transparent',
+    backgroundColor: colors.white,
     color: colors.primary,
     border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
@@ -281,7 +283,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   headerTitle: {
     fontSize: '28px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.textPrimary,
     margin: 0,
     display: 'flex',
     alignItems: 'center',
@@ -292,7 +294,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   headerSubtitle: {
     fontSize: '16px',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: '8px 0 0 0',
   },
   headerRight: {
@@ -301,23 +303,24 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   ordersButton: {
     padding: '12px 24px',
-    backgroundColor: '#ff9800',
-    color: colors.white,
-    border: 'none',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: 'bold',
     cursor: 'pointer',
+    transition: 'all 0.2s',
   },
   infoBanner: {
     margin: '0 40px 24px 40px',
     padding: '20px 24px',
-    backgroundColor: '#fff3e0',
+    backgroundColor: colors.cream,
     borderRadius: '12px',
     display: 'flex',
     alignItems: 'flex-start',
     gap: '16px',
-    border: '2px solid #ffcc80',
+    border: `2px solid ${colors.primary}`,
   },
   infoIcon: {
     fontSize: '32px',
@@ -328,12 +331,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   infoTitle: {
     fontSize: '18px',
     fontWeight: 'bold',
-    color: '#e65100',
+    color: colors.primaryDark,
     margin: '0 0 8px 0',
   },
   infoText: {
     fontSize: '14px',
-    color: '#bf360c',
+    color: colors.textSecondary,
     margin: 0,
     lineHeight: '1.5',
   },
@@ -343,12 +346,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   sectionTitle: {
     fontSize: '24px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.textPrimary,
     margin: '0 0 8px 0',
   },
   sectionSubtitle: {
     fontSize: '16px',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: '0 0 24px 0',
   },
   restaurantsGrid: {
@@ -363,10 +366,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflow: 'hidden',
     transition: 'all 0.3s ease',
     position: 'relative',
+    border: `1px solid ${colors.primaryMuted}`,
   },
   restaurantLogo: {
     height: '120px',
-    backgroundColor: '#ff9800',
+    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -380,12 +384,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   restaurantName: {
     fontSize: '20px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.textPrimary,
     margin: '0 0 8px 0',
   },
   restaurantDescription: {
     fontSize: '14px',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: '0 0 12px 0',
     lineHeight: '1.4',
   },
@@ -397,18 +401,19 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   categoryTag: {
     padding: '4px 12px',
-    backgroundColor: `${colors.primary}15`,
-    color: colors.primary,
+    backgroundColor: colors.primaryMuted,
+    color: colors.primaryDark,
     borderRadius: '20px',
     fontSize: '12px',
     fontWeight: '600',
+    border: `1px solid ${colors.primary}`,
   },
   restaurantMeta: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: '12px',
-    borderTop: `1px solid ${colors.grayLight}`,
+    borderTop: `1px solid ${colors.primaryMuted}`,
   },
   rating: {
     display: 'flex',
@@ -421,14 +426,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   ratingValue: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.textPrimary,
   },
   deliveryTime: {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
     fontSize: '14px',
-    color: colors.gray,
+    color: colors.textSecondary,
   },
   clockIcon: {
     fontSize: '14px',
@@ -437,7 +442,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: 'absolute',
     top: '12px',
     right: '12px',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     color: colors.white,
     padding: '6px 16px',
     borderRadius: '20px',
@@ -450,17 +455,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: colors.white,
     borderRadius: '16px',
     textAlign: 'center',
-    border: `2px dashed ${colors.grayLight}`,
+    border: `2px dashed ${colors.primary}`,
   },
   comingSoonTitle: {
     fontSize: '20px',
     fontWeight: 'bold',
-    color: colors.black,
+    color: colors.primary,
     margin: '0 0 8px 0',
   },
   comingSoonText: {
     fontSize: '16px',
-    color: colors.gray,
+    color: colors.textSecondary,
     margin: 0,
   },
 };
@@ -470,7 +475,19 @@ const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   .restaurant-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 8px 24px ${colors.shadowGold} !important;
+    border-color: ${colors.primary} !important;
+  }
+
+  .food-back-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+  }
+
+  .food-orders-btn:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+    transform: scale(1.02);
   }
 
   @keyframes spin {

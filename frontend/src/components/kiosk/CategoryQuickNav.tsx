@@ -120,27 +120,29 @@ const styles: { [key: string]: React.CSSProperties } = {
   container: {
     padding: '32px 40px',
     backgroundColor: colors.white,
-    marginBottom: '32px',
-    boxShadow: `0 2px 8px ${colors.shadow}`,
+    marginBottom: '24px',
+    boxShadow: `0 2px 12px ${colors.shadowGold}`,
+    borderTop: `1px solid ${colors.primaryMuted}`,
+    borderBottom: `1px solid ${colors.primaryMuted}`,
   },
   header: {
     marginBottom: '24px',
     textAlign: 'center',
   },
   title: {
-    fontSize: '28px',
-    fontWeight: 'bold',
-    color: colors.black,
+    fontSize: '26px',
+    fontWeight: '600',
+    color: colors.textPrimary,
     margin: '0 0 8px 0',
   },
   subtitle: {
-    fontSize: '16px',
-    color: colors.gray,
+    fontSize: '15px',
+    color: colors.textSecondary,
     margin: 0,
   },
   navContainer: {
     display: 'flex',
-    gap: '24px',
+    gap: '20px',
     flexWrap: 'wrap',
     justifyContent: 'center',
   },
@@ -149,62 +151,75 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: '12px',
-    padding: '24px 32px',
-    backgroundColor: colors.grayBg,
-    border: `3px solid transparent`,
-    borderRadius: '20px',
+    padding: '20px 28px',
+    backgroundColor: colors.white,
+    border: `2px solid ${colors.primaryMuted}`,
+    borderRadius: '16px',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    minWidth: '160px',
-    boxShadow: `0 4px 12px ${colors.shadow}`,
+    minWidth: '150px',
+    boxShadow: `0 2px 8px ${colors.shadow}`,
   },
   categoryButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
+    cursor: 'not-allowed',
   },
   iconWrapper: {
-    width: '80px',
-    height: '80px',
+    width: '70px',
+    height: '70px',
     borderRadius: '50%',
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.primaryMuted,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.3s ease',
-    boxShadow: `0 4px 12px ${colors.shadow}`,
+    border: `2px solid ${colors.primary}`,
   },
   icon: {
-    fontSize: '40px',
+    fontSize: '36px',
   },
   categoryName: {
-    fontSize: '18px',
-    fontWeight: '700',
-    color: colors.black,
+    fontSize: '16px',
+    fontWeight: '600',
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   limitBadge: {
-    fontSize: '12px',
-    fontWeight: 'bold',
-    padding: '6px 14px',
-    borderRadius: '16px',
+    fontSize: '11px',
+    fontWeight: '600',
+    padding: '5px 12px',
+    borderRadius: '12px',
     textTransform: 'uppercase',
+    letterSpacing: '0.5px',
   },
 };
 
 // Add hover effects
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
+  .category-nav-button {
+    background-color: ${colors.white} !important;
+  }
+
   .category-nav-button:hover {
     border-color: ${colors.primary} !important;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    background-color: ${colors.primaryMuted} !important;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px ${colors.shadowGold};
   }
 
   .category-nav-button:hover .icon-wrapper {
     background-color: ${colors.primary} !important;
+    border-color: ${colors.primaryDark} !important;
   }
 
   .category-nav-button:active {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    background-color: ${colors.primary} !important;
+  }
+
+  .category-nav-button:active span {
+    color: ${colors.white} !important;
   }
 `;
 if (!document.head.querySelector('[data-category-nav-styles]')) {

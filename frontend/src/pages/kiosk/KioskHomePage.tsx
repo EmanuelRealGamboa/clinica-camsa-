@@ -16,6 +16,7 @@ import { InitialWelcomeScreen } from '../../components/kiosk/InitialWelcomeScree
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useKioskState } from '../../hooks/useKioskState';
 import { colors } from '../../styles/colors';
+import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
@@ -535,14 +536,18 @@ export const KioskHomePage: React.FC = () => {
     <div style={styles.container}>
       {/* Header */}
       <header style={styles.header}>
-        <div>
-          <h1 style={styles.headerTitle}>Orden de Servicio a Habitación</h1>
-          {patientInfo && (
-            <>
-              <p style={styles.welcomeText}>Bienvenido, {patientInfo.full_name}</p>
-              <p style={styles.nurseText}>Tu enfermera: {patientInfo.staff_name}</p>
-            </>
-          )}
+        <div style={styles.headerLeft}>
+          <img src={logoHorizontal} alt="Clínica CAMSA" style={styles.logo} />
+          <div style={styles.headerDivider} />
+          <div>
+            <h1 style={styles.headerTitle}>Servicio a Habitación</h1>
+            {patientInfo && (
+              <>
+                <p style={styles.welcomeText}>Bienvenido, {patientInfo.full_name}</p>
+                <p style={styles.nurseText}>Tu enfermera: {patientInfo.staff_name}</p>
+              </>
+            )}
+          </div>
         </div>
         <div style={styles.headerInfo}>
           {patientInfo && (
@@ -552,11 +557,19 @@ export const KioskHomePage: React.FC = () => {
             </div>
           )}
           <div style={styles.headerRight}>
-            <button style={styles.ordersButton} onClick={handleViewOrders}>
+            <button
+              style={styles.ordersButton}
+              onClick={handleViewOrders}
+              className="kiosk-btn-outline"
+            >
               Mis Órdenes
             </button>
             {cartTotal > 0 && (
-              <button style={styles.cartButton} onClick={() => setShowCart(true)}>
+              <button
+                style={styles.cartButton}
+                onClick={() => setShowCart(true)}
+                className="kiosk-btn-primary"
+              >
                 🛒 Carrito ({cartTotal})
               </button>
             )}
@@ -687,7 +700,7 @@ export const KioskHomePage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: colors.grayBg,
+    backgroundColor: colors.ivory,
     paddingBottom: '40px',
   },
   loading: {
@@ -696,12 +709,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: colors.grayBg,
+    backgroundColor: colors.ivory,
+    color: colors.textSecondary,
   },
   spinner: {
     width: '48px',
     height: '48px',
-    border: `4px solid ${colors.grayLight}`,
+    border: `4px solid ${colors.primaryMuted}`,
     borderTop: `4px solid ${colors.primary}`,
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
@@ -711,28 +725,43 @@ const styles: { [key: string]: React.CSSProperties } = {
     top: 0,
     zIndex: 100,
     backgroundColor: colors.white,
-    padding: '24px 40px',
+    padding: '16px 40px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: `0 2px 8px ${colors.shadow}`,
+    boxShadow: `0 2px 12px ${colors.shadowGold}`,
+    borderBottom: `1px solid ${colors.primaryMuted}`,
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+  },
+  logo: {
+    height: '50px',
+    width: 'auto',
+  },
+  headerDivider: {
+    width: '1px',
+    height: '40px',
+    backgroundColor: colors.primaryMuted,
   },
   headerTitle: {
-    fontSize: '28px',
-    fontWeight: 'bold',
-    color: colors.black,
-    margin: '0 0 8px 0',
+    fontSize: '22px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+    margin: '0 0 4px 0',
   },
   welcomeText: {
-    fontSize: '16px',
-    color: colors.gray,
-    margin: '4px 0',
+    fontSize: '14px',
+    color: colors.primary,
+    margin: '2px 0',
     fontWeight: '500',
   },
   nurseText: {
-    fontSize: '14px',
-    color: colors.gray,
-    margin: '4px 0 0 0',
+    fontSize: '13px',
+    color: colors.textSecondary,
+    margin: '2px 0 0 0',
   },
   headerInfo: {
     display: 'flex',
@@ -743,51 +772,90 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: '4px',
+    gap: '2px',
+    padding: '8px 16px',
+    backgroundColor: colors.cream,
+    borderRadius: '8px',
+    border: `1px solid ${colors.primaryMuted}`,
   },
   roomLabel: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    color: colors.black,
+    fontSize: '15px',
+    fontWeight: '600',
+    color: colors.primary,
   },
   deviceLabel: {
-    fontSize: '12px',
-    color: colors.gray,
+    fontSize: '11px',
+    color: colors.textMuted,
   },
   headerRight: {
     display: 'flex',
-    gap: '16px',
+    gap: '12px',
   },
   ordersButton: {
     padding: '12px 24px',
-    backgroundColor: '#ff9800',
-    color: colors.white,
-    border: 'none',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    fontSize: '15px',
+    fontWeight: '600',
     cursor: 'pointer',
-    transition: 'background-color 0.2s',
+    transition: 'all 0.2s ease',
   },
   cartButton: {
     padding: '12px 24px',
-    backgroundColor: '#ff9800',
+    backgroundColor: colors.primary,
     color: colors.white,
-    border: 'none',
+    border: `2px solid ${colors.primary}`,
     borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    fontSize: '15px',
+    fontWeight: '600',
     cursor: 'pointer',
-    transition: 'background-color 0.2s',
+    transition: 'all 0.2s ease',
   },
 };
 
-// Add keyframes for spinner animation
+// Add keyframes and button hover styles
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+
+  .kiosk-btn-outline {
+    background-color: ${colors.white} !important;
+    color: ${colors.primary} !important;
+    border: 2px solid ${colors.primary} !important;
+  }
+
+  .kiosk-btn-outline:hover {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+  }
+
+  .kiosk-btn-outline:active {
+    background-color: ${colors.primaryDark} !important;
+    border-color: ${colors.primaryDark} !important;
+  }
+
+  .kiosk-btn-primary {
+    background-color: ${colors.primary} !important;
+    color: ${colors.white} !important;
+    border: 2px solid ${colors.primary} !important;
+  }
+
+  .kiosk-btn-primary:hover {
+    background-color: ${colors.primaryDark} !important;
+    border-color: ${colors.primaryDark} !important;
+  }
+
+  .kiosk-btn-primary:active {
+    background-color: ${colors.goldDark} !important;
+    border-color: ${colors.goldDark} !important;
+  }
 `;
-document.head.appendChild(styleSheet);
+if (!document.head.querySelector('[data-kiosk-home-styles]')) {
+  styleSheet.setAttribute('data-kiosk-home-styles', 'true');
+  document.head.appendChild(styleSheet);
+}

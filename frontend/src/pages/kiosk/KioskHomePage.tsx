@@ -376,8 +376,10 @@ export const KioskHomePage: React.FC = () => {
       setShowWelcomeModal(false);
       setCart(new Map());
       setActiveOrdersItems(new Map());
+      setShowThankYouModal(false);
+      closeSurvey(); // Close any open survey modals
     }
-  }, [deviceId, navigate]);
+  }, [deviceId, navigate, startSurvey, patientInfo, closeSurvey]);
 
   // WebSocket connection for real-time notifications
   const wsUrl = deviceId ? `${WS_BASE_URL}/ws/kiosk/orders/?device_uid=${deviceId}` : '';

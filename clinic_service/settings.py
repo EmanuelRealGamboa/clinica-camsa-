@@ -19,7 +19,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-change-this')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',') if not DEBUG else ['*']
+# ALLOWED_HOSTS - strip whitespace and handle empty values
+allowed_hosts_str = os.getenv('ALLOWED_HOSTS', '').strip()
+if allowed_hosts_str:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
+else:
+    ALLOWED_HOSTS = ['*'] if DEBUG else ['localhost']
 
 # CSRF Trusted Origins
 if not DEBUG:

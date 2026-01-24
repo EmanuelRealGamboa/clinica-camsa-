@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
-import { SurveyProvider } from './contexts/SurveyContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { AdminProtectedRoute } from './auth/AdminProtectedRoute';
 
@@ -11,6 +10,13 @@ import { KioskHomePage } from './pages/kiosk/KioskHomePage';
 import { KioskCategoryPage } from './pages/kiosk/KioskCategoryPage';
 import { KioskFoodPage } from './pages/kiosk/KioskFoodPage';
 import { KioskOrdersPage } from './pages/kiosk/KioskOrdersPage';
+import { KioskStorePage } from './pages/kiosk/KioskStorePage';
+import { KioskStoreProductDetail } from './pages/kiosk/KioskStoreProductDetail';
+import { KioskStoreCart } from './pages/kiosk/KioskStoreCart';
+import { KioskStoreCheckout } from './pages/kiosk/KioskStoreCheckout';
+import { KioskServicesPage } from './pages/kiosk/KioskServicesPage';
+import { KioskServiceDetail } from './pages/kiosk/KioskServiceDetail';
+import { KioskServiceBooking } from './pages/kiosk/KioskServiceBooking';
 
 // Staff Pages
 import LoginPage from './pages/staff/LoginPage';
@@ -23,7 +29,6 @@ import { InventoryViewPage } from './pages/staff/InventoryViewPage';
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import UsersManagementPage from './pages/admin/UsersManagementPage';
-import ClientsManagementPage from './pages/admin/ClientsManagementPage';
 import ProductsManagementPage from './pages/admin/ProductsManagementPage';
 import DevicesManagementPage from './pages/admin/DevicesManagementPage';
 import FeedbackPage from './pages/admin/FeedbackPage';
@@ -32,16 +37,30 @@ import InventoryPage from './pages/admin/InventoryPage';
 function App() {
   return (
     <AuthProvider>
-      <SurveyProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Kiosk Routes - New Design */}
-            <Route path="/kiosk/:deviceId" element={<KioskHomePage />} />
-            <Route path="/kiosk/:deviceId/category/:categoryId" element={<KioskCategoryPage />} />
-            <Route path="/kiosk/:deviceId/food" element={<KioskFoodPage />} />
-            <Route path="/kiosk/:deviceId/food/restaurant/:restaurantId" element={<KioskFoodPage />} />
-            <Route path="/kiosk/:deviceId/orders" element={<KioskOrdersPage />} />
-            <Route path="/kiosk" element={<Navigate to="/kiosk/01" replace />} />
+      <BrowserRouter>
+        <Routes>
+          {/* Kiosk Routes - More specific routes first */}
+          
+          {/* Store Routes - Must be before /kiosk/:deviceId */}
+          <Route path="/kiosk/:deviceId/store/checkout" element={<KioskStoreCheckout />} />
+          <Route path="/kiosk/:deviceId/store/cart" element={<KioskStoreCart />} />
+          <Route path="/kiosk/:deviceId/store/product/:productId" element={<KioskStoreProductDetail />} />
+          <Route path="/kiosk/:deviceId/store" element={<KioskStorePage />} />
+          
+          {/* Services Routes - Must be before /kiosk/:deviceId */}
+          <Route path="/kiosk/:deviceId/services/:serviceId/booking" element={<KioskServiceBooking />} />
+          <Route path="/kiosk/:deviceId/services/:serviceId" element={<KioskServiceDetail />} />
+          <Route path="/kiosk/:deviceId/services" element={<KioskServicesPage />} />
+          
+          {/* Other Kiosk Routes */}
+          <Route path="/kiosk/:deviceId/food/restaurant/:restaurantId" element={<KioskFoodPage />} />
+          <Route path="/kiosk/:deviceId/food" element={<KioskFoodPage />} />
+          <Route path="/kiosk/:deviceId/category/:categoryId" element={<KioskCategoryPage />} />
+          <Route path="/kiosk/:deviceId/orders" element={<KioskOrdersPage />} />
+          
+          {/* General Kiosk Route - Must be last */}
+          <Route path="/kiosk/:deviceId" element={<KioskHomePage />} />
+          <Route path="/kiosk" element={<Navigate to="/kiosk/01" replace />} />
 
           {/* Staff Routes */}
           <Route path="/staff/login" element={<LoginPage />} />
@@ -97,14 +116,6 @@ function App() {
             }
           />
           <Route
-            path="/admin/clients"
-            element={
-              <AdminProtectedRoute>
-                <ClientsManagementPage />
-              </AdminProtectedRoute>
-            }
-          />
-          <Route
             path="/admin/products"
             element={
               <AdminProtectedRoute>
@@ -137,13 +148,12 @@ function App() {
             }
           />
 
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/kiosk" replace />} />
-            <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
-            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </SurveyProvider>
+          {/* Default redirect */}
+          <Route path="/" element={<Navigate to="/kiosk" replace />} />
+          <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   );
 }

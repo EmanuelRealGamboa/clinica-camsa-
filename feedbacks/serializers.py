@@ -1,23 +1,29 @@
 from rest_framework import serializers
 from .models import Feedback
-from orders.models import Order
-from clinic.models import Device
+from clinic.models import Device, PatientAssignment
 
 
 class CreateFeedbackSerializer(serializers.Serializer):
     """
     Serializer for creating feedback from kiosk/iPad
+    New structure: ratings for products, staff, and stay
     """
-    device_uid = serializers.CharField(required=True)
-    satisfaction_rating = serializers.IntegerField(min_value=1, max_value=5, required=True)
+    patient_assignment_id = serializers.IntegerField(required=True)
+    product_ratings = serializers.DictField(
+        child=serializers.DictField(child=serializers.IntegerField(min_value=0, max_value=5)),
+        required=True,
+        help_text='Ratings for products: {order_id: {product_id: rating (0-5)}}'
+    )
+    staff_rating = serializers.IntegerField(min_value=0, max_value=5, required=True)
+    stay_rating = serializers.IntegerField(min_value=0, max_value=5, required=True)
     comment = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
-    def validate_device_uid(self, value):
-        """Validate device exists and is active"""
+    def validate_patient_assignment_id(self, value):
+        """Validate patient assignment exists and is active"""
         try:
-            Device.objects.get(device_uid=value, is_active=True)
-        except Device.DoesNotExist:
-            raise serializers.ValidationError("Device not found or inactive")
+            assignment = PatientAssignment.objects.get(id=value, is_active=True)
+        except PatientAssignment.DoesNotExist:
+            raise serializers.ValidationError("Patient assignment not found or inactive")
         return value
 
 
@@ -25,9 +31,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
     """
     Serializer for Feedback model (read-only for staff)
     """
-    order_id = serializers.IntegerField(source='order.id', read_only=True)
-    order_placed_at = serializers.DateTimeField(source='order.placed_at', read_only=True)
-    order_delivered_at = serializers.DateTimeField(source='order.delivered_at', read_only=True)
+    patient_assignment_id = serializers.IntegerField(source='patient_assignment.id', read_only=True)
     room_code = serializers.CharField(source='room.code', read_only=True)
     patient_name = serializers.CharField(source='patient.full_name', read_only=True, allow_null=True)
     staff_name = serializers.CharField(source='staff.full_name', read_only=True, allow_null=True)
@@ -37,10 +41,8 @@ class FeedbackSerializer(serializers.ModelSerializer):
         model = Feedback
         fields = [
             'id',
-            'order',
-            'order_id',
-            'order_placed_at',
-            'order_delivered_at',
+            'patient_assignment',
+            'patient_assignment_id',
             'room',
             'room_code',
             'patient',
@@ -48,7 +50,9 @@ class FeedbackSerializer(serializers.ModelSerializer):
             'staff',
             'staff_name',
             'staff_email',
-            'satisfaction_rating',
+            'product_ratings',
+            'staff_rating',
+            'stay_rating',
             'comment',
             'created_at'
         ]

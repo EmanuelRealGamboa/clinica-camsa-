@@ -6,11 +6,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from accounts.permissions import IsStaffOrAdmin
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.db.models import Count, Avg
 
 from .models import Room, Patient, Device, PatientAssignment
 from .serializers import (
     RoomSerializer,
     PatientSerializer,
+    PatientDetailSerializer,
     DeviceSerializer,
     PatientAssignmentSerializer,
     PatientAssignmentCreateSerializer
@@ -56,9 +58,117 @@ class PatientViewSet(viewsets.ModelViewSet):
     permission_classes = [IsStaffOrAdmin]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active']
-    search_fields = ['full_name', 'phone_e164']
+    search_fields = ['full_name', 'phone_e164', 'email']
     ordering_fields = ['full_name', 'created_at']
     ordering = ['-created_at']
+
+    def get_serializer_class(self):
+        """Use detailed serializer for list and retrieve"""
+        if self.action in ['list', 'retrieve']:
+            return PatientDetailSerializer
+        return PatientSerializer
+
+    @action(detail=True, methods=['get'])
+    def orders(self, request, pk=None):
+        """
+        Get all orders for a patient
+        GET /api/clinic/patients/{id}/orders/
+        """
+        from orders.serializers import OrderSerializer
+        
+        patient = self.get_object()
+        orders = patient.orders.all().prefetch_related('items', 'items__product').order_by('-placed_at')
+        
+        serializer = OrderSerializer(orders, many=True)
+        return Response({
+            'success': True,
+            'count': orders.count(),
+            'orders': serializer.data
+        })
+
+    @action(detail=True, methods=['get'])
+    def feedbacks(self, request, pk=None):
+        """
+        Get all feedbacks for a patient
+        GET /api/clinic/patients/{id}/feedbacks/
+        """
+        from feedbacks.serializers import FeedbackSerializer
+        
+        patient = self.get_object()
+        feedbacks = patient.feedbacks.all().select_related(
+            'patient_assignment', 'room', 'staff'
+        ).order_by('-created_at')
+        
+        serializer = FeedbackSerializer(feedbacks, many=True)
+        return Response({
+            'success': True,
+            'count': feedbacks.count(),
+            'feedbacks': serializer.data
+        })
+
+    @action(detail=True, methods=['get'])
+    def assignments(self, request, pk=None):
+        """
+        Get all assignments for a patient
+        GET /api/clinic/patients/{id}/assignments/
+        """
+        patient = self.get_object()
+        assignments = patient.assignments.all().select_related(
+            'staff', 'device', 'room'
+        ).order_by('-started_at')
+        
+        serializer = PatientAssignmentSerializer(assignments, many=True)
+        return Response({
+            'success': True,
+            'count': assignments.count(),
+            'assignments': serializer.data
+        })
+
+    @action(detail=True, methods=['get'])
+    def full_details(self, request, pk=None):
+        """
+        Get complete patient information including orders, feedbacks, and assignments
+        GET /api/clinic/patients/{id}/full_details/
+        """
+        from orders.serializers import OrderSerializer
+        from feedbacks.serializers import FeedbackSerializer
+        
+        patient = self.get_object()
+        
+        # Get orders
+        orders = patient.orders.all().prefetch_related('items', 'items__product').order_by('-placed_at')
+        
+        # Get feedbacks
+        feedbacks = patient.feedbacks.all().select_related(
+            'patient_assignment', 'room', 'staff'
+        ).order_by('-created_at')
+        
+        # Get assignments
+        assignments = patient.assignments.all().select_related(
+            'staff', 'device', 'room'
+        ).order_by('-started_at')
+        
+        # Calculate statistics
+        total_orders = orders.count()
+        total_feedbacks = feedbacks.count()
+        
+        # Average ratings from feedbacks
+        avg_staff_rating = feedbacks.aggregate(avg=Avg('staff_rating'))['avg'] or 0
+        avg_stay_rating = feedbacks.aggregate(avg=Avg('stay_rating'))['avg'] or 0
+        
+        return Response({
+            'patient': PatientDetailSerializer(patient).data,
+            'statistics': {
+                'total_orders': total_orders,
+                'total_feedbacks': total_feedbacks,
+                'total_assignments': assignments.count(),
+                'avg_staff_rating': round(avg_staff_rating, 2),
+                'avg_stay_rating': round(avg_stay_rating, 2),
+            },
+            'orders': OrderSerializer(orders[:10], many=True).data,  # Last 10 orders
+            'feedbacks': FeedbackSerializer(feedbacks[:10], many=True).data,  # Last 10 feedbacks
+            'assignments': PatientAssignmentSerializer(assignments[:10], many=True).data,  # Last 10 assignments
+        })
 
 
 class DeviceViewSet(viewsets.ModelViewSet):
@@ -228,6 +338,22 @@ class PatientAssignmentViewSet(viewsets.ModelViewSet):
             # Log but don't fail the request
             print(f'WebSocket broadcast failed: {ws_error}')
 
+        # Broadcast session ended to staff via WebSocket
+        try:
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                'staff_orders',
+                {
+                    'type': 'patient_assignment_ended',
+                    'assignment_id': assignment.id,
+                    'staff_id': assignment.staff.id if assignment.staff else None,
+                    'ended_at': assignment.ended_at.isoformat(),
+                }
+            )
+        except Exception as ws_error:
+            # Log but don't fail the request
+            print(f'WebSocket broadcast to staff failed: {ws_error}')
+
         serializer = self.get_serializer(assignment)
         return Response(serializer.data)
 
@@ -280,9 +406,10 @@ class PatientAssignmentViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-        # Update limits
+        # Update limits and reactivate patient orders
         assignment.order_limits = order_limits
-        assignment.save(update_fields=['order_limits', 'updated_at'])
+        assignment.can_patient_order = True  # Reactivate patient orders when limits are updated
+        assignment.save(update_fields=['order_limits', 'can_patient_order', 'updated_at'])
 
         # Broadcast limits update to kiosk
         try:
@@ -294,6 +421,58 @@ class PatientAssignmentViewSet(viewsets.ModelViewSet):
                         'type': 'limits_updated',
                         'assignment_id': assignment.id,
                         'order_limits': order_limits,
+                        'can_patient_order': True,
+                    }
+                )
+        except Exception as ws_error:
+            # Log but don't fail the request
+            print(f'WebSocket broadcast failed: {ws_error}')
+
+        serializer = self.get_serializer(assignment)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def enable_survey(self, request, pk=None):
+        """
+        Enable survey for a patient assignment
+        POST /api/clinic/patient-assignments/{id}/enable_survey/
+        This will block patient from creating new orders until survey is completed
+        """
+        from django.utils import timezone
+        
+        assignment = self.get_object()
+
+        # Check if assignment is active
+        if not assignment.is_active:
+            return Response(
+                {'detail': 'Cannot enable survey for an ended assignment'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if current user is the assigned staff
+        if assignment.staff != request.user and not request.user.is_superuser:
+            return Response(
+                {'detail': 'You can only enable survey for your own patient assignments'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Enable survey and block patient orders
+        assignment.survey_enabled = True
+        assignment.survey_enabled_at = timezone.now()
+        assignment.can_patient_order = False  # Block patient from creating new orders
+        assignment.save(update_fields=['survey_enabled', 'survey_enabled_at', 'can_patient_order', 'updated_at'])
+
+        # Broadcast survey enabled to kiosk
+        try:
+            if assignment.device:
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    f'device_{assignment.device.id}',
+                    {
+                        'type': 'survey_enabled',
+                        'assignment_id': assignment.id,
+                        'patient_id': assignment.patient.id,
+                        'survey_enabled': True,
                     }
                 )
         except Exception as ws_error:
@@ -351,9 +530,13 @@ def get_active_patient_by_device(request, device_uid):
                 'full_name': assignment.staff.full_name,
                 'email': assignment.staff.email,
             },
+            'id': assignment.id,
             'assignment_id': assignment.id,
             'started_at': assignment.started_at.isoformat(),
-            'order_limits': assignment.order_limits or {}
+            'order_limits': assignment.order_limits or {},
+            'survey_enabled': assignment.survey_enabled,
+            'survey_enabled_at': assignment.survey_enabled_at.isoformat() if assignment.survey_enabled_at else None,
+            'can_patient_order': assignment.can_patient_order,
         }, status=status.HTTP_200_OK)
 
     except Device.DoesNotExist:

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Product } from '../../types';
 import { colors, gradients } from '../../styles/colors';
+import { useWindowSize } from '../../utils/responsive';
 
 interface HeroSectionProps {
   product: Product;
@@ -8,31 +9,42 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ product, onAddToCart }) => {
+  const { isMobile } = useWindowSize();
   const title = product.featured_title || product.name;
   const description = product.featured_description || product.description;
   const isOutOfStock = product.is_available === false;
 
+  const heroStyles = {
+    ...styles.hero,
+    ...(isMobile && responsiveStyles.hero),
+  };
+
+  const contentStyles = {
+    ...styles.content,
+    ...(isMobile && responsiveStyles.content),
+  };
+
   return (
-    <div style={styles.hero}>
-      <div style={styles.content}>
+    <div style={heroStyles}>
+      <div style={contentStyles}>
         {/* Badge */}
-        <div style={styles.badge}>
+        <div style={{ ...styles.badge, ...(isMobile && responsiveStyles.badge) }}>
           ✨ Producto Especial del Mes
         </div>
 
         {/* Title */}
-        <h1 style={styles.title}>{title}</h1>
+        <h1 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>{title}</h1>
 
         {/* Unit label removed - not shown in featured banner */}
 
         {/* Description */}
-        <p style={styles.description}>{description}</p>
+        <p style={{ ...styles.description, ...(isMobile && responsiveStyles.description) }}>{description}</p>
 
         {/* Benefits Pills */}
         {product.benefits && product.benefits.length > 0 && (
-          <div style={styles.benefitsContainer}>
+          <div style={{ ...styles.benefitsContainer, ...(isMobile && responsiveStyles.benefitsContainer) }}>
             {product.benefits.map((benefit, index) => (
-              <div key={index} style={styles.benefitPill}>
+              <div key={index} style={{ ...styles.benefitPill, ...(isMobile && responsiveStyles.benefitPill) }}>
                 <span style={styles.benefitIcon}>{benefit.icon}</span>
                 <span>{benefit.text}</span>
               </div>
@@ -43,21 +55,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ product, onAddToCart }
         {/* CTA Button */}
         {!isOutOfStock ? (
           <button
-            style={styles.ctaButton}
+            style={{ ...styles.ctaButton, ...(isMobile && responsiveStyles.ctaButton) }}
             onClick={() => onAddToCart(product.id)}
             className="hero-cta-button"
           >
             Ordenar Ahora
           </button>
         ) : (
-          <button style={styles.ctaButtonDisabled} disabled>
+          <button style={{ ...styles.ctaButtonDisabled, ...(isMobile && responsiveStyles.ctaButton) }} disabled>
             Producto Agotado
           </button>
         )}
       </div>
 
       {/* Product Image */}
-      <div style={styles.imageContainer}>
+      <div style={{ ...styles.imageContainer, ...(isMobile && responsiveStyles.imageContainer) }}>
         {product.image_url_full && (
           <img
             src={product.image_url_full}
@@ -208,28 +220,53 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 // Responsive styles for mobile
-const mediaQuery = window.matchMedia('(max-width: 768px)');
-if (mediaQuery.matches) {
-  styles.hero = {
-    ...styles.hero,
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  hero: {
     flexDirection: 'column',
-    padding: '40px 20px',
-    gap: '32px',
-  };
-  styles.title = {
-    ...styles.title,
-    fontSize: '32px',
-  };
-  styles.description = {
-    ...styles.description,
-    fontSize: '16px',
-  };
-  styles.imageContainer = {
-    ...styles.imageContainer,
+    padding: '30px 20px',
+    margin: '12px',
+    gap: '24px',
+    minHeight: 'auto',
+    borderRadius: '16px',
+  },
+  content: {
     maxWidth: '100%',
-    height: '300px',
-  };
-}
+    textAlign: 'center',
+  },
+  badge: {
+    fontSize: '12px',
+    padding: '8px 16px',
+    marginBottom: '16px',
+  },
+  title: {
+    fontSize: '32px',
+    marginBottom: '12px',
+  },
+  description: {
+    fontSize: '16px',
+    marginBottom: '20px',
+  },
+  benefitsContainer: {
+    justifyContent: 'center',
+    gap: '8px',
+    marginBottom: '24px',
+  },
+  benefitPill: {
+    fontSize: '13px',
+    padding: '10px 16px',
+  },
+  ctaButton: {
+    width: '100%',
+    padding: '16px 24px',
+    fontSize: '16px',
+  },
+  imageContainer: {
+    maxWidth: '100%',
+    minWidth: 'auto',
+    width: '100%',
+    height: '250px',
+  },
+};
 
 // Add hover effects for CTA button
 const styleSheet = document.createElement('style');

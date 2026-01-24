@@ -1,4 +1,5 @@
 import React from 'react';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 
 interface WelcomeModalProps {
@@ -17,26 +18,33 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   orderLimits,
   onClose,
 }) => {
+  const { isMobile } = useWindowSize();
+  
   if (!show) return null;
 
   const drinkLimit = orderLimits?.DRINK || 1;
   const snackLimit = orderLimits?.SNACK || 1;
 
+  const modalStyles = {
+    ...styles.modal,
+    ...(isMobile && responsiveStyles.modal),
+  };
+
   return (
     <div style={styles.overlay}>
-      <div style={styles.modal}>
+      <div style={modalStyles}>
         <div style={styles.iconContainer}>
           <span style={styles.icon}>🏥</span>
         </div>
 
-        <h2 style={styles.title}>¡Bienvenido/a {patientName}!</h2>
+        <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>¡Bienvenido/a {patientName}!</h2>
 
-        <p style={styles.message}>
+        <p style={{ ...styles.message, ...(isMobile && responsiveStyles.message) }}>
           Nos complace tenerte con nosotros. Como cortesía de la casa,
           puedes disfrutar de:
         </p>
 
-        <div style={styles.limitsContainer}>
+        <div style={{ ...styles.limitsContainer, ...(isMobile && responsiveStyles.limitsContainer) }}>
           {drinkLimit > 0 && (
             <div style={styles.limitItem}>
               <span style={styles.limitIcon}>🥤</span>
@@ -72,11 +80,11 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           )}
         </div>
 
-        <p style={styles.enjoyMessage}>
+        <p style={{ ...styles.enjoyMessage, ...(isMobile && responsiveStyles.enjoyMessage) }}>
           ¡Disfruta tu estancia y que te recuperes pronto!
         </p>
 
-        <button style={styles.button} onClick={onClose} className="welcome-btn">
+        <button style={{ ...styles.button, ...(isMobile && responsiveStyles.button) }} onClick={onClose} className="welcome-btn">
           Comenzar
         </button>
       </div>
@@ -185,6 +193,38 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
     transition: 'all 0.3s',
     boxShadow: `0 4px 12px ${colors.shadowGold}`,
+  },
+};
+
+// Responsive styles for mobile
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  modal: {
+    width: '100%',
+    maxWidth: '100%',
+    padding: '32px 20px',
+    borderRadius: 0,
+  },
+  title: {
+    fontSize: '24px',
+    marginBottom: '16px',
+  },
+  message: {
+    fontSize: '16px',
+    marginBottom: '24px',
+  },
+  limitsContainer: {
+    padding: '16px',
+    gap: '12px',
+    marginBottom: '24px',
+  },
+  enjoyMessage: {
+    fontSize: '16px',
+    marginBottom: '24px',
+  },
+  button: {
+    width: '100%',
+    padding: '14px 32px',
+    fontSize: '16px',
   },
 };
 

@@ -2,6 +2,44 @@ from rest_framework import serializers
 from .models import Room, Patient, Device, PatientAssignment
 
 
+class PatientDetailSerializer(serializers.ModelSerializer):
+    """
+    Detailed serializer for Patient with related orders and feedbacks
+    """
+    total_orders = serializers.SerializerMethodField()
+    total_feedbacks = serializers.SerializerMethodField()
+    assignments_count = serializers.SerializerMethodField()
+    last_visit = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Patient
+        fields = [
+            'id', 'full_name', 'phone_e164', 'email', 'is_active',
+            'total_orders', 'total_feedbacks', 'assignments_count',
+            'last_visit', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_total_orders(self, obj):
+        """Get total orders count for this patient"""
+        return obj.orders.count()
+    
+    def get_total_feedbacks(self, obj):
+        """Get total feedbacks count for this patient"""
+        return obj.feedbacks.count()
+    
+    def get_assignments_count(self, obj):
+        """Get total assignments count"""
+        return obj.assignments.count()
+    
+    def get_last_visit(self, obj):
+        """Get last assignment date"""
+        last_assignment = obj.assignments.order_by('-started_at').first()
+        if last_assignment:
+            return last_assignment.started_at.isoformat()
+        return None
+
+
 class RoomSerializer(serializers.ModelSerializer):
     """
     Serializer for Room model
@@ -18,8 +56,16 @@ class PatientSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Patient
-        fields = ['id', 'full_name', 'phone_e164', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'full_name', 'phone_e164', 'email', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_email(self, value):
+        """
+        Convert empty string to None for optional email field
+        """
+        if value == '' or value is None:
+            return None
+        return value
 
     def validate_phone_e164(self, value):
         """
@@ -107,6 +153,9 @@ class PatientAssignmentSerializer(serializers.ModelSerializer):
             'room',
             'room_details',
             'order_limits',
+            'survey_enabled',
+            'survey_enabled_at',
+            'can_patient_order',
             'is_active',
             'started_at',
             'ended_at',

@@ -3,27 +3,29 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from orders.models import Order
-from clinic.models import Room, Patient
+from clinic.models import Room, Patient, PatientAssignment
 
 
 class Feedback(models.Model):
     """
-    Feedback model for order ratings
-    Each order can have exactly one feedback (OneToOne relationship)
+    Feedback model for patient assignment ratings
+    Each patient assignment can have one feedback with ratings for all orders
     """
-    order = models.OneToOneField(
-        Order,
+    patient_assignment = models.ForeignKey(
+        PatientAssignment,
         on_delete=models.CASCADE,
-        related_name='feedback',
-        verbose_name=_('order'),
-        help_text=_('The order this feedback is for (unique)')
+        related_name='feedbacks',
+        null=True,
+        blank=True,
+        verbose_name=_('patient assignment'),
+        help_text=_('The patient assignment this feedback is for')
     )
     room = models.ForeignKey(
         Room,
         on_delete=models.CASCADE,
         related_name='feedbacks',
         verbose_name=_('room'),
-        help_text=_('The room where the order was delivered')
+        help_text=_('The room where the orders were delivered')
     )
     patient = models.ForeignKey(
         Patient,
@@ -41,12 +43,26 @@ class Feedback(models.Model):
         blank=True,
         related_name='received_feedbacks',
         verbose_name=_('staff member'),
-        help_text=_('Staff member (nurse) who attended this order')
+        help_text=_('Staff member (nurse) who attended the orders')
     )
-    satisfaction_rating = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        verbose_name=_('satisfaction rating'),
-        help_text=_('Overall satisfaction rating (1-5 stars)')
+    # Product ratings: {order_id: {product_id: rating (0-5)}}
+    product_ratings = models.JSONField(
+        _('product ratings'),
+        default=dict,
+        blank=True,
+        help_text=_('Ratings for products in each order: {order_id: {product_id: rating (0-5)}}')
+    )
+    # Staff interaction rating (0-5)
+    staff_rating = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name=_('staff rating'),
+        help_text=_('Rating for staff interaction (0-5 stars)')
+    )
+    # Stay experience rating (0-5)
+    stay_rating = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        verbose_name=_('stay rating'),
+        help_text=_('Rating for stay experience (0-5 stars)')
     )
     comment = models.TextField(
         null=True,
@@ -67,9 +83,9 @@ class Feedback(models.Model):
             models.Index(fields=['-created_at']),
             models.Index(fields=['room', '-created_at']),
             models.Index(fields=['staff', '-created_at']),
-            models.Index(fields=['satisfaction_rating', '-created_at']),
+            models.Index(fields=['patient_assignment', '-created_at']),
         ]
 
     def __str__(self):
         staff_name = self.staff.full_name if self.staff else 'Unknown'
-        return f'Feedback for Order #{self.order.id} - {self.satisfaction_rating}/5 stars - Attended by {staff_name}'
+        return f'Feedback for Assignment #{self.patient_assignment.id} - Staff: {self.staff_rating}/5 - Stay: {self.stay_rating}/5 - Attended by {staff_name}'

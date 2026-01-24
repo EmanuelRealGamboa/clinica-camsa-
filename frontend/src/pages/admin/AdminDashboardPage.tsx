@@ -56,8 +56,8 @@ const NewAdminDashboardPage: React.FC = () => {
   })) || [];
 
   const satisfactionDistData = stats?.satisfaction?.distribution?.map((item: any) => ({
-    stars: `${item.satisfaction_rating} ⭐`,
-    cantidad: item.count,
+    stars: `${item.satisfaction_rating || item.rating || 0} ⭐`,
+    cantidad: item.count || 0,
   })) || [];
 
   const topProductsData = stats?.products?.top_requested?.map((item: any) => ({
@@ -174,7 +174,13 @@ const NewAdminDashboardPage: React.FC = () => {
             <h3 style={styles.panelTitle}>⭐ Satisfacción del Cliente</h3>
             <div style={styles.kpiRow}>
               <div style={styles.kpi}>
-                <div style={styles.kpiValue}>{stats?.satisfaction?.average || 0}</div>
+                <div style={styles.kpiValue}>
+                  {stats?.satisfaction?.average 
+                    ? typeof stats.satisfaction.average === 'number' 
+                      ? stats.satisfaction.average.toFixed(2) 
+                      : stats.satisfaction.average 
+                    : '0.00'}
+                </div>
                 <div style={styles.kpiLabel}>Promedio (de 5)</div>
               </div>
               <div style={styles.kpi}>
@@ -196,9 +202,11 @@ const NewAdminDashboardPage: React.FC = () => {
                 <div style={styles.sectionTitle}>Mejor Personal</div>
                 {stats.satisfaction.top_staff.map((staff: any, index: number) => (
                   <div key={index} style={styles.staffItem}>
-                    <span>{staff.staff__full_name}</span>
+                    <span>{staff.staff__full_name || 'N/A'}</span>
                     <span style={styles.staffRating}>
-                      {staff.avg_rating?.toFixed(1)} ⭐ ({staff.count})
+                      {staff.avg_rating && typeof staff.avg_rating === 'number' 
+                        ? staff.avg_rating.toFixed(1) 
+                        : '0.0'} ⭐ ({staff.count || 0})
                     </span>
                   </div>
                 ))}

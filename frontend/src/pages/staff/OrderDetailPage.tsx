@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ordersApi } from '../../api/orders';
+import { colors } from '../../styles/colors';
 
 const OrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -62,7 +63,7 @@ const OrderDetailPage: React.FC = () => {
       setSuccessModal({
         show: true,
         title: 'Estado Actualizado',
-        message: response.message,
+        message: translateMessage(response.message),
       });
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || 'Error al actualizar el estado';
@@ -94,7 +95,7 @@ const OrderDetailPage: React.FC = () => {
           setSuccessModal({
             show: true,
             title: 'Orden Cancelada',
-            message: response.message,
+            message: translateMessage(response.message),
           });
         } catch (err: any) {
           const errorMsg = err.response?.data?.error || 'Error al cancelar la orden';
@@ -114,20 +115,54 @@ const OrderDetailPage: React.FC = () => {
     });
   };
 
+  const translateStatus = (status: string): string => {
+    const statusMap: { [key: string]: string } = {
+      'NUEVO': 'Nuevo',
+      'PLACED': 'Realizada',
+      'PREPARING': 'Preparando',
+      'READY': 'Lista',
+      'DELIVERED': 'Entregada',
+      'CANCELLED': 'Cancelada',
+    };
+    return statusMap[status] || status;
+  };
+
+  const translateMessage = (message: string): string => {
+    // Traducir mensajes comunes del backend
+    if (message.includes('Order status changed from')) {
+      return message
+        .replace(/Order status changed from (\w+) to (\w+)/i, (match, from, to) => {
+          return `Estado de orden cambiado de ${translateStatus(from)} a ${translateStatus(to)}`;
+        })
+        .replace(/Order status changed/i, 'Estado de orden cambiado');
+    }
+    if (message.includes('Order cancelled')) {
+      return message.replace(/Order cancelled/i, 'Orden cancelada');
+    }
+    if (message.includes('Order created')) {
+      return message.replace(/Order created/i, 'Orden creada');
+    }
+    if (message.includes('Order placed')) {
+      return message.replace(/Order placed/i, 'Orden realizada');
+    }
+    // Si no coincide con ningún patrón, devolver el mensaje original
+    return message;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PLACED':
-        return '#e74c3c';
+        return colors.orderPlaced;
       case 'PREPARING':
-        return '#f39c12';
+        return colors.orderPreparing;
       case 'READY':
-        return '#3498db';
+        return colors.orderReady;
       case 'DELIVERED':
-        return '#27ae60';
+        return colors.orderDelivered;
       case 'CANCELLED':
-        return '#95a5a6';
+        return colors.orderCancelled;
       default:
-        return '#95a5a6';
+        return colors.orderCancelled;
     }
   };
 
@@ -165,7 +200,7 @@ const OrderDetailPage: React.FC = () => {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <button onClick={() => navigate('/staff/orders')} style={styles.backButton}>
+        <button onClick={() => navigate('/staff/orders')} style={styles.backButton} className="back-button">
           ← Atrás
         </button>
         <h1>Orden #{order.id}</h1>
@@ -243,7 +278,7 @@ const OrderDetailPage: React.FC = () => {
               {order.status_events.map((event: any) => (
                 <div key={event.id} style={styles.timelineItem}>
                   <div style={styles.timelineStatus}>
-                    {event.from_status || 'NUEVO'} → {event.to_status}
+                    {translateStatus(event.from_status || 'NUEVO')} → {translateStatus(event.to_status)}
                   </div>
                   <div style={styles.timelineTime}>
                     {new Date(event.changed_at).toLocaleString('es-MX')}
@@ -251,7 +286,11 @@ const OrderDetailPage: React.FC = () => {
                   {event.changed_by_email && (
                     <div style={styles.timelineUser}>Por: {event.changed_by_email}</div>
                   )}
-                  {event.note && <div style={styles.timelineNote}>{event.note}</div>}
+                  {event.note && (
+                    <div style={styles.timelineNote}>
+                      {event.note === 'Order placed from kiosk' ? 'Orden realizada desde kiosco' : event.note}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -264,12 +303,13 @@ const OrderDetailPage: React.FC = () => {
               key={action.status}
               onClick={() => handleStatusChange(action.status)}
               style={styles.actionButton}
+              className="action-button"
             >
               {action.label}
             </button>
           ))}
           {canCancel && (
-            <button onClick={handleCancel} style={styles.cancelButton}>
+            <button onClick={handleCancel} style={styles.cancelButton} className="cancel-button">
               Cancelar Orden
             </button>
           )}
@@ -294,6 +334,7 @@ const OrderDetailPage: React.FC = () => {
               <button
                 style={styles.modalConfirmButton}
                 onClick={confirmModal.onConfirm}
+                className="modal-confirm-button"
               >
                 {confirmModal.confirmText || 'Confirmar'}
               </button>
@@ -312,6 +353,7 @@ const OrderDetailPage: React.FC = () => {
             <button
               style={styles.successButton}
               onClick={() => setSuccessModal({ ...successModal, show: false })}
+              className="success-button"
             >
               OK
             </button>
@@ -325,23 +367,27 @@ const OrderDetailPage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.ivory,
   },
   header: {
-    backgroundColor: '#2c3e50',
-    color: 'white',
+    backgroundColor: colors.white,
+    color: colors.textPrimary,
     padding: '20px',
     display: 'flex',
     alignItems: 'center',
     gap: '20px',
+    boxShadow: colors.shadowGold,
+    borderBottom: `2px solid ${colors.primaryMuted}`,
   },
   backButton: {
     padding: '10px 20px',
-    backgroundColor: '#34495e',
+    backgroundColor: colors.primaryDark,
     color: 'white',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '8px',
     cursor: 'pointer',
+    fontWeight: '600',
+    transition: 'all 0.2s',
   },
   content: {
     maxWidth: '1200px',
@@ -349,11 +395,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '20px',
   },
   section: {
-    backgroundColor: 'white',
-    padding: '20px',
-    borderRadius: '8px',
+    backgroundColor: colors.white,
+    padding: '24px',
+    borderRadius: '12px',
     marginBottom: '20px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    boxShadow: colors.shadowGold,
+    border: `1px solid ${colors.primaryMuted}`,
   },
   statusBadge: {
     display: 'inline-block',
@@ -389,9 +436,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   timelineItem: {
     padding: '15px',
-    borderLeft: '3px solid #3498db',
+    borderLeft: `3px solid ${colors.primary}`,
     marginBottom: '15px',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.cream,
+    borderRadius: '0 8px 8px 0',
   },
   timelineStatus: {
     fontWeight: 'bold',
@@ -419,23 +467,25 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   actionButton: {
     padding: '12px 30px',
-    backgroundColor: '#3498db',
+    backgroundColor: colors.primary,
     color: 'white',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '8px',
     fontSize: '16px',
     cursor: 'pointer',
     fontWeight: 'bold',
+    transition: 'all 0.2s',
   },
   cancelButton: {
     padding: '12px 30px',
-    backgroundColor: '#e74c3c',
+    backgroundColor: colors.error,
     color: 'white',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '8px',
     fontSize: '16px',
     cursor: 'pointer',
     fontWeight: 'bold',
+    transition: 'all 0.2s',
   },
   error: {
     padding: '20px',
@@ -492,13 +542,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   modalConfirmButton: {
     padding: '12px 30px',
-    backgroundColor: '#3498db',
+    backgroundColor: colors.primary,
     color: 'white',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '8px',
     fontSize: '16px',
     cursor: 'pointer',
     fontWeight: 'bold',
+    transition: 'all 0.2s',
   },
   successModalContent: {
     backgroundColor: 'white',
@@ -533,14 +584,48 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   successButton: {
     padding: '12px 40px',
-    backgroundColor: '#27ae60',
+    backgroundColor: colors.primary,
     color: 'white',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '8px',
     fontSize: '16px',
     cursor: 'pointer',
     fontWeight: 'bold',
+    transition: 'all 0.2s',
   },
 };
+
+// Add hover effects
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  .back-button:hover {
+    background-color: ${colors.primary} !important;
+    transform: scale(1.02);
+  }
+  
+  .action-button:hover {
+    background-color: ${colors.primaryDark} !important;
+    transform: scale(1.02);
+  }
+  
+  .cancel-button:hover {
+    background-color: ${colors.error} !important;
+    transform: scale(1.02);
+  }
+  
+  .modal-confirm-button:hover {
+    background-color: ${colors.primaryDark} !important;
+    transform: scale(1.02);
+  }
+  
+  .success-button:hover {
+    background-color: ${colors.primaryDark} !important;
+    transform: scale(1.02);
+  }
+`;
+if (!document.head.querySelector('[data-staff-order-detail-styles]')) {
+  styleSheet.setAttribute('data-staff-order-detail-styles', 'true');
+  document.head.appendChild(styleSheet);
+}
 
 export default OrderDetailPage;

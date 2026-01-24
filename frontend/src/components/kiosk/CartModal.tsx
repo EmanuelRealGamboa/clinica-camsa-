@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Product } from '../../types';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 
 interface CartItem {
@@ -28,6 +29,7 @@ export const CartModal: React.FC<CartModalProps> = ({
   activeOrdersItems = new Map(),
   onLimitReached,
 }) => {
+  const { isMobile } = useWindowSize();
   const cartItems: CartItem[] = [];
 
   cart.forEach((quantity, productId) => {
@@ -93,19 +95,27 @@ export const CartModal: React.FC<CartModalProps> = ({
     onUpdateQuantity(productId, 0);
   };
 
+  const modalStyles = {
+    ...styles.modal,
+    ...(isMobile && responsiveStyles.modal),
+  };
+
   return (
     <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div style={modalStyles} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div style={styles.header}>
-          <h2 style={styles.title}>🛒 Tu Carrito</h2>
-          <button style={styles.closeButton} onClick={onClose} className="cart-close-btn">
+        <div style={{ ...styles.header, ...(isMobile && responsiveStyles.header) }}>
+          <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>🛒 Tu Carrito</h2>
+          <button style={{ ...styles.closeButton, ...(isMobile && responsiveStyles.closeButton) }} onClick={onClose} className="cart-close-btn">
             ✕
           </button>
         </div>
 
         {/* Cart Items */}
-        <div style={styles.itemsContainer}>
+        <div style={{
+          ...styles.itemsContainer,
+          ...(isMobile && responsiveStyles.itemsContainer)
+        }}>
           {cartItems.length === 0 ? (
             <div style={styles.emptyCart}>
               <div style={styles.emptyIcon}>🛒</div>
@@ -115,9 +125,15 @@ export const CartModal: React.FC<CartModalProps> = ({
           ) : (
             <>
               {cartItems.map(({ product, quantity }) => (
-                <div key={product.id} style={styles.cartItem}>
+                <div key={product.id} style={{
+                  ...styles.cartItem,
+                  ...(isMobile && responsiveStyles.cartItem)
+                }}>
                   {/* Product Image */}
-                  <div style={styles.itemImage}>
+                  <div style={{
+                    ...styles.itemImage,
+                    ...(isMobile && responsiveStyles.itemImage)
+                  }}>
                     {product.image_url_full ? (
                       <img
                         src={product.image_url_full}
@@ -133,38 +149,68 @@ export const CartModal: React.FC<CartModalProps> = ({
                   </div>
 
                   {/* Product Info */}
-                  <div style={styles.itemInfo}>
-                    <h3 style={styles.itemName}>{product.name}</h3>
-                    <p style={styles.itemUnit}>{product.unit_label}</p>
+                  <div style={{
+                    ...styles.itemInfo,
+                    ...(isMobile && responsiveStyles.itemInfo)
+                  }}>
+                    <h3 style={{
+                      ...styles.itemName,
+                      ...(isMobile && responsiveStyles.itemName)
+                    }}>{product.name}</h3>
+                    <p style={{
+                      ...styles.itemUnit,
+                      ...(isMobile && responsiveStyles.itemUnit)
+                    }}>{product.unit_label}</p>
                   </div>
 
-                  {/* Quantity Controls */}
-                  <div style={styles.quantityControls}>
+                  {/* Quantity Controls and Remove Button Container */}
+                  <div style={{
+                    ...styles.controlsContainer,
+                    ...(isMobile && responsiveStyles.controlsContainer)
+                  }}>
+                    {/* Quantity Controls */}
+                    <div style={{
+                      ...styles.quantityControls,
+                      ...(isMobile && responsiveStyles.quantityControls)
+                    }}>
+                      <button
+                        style={{
+                          ...styles.quantityButton,
+                          ...(isMobile && responsiveStyles.quantityButton)
+                        }}
+                        onClick={() => handleDecrement(product.id, quantity)}
+                        className="cart-qty-btn"
+                      >
+                        −
+                      </button>
+                      <span style={{
+                        ...styles.quantity,
+                        ...(isMobile && responsiveStyles.quantity)
+                      }}>{quantity}</span>
+                      <button
+                        style={{
+                          ...styles.quantityButton,
+                          ...(isMobile && responsiveStyles.quantityButton)
+                        }}
+                        onClick={() => handleIncrement(product.id, quantity)}
+                        className="cart-qty-btn"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Remove Button */}
                     <button
-                      style={styles.quantityButton}
-                      onClick={() => handleDecrement(product.id, quantity)}
-                      className="cart-qty-btn"
+                      style={{
+                        ...styles.removeButton,
+                        ...(isMobile && responsiveStyles.removeButton)
+                      }}
+                      onClick={() => handleRemove(product.id)}
+                      className="cart-remove-btn"
                     >
-                      −
-                    </button>
-                    <span style={styles.quantity}>{quantity}</span>
-                    <button
-                      style={styles.quantityButton}
-                      onClick={() => handleIncrement(product.id, quantity)}
-                      className="cart-qty-btn"
-                    >
-                      +
+                      🗑️
                     </button>
                   </div>
-
-                  {/* Remove Button */}
-                  <button
-                    style={styles.removeButton}
-                    onClick={() => handleRemove(product.id)}
-                    className="cart-remove-btn"
-                  >
-                    🗑️
-                  </button>
                 </div>
               ))}
             </>
@@ -173,12 +219,27 @@ export const CartModal: React.FC<CartModalProps> = ({
 
         {/* Footer */}
         {cartItems.length > 0 && (
-          <div style={styles.footer}>
-            <div style={styles.summary}>
-              <span style={styles.summaryLabel}>Total de items:</span>
-              <span style={styles.summaryValue}>{totalItems}</span>
+          <div style={{
+            ...styles.footer,
+            ...(isMobile && responsiveStyles.footer)
+          }}>
+            <div style={{
+              ...styles.summary,
+              ...(isMobile && responsiveStyles.summary)
+            }}>
+              <span style={{
+                ...styles.summaryLabel,
+                ...(isMobile && responsiveStyles.summaryLabel)
+              }}>Total de items:</span>
+              <span style={{
+                ...styles.summaryValue,
+                ...(isMobile && responsiveStyles.summaryValue)
+              }}>{totalItems}</span>
             </div>
-            <button style={styles.checkoutButton} onClick={onCheckout} className="cart-checkout-btn">
+            <button style={{
+              ...styles.checkoutButton,
+              ...(isMobile && responsiveStyles.checkoutButton)
+            }} onClick={onCheckout} className="cart-checkout-btn">
               Confirmar Orden
             </button>
           </div>
@@ -246,6 +307,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflowY: 'auto',
     padding: '16px 24px',
     backgroundColor: colors.ivory,
+    boxSizing: 'border-box',
   },
   emptyCart: {
     display: 'flex',
@@ -273,13 +335,24 @@ const styles: { [key: string]: React.CSSProperties } = {
   cartItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px',
-    padding: '16px',
+    gap: '12px',
+    padding: '12px',
     backgroundColor: colors.white,
     borderRadius: '12px',
     marginBottom: '12px',
     border: `1px solid ${colors.primaryMuted}`,
     boxShadow: `0 2px 8px ${colors.shadow}`,
+    position: 'relative',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  controlsContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: '8px',
+    flexShrink: 0,
+    width: 'auto',
   },
   itemImage: {
     width: '80px',
@@ -395,6 +468,116 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'all 0.2s',
+  },
+};
+
+// Responsive styles for mobile
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  modal: {
+    width: '100%',
+    maxWidth: '100%',
+    height: '100vh',
+    maxHeight: '100vh',
+    borderRadius: 0,
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  header: {
+    padding: '12px 16px',
+  },
+  title: {
+    fontSize: '18px',
+  },
+  closeButton: {
+    width: '36px',
+    height: '36px',
+    fontSize: '18px',
+  },
+  cartItem: {
+    gap: '8px',
+    padding: '12px',
+    marginBottom: '10px',
+    flexWrap: 'nowrap',
+    alignItems: 'flex-start',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  itemImage: {
+    width: '50px',
+    height: '50px',
+    flexShrink: 0,
+  },
+  itemInfo: {
+    flex: 1,
+    minWidth: 0,
+    maxWidth: 'none',
+    overflow: 'hidden',
+    paddingRight: '8px',
+  },
+  itemName: {
+    fontSize: '14px',
+    lineHeight: '1.3',
+    wordBreak: 'break-word',
+    marginBottom: '4px',
+  },
+  itemUnit: {
+    fontSize: '11px',
+  },
+  controlsContainer: {
+    flexDirection: 'column',
+    gap: '6px',
+    alignItems: 'center',
+    flexShrink: 0,
+    width: 'auto',
+    minWidth: '70px',
+  },
+  quantityControls: {
+    gap: '4px',
+    padding: '3px',
+  },
+  quantityButton: {
+    width: '26px',
+    height: '26px',
+    fontSize: '14px',
+  },
+  quantity: {
+    fontSize: '13px',
+    minWidth: '20px',
+  },
+  removeButton: {
+    width: '28px',
+    height: '28px',
+    fontSize: '12px',
+    padding: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '6px',
+    flexShrink: 0,
+  },
+  itemsContainer: {
+    padding: '12px',
+    overflowY: 'auto',
+    flex: 1,
+    minHeight: 0,
+  },
+  footer: {
+    padding: '16px',
+  },
+  summary: {
+    padding: '12px',
+    marginBottom: '12px',
+  },
+  summaryLabel: {
+    fontSize: '14px',
+  },
+  summaryValue: {
+    fontSize: '20px',
+  },
+  checkoutButton: {
+    padding: '12px',
+    fontSize: '16px',
   },
 };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Product } from '../../types';
 import { StarRating } from './StarRating';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 
 interface ProductCardProps {
@@ -14,15 +15,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onAddToCart,
   variant = 'grid',
 }) => {
+  const { isMobile } = useWindowSize();
   const isOutOfStock = product.is_available === false;
   const mainBenefit = product.benefits && product.benefits.length > 0 ? product.benefits[0] : null;
   const mainTag = product.tags && product.tags.length > 0 ? product.tags[0] : null;
   const isFood = product.category_type === 'FOOD';
   const hasPrice = isFood && product.price !== undefined && product.price !== null && product.price > 0;
 
-  const cardStyles = variant === 'carousel'
+  const baseCardStyles = variant === 'carousel'
     ? { ...styles.card, ...styles.carouselCard }
     : styles.card;
+
+  const cardStyles = {
+    ...baseCardStyles,
+    ...(isMobile && responsiveStyles.card),
+    ...(isMobile && variant === 'carousel' && responsiveStyles.carouselCard),
+  };
 
   // Format price as Mexican Pesos
   const formatPrice = (price: number) => {
@@ -84,9 +92,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Content */}
-      <div style={styles.content}>
-        <h3 style={styles.title}>{product.name}</h3>
-        <p style={styles.description}>{product.description}</p>
+      <div style={{ ...styles.content, ...(isMobile && responsiveStyles.content) }}>
+        <h3 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>{product.name}</h3>
+        <p style={{ ...styles.description, ...(isMobile && responsiveStyles.description) }}>{product.description}</p>
 
         {/* Price for FOOD items */}
         {hasPrice && (
@@ -118,12 +126,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Action Button */}
-      <div style={styles.actions}>
+      <div style={{ ...styles.actions, ...(isMobile && responsiveStyles.actions) }}>
         {isOutOfStock ? (
           <button
             style={{
               ...styles.addButton,
               ...styles.disabledButton,
+              ...(isMobile && responsiveStyles.addButton),
             }}
             disabled
           >
@@ -134,10 +143,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             style={{
               ...styles.addButton,
               ...(isFood ? styles.foodButton : {}),
+              ...(isMobile && responsiveStyles.addButton),
             }}
             onClick={() => onAddToCart(product.id)}
           >
-            {isFood ? 'Agregar (Pago adicional)' : 'Agregar a la Orden'}
+            {isFood 
+              ? (isMobile ? 'Agregar (+)' : 'Agregar (Pago adicional)')
+              : 'Agregar a la Orden'}
           </button>
         )}
       </div>
@@ -304,6 +316,36 @@ const styles: { [key: string]: React.CSSProperties } = {
   foodButton: {
     backgroundColor: colors.primary,
     color: colors.white,
+  },
+};
+
+// Responsive styles for mobile
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  card: {
+    borderRadius: '12px',
+  },
+  carouselCard: {
+    minWidth: '260px',
+    maxWidth: '260px',
+  },
+  content: {
+    padding: '16px',
+    gap: '6px',
+  },
+  title: {
+    fontSize: '15px',
+    marginBottom: '4px',
+  },
+  description: {
+    fontSize: '13px',
+    WebkitLineClamp: 2,
+  },
+  actions: {
+    padding: '0 16px 16px 16px',
+  },
+  addButton: {
+    padding: '12px',
+    fontSize: '14px',
   },
 };
 

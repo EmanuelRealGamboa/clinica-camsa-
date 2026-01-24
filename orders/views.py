@@ -66,6 +66,14 @@ class PublicOrderViewSet(viewsets.ViewSet):
                         'error': 'No active patient assigned to this device'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+                # Check if patient can create orders
+                if not patient_assignment.can_patient_order:
+                    return Response({
+                        'error': 'No puedes crear nuevas órdenes. Espera la confirmación de encuesta.',
+                        'survey_enabled': patient_assignment.survey_enabled,
+                        'can_patient_order': False
+                    }, status=status.HTTP_403_FORBIDDEN)
+
                 # Update device last_seen_at
                 device.last_seen_at = timezone.now()
                 device.save(update_fields=['last_seen_at'])
@@ -243,6 +251,47 @@ class PublicOrderViewSet(viewsets.ViewSet):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['get'], url_path='by-assignment/(?P<assignment_id>[^/.]+)')
+    def orders_by_assignment(self, request, assignment_id=None):
+        """
+        Get all delivered orders for a patient assignment
+        GET /api/public/orders/by-assignment/{assignment_id}/
+        """
+        try:
+            from clinic.models import PatientAssignment
+            
+            # Get patient assignment
+            assignment = PatientAssignment.objects.select_related(
+                'patient', 'device', 'room'
+            ).get(id=assignment_id, is_active=True)
+            
+            # Get all delivered orders for this assignment
+            orders = Order.objects.filter(
+                patient_assignment=assignment,
+                status='DELIVERED'
+            ).prefetch_related('items', 'items__product').order_by('-delivered_at')
+            
+            serializer = PublicOrderSerializer(orders, many=True)
+            
+            return Response({
+                'success': True,
+                'count': orders.count(),
+                'orders': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except PatientAssignment.DoesNotExist:
+            return Response({
+                'error': 'Patient assignment not found or not active'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except ValueError:
+            return Response({
+                'error': 'Invalid assignment ID'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -378,6 +427,20 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                         )
 
                     order.delivered_at = timezone.now()
+
+                    # Block patient from creating new orders when order is delivered
+                    # Check if there are any other active orders (PLACED, PREPARING, READY)
+                    from clinic.models import PatientAssignment
+                    if order.patient_assignment:
+                        other_active_orders = Order.objects.filter(
+                            patient_assignment=order.patient_assignment,
+                            status__in=['PLACED', 'PREPARING', 'READY']
+                        ).exclude(id=order.id).exists()
+                        
+                        # Only block patient orders if there are no other active orders
+                        if not other_active_orders:
+                            order.patient_assignment.can_patient_order = False
+                            order.patient_assignment.save(update_fields=['can_patient_order', 'updated_at'])
 
                 # Update order status
                 order.status = to_status

@@ -27,6 +27,27 @@ export const ordersApi = {
     return response.data;
   },
 
+  submitCompleteFeedback: async (feedbackData: {
+    patient_assignment_id: number;
+    product_ratings: { [orderId: string]: { [productId: string]: number } };
+    staff_rating: number;
+    stay_rating: number;
+    comment?: string;
+  }) => {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/public/feedbacks/`,
+      feedbackData
+    );
+    return response.data;
+  },
+
+  getDeliveredOrdersByAssignment: async (patientAssignmentId: number) => {
+    const response = await axios.get(
+      `${API_BASE_URL}/api/public/orders/by-assignment/${patientAssignmentId}/`
+    );
+    return response.data;
+  },
+
   // Staff endpoints (auth required)
   getAllOrders: async () => {
     const response = await apiClient.get('/orders/');

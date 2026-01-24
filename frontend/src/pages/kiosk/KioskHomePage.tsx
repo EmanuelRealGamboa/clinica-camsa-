@@ -13,8 +13,15 @@ import { OrderLimitsIndicator } from '../../components/kiosk/OrderLimitsIndicato
 import { LimitReachedModal } from '../../components/kiosk/LimitReachedModal';
 import { WelcomeModal } from '../../components/kiosk/WelcomeModal';
 import { InitialWelcomeScreen } from '../../components/kiosk/InitialWelcomeScreen';
+import CannotOrderModal from '../../components/kiosk/CannotOrderModal';
+import ProductRatingsModal from '../../components/kiosk/ProductRatingsModal';
+import StaffRatingModal from '../../components/kiosk/StaffRatingModal';
+import StayRatingModal from '../../components/kiosk/StayRatingModal';
+import { ThankYouModal } from '../../components/kiosk/ThankYouModal';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useKioskState } from '../../hooks/useKioskState';
+import { useSurvey } from '../../contexts/SurveyContext';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
@@ -28,6 +35,9 @@ interface PatientInfo {
     DRINK?: number;
     SNACK?: number;
   };
+  can_patient_order?: boolean;
+  survey_enabled?: boolean;
+  patient_assignment_id?: number;
 }
 
 // Storage key for cart persistence
@@ -37,6 +47,7 @@ export const KioskHomePage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isMobile, isTablet } = useWindowSize();
 
   // Refs for category carousels (for scroll targeting)
   const categoryRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
@@ -85,6 +96,11 @@ export const KioskHomePage: React.FC = () => {
   const [showInitialWelcome, setShowInitialWelcome] = useState(true);
   const [checkingPatient, setCheckingPatient] = useState(false);
   const [patientAssigned, setPatientAssigned] = useState(false);
+  const [showCannotOrderModal, setShowCannotOrderModal] = useState(false);
+  const [showThankYouModal, setShowThankYouModal] = useState(false);
+
+  // Survey context
+  const { surveyState, startSurvey, setProductRatings, setStaffRating, completeSurvey, closeSurvey } = useSurvey();
 
   useEffect(() => {
     loadHomeData();
@@ -207,7 +223,15 @@ export const KioskHomePage: React.FC = () => {
             room_code: patientData.room.code,
             staff_name: patientData.staff.full_name,
             order_limits: patientData.order_limits || {},
+            can_patient_order: patientData.can_patient_order !== false, // Default to true
+            survey_enabled: patientData.survey_enabled || false,
+            patient_assignment_id: patientData.id,
           });
+
+          // If survey is enabled, start it immediately
+          if (patientData.survey_enabled && patientData.id) {
+            startSurvey(patientData.id, patientData.staff.full_name);
+          }
 
           // Hide initial welcome screen when patient is assigned
           setShowInitialWelcome(false);
@@ -322,8 +346,26 @@ export const KioskHomePage: React.FC = () => {
       loadHomeData();
     } else if (message.type === 'limits_updated') {
       console.log('Order limits updated by staff - reloading patient data');
-      // When staff updates limits, reload patient data to get new limits
+      // When staff updates limits, reload patient data to get new limits and reactivate orders
       loadHomeData();
+      setPatientInfo(prev => prev ? { ...prev, can_patient_order: message.can_patient_order ?? true } : null);
+    } else if (message.type === 'survey_enabled') {
+      console.log('Survey enabled - starting survey immediately');
+      // When survey is enabled, block patient orders and start survey immediately
+      const assignmentId = message.assignment_id;
+      const staffName = patientInfo?.staff_name || 'Personal';
+      
+      setPatientInfo(prev => prev ? { 
+        ...prev, 
+        can_patient_order: false, 
+        survey_enabled: true,
+        patient_assignment_id: assignmentId || prev.patient_assignment_id
+      } : null);
+      
+      // Start survey immediately using global context (works from any page)
+      if (assignmentId || patientInfo?.patient_assignment_id) {
+        startSurvey(assignmentId || patientInfo?.patient_assignment_id!, staffName);
+      }
     } else if (message.type === 'session_ended') {
       console.log('Patient session ended by staff - returning to welcome screen');
       // Reset all state to show initial welcome screen
@@ -334,8 +376,10 @@ export const KioskHomePage: React.FC = () => {
       setShowWelcomeModal(false);
       setCart(new Map());
       setActiveOrdersItems(new Map());
+      setShowThankYouModal(false);
+      closeSurvey(); // Close any open survey modals
     }
-  }, [deviceId, navigate]);
+  }, [deviceId, navigate, startSurvey, patientInfo, closeSurvey]);
 
   // WebSocket connection for real-time notifications
   const wsUrl = deviceId ? `${WS_BASE_URL}/ws/kiosk/orders/?device_uid=${deviceId}` : '';
@@ -355,6 +399,12 @@ export const KioskHomePage: React.FC = () => {
   });
 
   const handleAddToCart = (productId: number) => {
+    // Check if patient can order
+    if (patientInfo && patientInfo.can_patient_order === false) {
+      setShowCannotOrderModal(true);
+      return;
+    }
+
     // Update activity timestamp
     updateActivity();
 
@@ -532,45 +582,60 @@ export const KioskHomePage: React.FC = () => {
     );
   }
 
+  const headerStyles = {
+    ...styles.header,
+    ...(isMobile && responsiveStyles.header),
+  };
+  
+  const headerLeftStyles = {
+    ...styles.headerLeft,
+    ...(isMobile && responsiveStyles.headerLeft),
+  };
+  
+  const headerInfoStyles = {
+    ...styles.headerInfo,
+    ...(isMobile && responsiveStyles.headerInfo),
+  };
+
   return (
     <div style={styles.container}>
       {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <img src={logoHorizontal} alt="Clínica CAMSA" style={styles.logo} />
-          <div style={styles.headerDivider} />
-          <div>
-            <h1 style={styles.headerTitle}>Servicio a Habitación</h1>
+      <header style={headerStyles}>
+        <div style={headerLeftStyles}>
+          <img src={logoHorizontal} alt="Clínica CAMSA" style={{ ...styles.logo, ...(isMobile && responsiveStyles.logo) }} />
+          {!isMobile && <div style={styles.headerDivider} />}
+          <div style={isMobile ? responsiveStyles.headerText : {}}>
+            <h1 style={{ ...styles.headerTitle, ...(isMobile && responsiveStyles.headerTitle) }}>Servicio a Habitación</h1>
             {patientInfo && (
               <>
-                <p style={styles.welcomeText}>Bienvenido, {patientInfo.full_name}</p>
-                <p style={styles.nurseText}>Tu enfermera: {patientInfo.staff_name}</p>
+                <p style={{ ...styles.welcomeText, ...(isMobile && responsiveStyles.welcomeText) }}>Bienvenido, {patientInfo.full_name}</p>
+                {!isMobile && <p style={styles.nurseText}>Tu enfermera: {patientInfo.staff_name}</p>}
               </>
             )}
           </div>
         </div>
-        <div style={styles.headerInfo}>
-          {patientInfo && (
+        <div style={headerInfoStyles}>
+          {patientInfo && !isMobile && (
             <div style={styles.roomInfo}>
               <div style={styles.roomLabel}>Habitación: {patientInfo.room_code}</div>
               <div style={styles.deviceLabel}>Dispositivo: {deviceId}</div>
             </div>
           )}
-          <div style={styles.headerRight}>
+          <div style={{ ...styles.headerRight, ...(isMobile && responsiveStyles.headerRight) }}>
             <button
-              style={styles.ordersButton}
+              style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}
               onClick={handleViewOrders}
               className="kiosk-btn-outline"
             >
-              Mis Órdenes
+              {isMobile ? 'Órdenes' : 'Mis Órdenes'}
             </button>
             {cartTotal > 0 && (
               <button
-                style={styles.cartButton}
+                style={{ ...styles.cartButton, ...(isMobile && responsiveStyles.button) }}
                 onClick={() => setShowCart(true)}
                 className="kiosk-btn-primary"
               >
-                🛒 Carrito ({cartTotal})
+                {isMobile ? `🛒 ${cartTotal}` : `🛒 Carrito (${cartTotal})`}
               </button>
             )}
           </div>
@@ -693,6 +758,60 @@ export const KioskHomePage: React.FC = () => {
           setHasSeenWelcome(true);
         }}
       />
+
+      {/* Cannot Order Modal */}
+      {showCannotOrderModal && (
+        <CannotOrderModal
+          onClose={() => setShowCannotOrderModal(false)}
+        />
+      )}
+
+      {/* Survey Modals - Global Context */}
+      {surveyState.showProductRatings && surveyState.patientAssignmentId && (
+        <ProductRatingsModal
+          patientAssignmentId={surveyState.patientAssignmentId}
+          onNext={(ratings) => {
+            setProductRatings(ratings);
+          }}
+        />
+      )}
+
+      {surveyState.showStaffRating && surveyState.patientAssignmentId && (
+        <StaffRatingModal
+          staffName={surveyState.staffName}
+          onNext={(rating) => {
+            setStaffRating(rating);
+          }}
+        />
+      )}
+
+      {surveyState.showStayRating && surveyState.patientAssignmentId && (
+        <StayRatingModal
+          onComplete={async (stayRating, comment) => {
+            try {
+              await completeSurvey(stayRating, comment);
+              setShowThankYouModal(true);
+            } catch (error: any) {
+              console.error('Error completing survey:', error);
+              const errorMessage = error.response?.data?.error || 'Error al enviar la encuesta. Por favor intenta de nuevo.';
+              alert(errorMessage);
+            }
+          }}
+        />
+      )}
+
+      {/* Thank You Modal */}
+      {showThankYouModal && (
+        <ThankYouModal
+          show={showThankYouModal}
+          onClose={() => {
+            setShowThankYouModal(false);
+            closeSurvey();
+            // Reload data to reflect session end
+            loadHomeData();
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -812,6 +931,50 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+  },
+};
+
+// Responsive styles for mobile
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  header: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    padding: '12px 16px',
+    gap: '12px',
+  },
+  headerLeft: {
+    flexDirection: 'column',
+    gap: '12px',
+    width: '100%',
+  },
+  headerText: {
+    width: '100%',
+  },
+  headerTitle: {
+    fontSize: '18px',
+    marginBottom: '4px',
+  },
+  welcomeText: {
+    fontSize: '13px',
+  },
+  headerInfo: {
+    flexDirection: 'column',
+    width: '100%',
+    gap: '12px',
+    alignItems: 'stretch',
+  },
+  headerRight: {
+    width: '100%',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  logo: {
+    height: '40px',
+  },
+  button: {
+    width: '100%',
+    padding: '12px 16px',
+    fontSize: '14px',
   },
 };
 

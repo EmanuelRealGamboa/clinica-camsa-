@@ -44,7 +44,7 @@ function App() {
         <Routes>
           {/* Kiosk Routes - More specific routes first */}
           
-          {/* Renova Clinic Routes */}
+          {/* Clínica CAMSA Routes */}
           <Route path="/kiosk/:deviceId/renova/about" element={<RenovaAboutPage />} />
           <Route path="/kiosk/:deviceId/renova/home" element={<RenovaHomePage />} />
           

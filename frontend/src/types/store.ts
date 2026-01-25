@@ -23,7 +23,7 @@ export interface StoreProduct {
   description: string;
   stock: number;
   category: string;
-  categoryId: string; // ID de categoría de Renova Clinic
+  categoryId: string; // ID de categoría de Clínica CAMSA
   type: 'product';
 }
 
@@ -47,7 +47,7 @@ export interface Service {
   duration: number;
   availableDays: string[];
   timeSlots: string[];
-  categoryId: string; // ID de categoría de Renova Clinic
+  categoryId: string; // ID de categoría de Clínica CAMSA
   type: 'service';
 }
 
@@ -61,7 +61,7 @@ export const MOCK_COUPONS: StoreCoupon[] = [
 ];
 
 export const MOCK_PRODUCTS: StoreProduct[] = [
-  // PRODUCTOS REALES DE RENOVA CLINIC (1-6)
+  // PRODUCTOS REALES DE CLÍNICA CAMSA (1-6)
   {
     id: 1,
     name: 'Alivium',

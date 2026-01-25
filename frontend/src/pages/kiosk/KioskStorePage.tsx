@@ -8,7 +8,7 @@ import { CartSidebar } from '../../components/store/CartSidebar';
 import { RenovaHeader } from '../../components/store/RenovaHeader';
 import { colors } from '../../styles/colors';
 
-/** Prototipo: Tienda unificada de Renova Clinic con productos y servicios */
+/** Prototipo: Tienda unificada de Clínica CAMSA con productos y servicios */
 export const KioskStorePage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();

@@ -2,9 +2,10 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { colors } from '../../styles/colors';
 import { useStoreCart } from '../../hooks/useStoreCart';
+import clinicaCamsaLogo from '../../assets/clinica-camsa-logo.png';
 
 interface RenovaHeaderProps {
-  activePage?: 'home' | 'store' | 'about' | 'contact';
+  activePage?: 'home' | 'store' | 'about';
   onCartClick?: () => void;
 }
 
@@ -16,10 +17,8 @@ export const RenovaHeader: React.FC<RenovaHeaderProps> = ({ activePage = 'home',
   return (
     <header style={styles.header}>
       <div style={styles.headerLeft}>
-        <div style={styles.logoCircle}>
-          <span style={styles.logoR}>R</span>
-        </div>
-        <h1 style={styles.brandName}>Renova Clinic</h1>
+        <img src={clinicaCamsaLogo} alt="Clínica CAMSA" style={styles.logo} />
+        <h1 style={styles.brandName}>Clínica CAMSA</h1>
       </div>
       <nav style={styles.nav}>
         <button
@@ -51,16 +50,6 @@ export const RenovaHeader: React.FC<RenovaHeaderProps> = ({ activePage = 'home',
           onClick={() => navigate(`/kiosk/${deviceId}/renova/about`)}
         >
           Nosotros
-        </button>
-        <button
-          type="button"
-          style={{
-            ...styles.navLink,
-            ...(activePage === 'contact' ? styles.navLinkActive : {}),
-          }}
-          onClick={() => navigate(`/kiosk/${deviceId}/renova/contact`)}
-        >
-          Contacto
         </button>
       </nav>
       <div style={styles.headerRight}>
@@ -99,19 +88,10 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 12,
   },
-  logoCircle: {
+  logo: {
     width: 40,
     height: 40,
-    borderRadius: '50%',
-    backgroundColor: colors.primary,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoR: {
-    color: colors.white,
-    fontSize: 20,
-    fontWeight: 700,
+    objectFit: 'contain',
   },
   brandName: {
     margin: 0,

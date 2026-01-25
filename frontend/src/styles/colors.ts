@@ -1,11 +1,11 @@
 /**
- * Color palette for Renova Clinic
- * Based on the exact design from Renova Clinic images
+ * Color palette for Clínica CAMSA
+ * Based on the exact design from Clínica CAMSA images
  */
 
 export const colors = {
-  // Primary colors (gold/dorado de Renova Clinic)
-  primary: '#B99B5F',        // Dorado/amarillo dorado de Renova Clinic
+  // Primary colors (gold/dorado de Clínica CAMSA)
+  primary: '#B99B5F',        // Dorado/amarillo dorado de Clínica CAMSA
   primaryLight: '#D4B88A',   // Dorado claro
   primaryDark: '#9A7D4A',    // Dorado oscuro
   primaryMuted: '#E5D4B1',   // Dorado muy suave para fondos sutiles
@@ -17,18 +17,18 @@ export const colors = {
   goldGradientStart: '#D4B88A',
   goldGradientEnd: '#9A7D4A',
 
-  // Neutral colors (Renova Clinic palette)
+  // Neutral colors (Clínica CAMSA palette)
   white: '#FFFFFF',
-  ivory: '#F8F6F1',          // Beige muy claro/off-white de Renova Clinic
-  cream: '#F7F4EF',          // Crema suave de Renova Clinic
-  black: '#36251E',          // Marrón oscuro para texto de Renova Clinic
+  ivory: '#F8F6F1',          // Beige muy claro/off-white de Clínica CAMSA
+  cream: '#F7F4EF',          // Crema suave de Clínica CAMSA
+  black: '#36251E',          // Marrón oscuro para texto de Clínica CAMSA
   gray: '#666666',
   grayLight: '#999999',
   grayBg: '#F8F6F1',         // Fondo beige muy claro
   grayDark: '#333333',
 
-  // Text colors (Renova Clinic)
-  textPrimary: '#36251E',    // Marrón oscuro de Renova Clinic
+  // Text colors (Clínica CAMSA)
+  textPrimary: '#36251E',    // Marrón oscuro de Clínica CAMSA
   textSecondary: '#666666',
   textMuted: '#999999',
   textGold: '#B99B5F',

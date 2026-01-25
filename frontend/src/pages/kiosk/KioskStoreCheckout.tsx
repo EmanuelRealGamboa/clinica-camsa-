@@ -8,13 +8,14 @@ import { DeliveryStep } from '../../components/store/DeliveryStep';
 import { PaymentStep } from '../../components/store/PaymentStep';
 import { ConfirmationStep } from '../../components/store/ConfirmationStep';
 import { colors } from '../../styles/colors';
+import clinicaCamsaLogo from '../../assets/clinica-camsa-logo.png';
 
 const formatPrice = (n: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
 
 type CheckoutStep = 1 | 2 | 3;
 
-/** Prototipo: Checkout de 3 pasos según diseño Renova Clinic */
+/** Prototipo: Checkout de 3 pasos según diseño Clínica CAMSA */
 export const KioskStoreCheckout: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
@@ -87,10 +88,8 @@ export const KioskStoreCheckout: React.FC = () => {
       <div style={{ minHeight: '100vh', backgroundColor: colors.ivory }}>
         <header style={styles.header}>
           <div style={styles.headerLeft}>
-            <div style={styles.logoCircle}>
-              <span style={styles.logoR}>R</span>
-            </div>
-            <h1 style={styles.brandName}>Renova Clinic</h1>
+            <img src={clinicaCamsaLogo} alt="Clínica CAMSA" style={styles.logo} />
+            <h1 style={styles.brandName}>Clínica CAMSA</h1>
           </div>
           <div style={styles.securityBadge}>
             <span style={styles.lockIcon}>🔒</span>
@@ -130,10 +129,8 @@ export const KioskStoreCheckout: React.FC = () => {
           </a>
         </div>
         <div style={styles.headerCenter}>
-          <div style={styles.logoCircle}>
-            <span style={styles.logoR}>R</span>
-          </div>
-          <h1 style={styles.brandName}>Renova Clinic</h1>
+          <img src={clinicaCamsaLogo} alt="Clínica CAMSA" style={styles.logo} />
+          <h1 style={styles.brandName}>Clínica CAMSA</h1>
         </div>
         <div style={styles.headerRight}>
           <div style={styles.securityBadge}>
@@ -404,19 +401,10 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 12,
   },
-  logoCircle: {
+  logo: {
     width: 40,
     height: 40,
-    borderRadius: '50%',
-    backgroundColor: colors.primary,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoR: {
-    color: colors.white,
-    fontSize: 20,
-    fontWeight: 700,
+    objectFit: 'contain',
   },
   brandName: {
     margin: 0,

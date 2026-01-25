@@ -14,7 +14,7 @@ export const RenovaHomePage: React.FC = () => {
       {/* Hero Section */}
       <section style={styles.hero}>
         <div style={styles.heroContent}>
-          <h1 style={styles.heroTitle}>Bienvenido a Renova Clinic</h1>
+          <h1 style={styles.heroTitle}>Bienvenido a Clínica CAMSA</h1>
           <p style={styles.heroSubtitle}>
             Medicina regenerativa y tratamientos de vanguardia para tu bienestar
           </p>
@@ -72,7 +72,7 @@ export const RenovaHomePage: React.FC = () => {
             <div style={styles.aboutText}>
               <h2 style={styles.sectionTitle}>Medicina Regenerativa</h2>
               <p style={styles.aboutDesc}>
-                En Renova Clinic nos especializamos en medicina regenerativa de vanguardia,
+                En Clínica CAMSA nos especializamos en medicina regenerativa de vanguardia,
                 combinando tratamientos avanzados con productos de última generación para
                 promover la regeneración celular y el bienestar integral.
               </p>

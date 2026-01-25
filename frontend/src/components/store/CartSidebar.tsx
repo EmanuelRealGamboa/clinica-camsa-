@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { StoreProduct } from '../../types/store';
-import { getCartProducts } from '../../hooks/useStoreCart';
+import type { StoreProduct, Service } from '../../types/store';
+import { getCartItems, type CartItem } from '../../hooks/useStoreCart';
 import { CouponInput, type AppliedCoupon } from './CouponInput';
 import { OrderSummary } from './OrderSummary';
 import { colors } from '../../styles/colors';
@@ -11,23 +11,25 @@ const formatPrice = (n: number) =>
   new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
 
 interface CartSidebarProps {
-  cart: Map<number, number>;
+  cart: Map<number, CartItem>;
   products: StoreProduct[];
+  services?: Service[];
   onClose: () => void;
-  onUpdateQuantity: (productId: number, quantity: number) => void;
+  onUpdateQuantity: (itemId: number, quantity: number) => void;
   onCheckout: () => void;
 }
 
 export const CartSidebar: React.FC<CartSidebarProps> = ({
   cart,
   products,
+  services = [],
   onClose,
   onUpdateQuantity,
   onCheckout,
 }) => {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
-  const items = getCartProducts(cart, products);
-  const subtotal = items.reduce((s, { product, quantity }) => s + product.price * quantity, 0);
+  const items = getCartItems(cart, products, services);
+  const subtotal = items.reduce((s, { item, quantity }) => s + item.price * quantity, 0);
 
   const handleCheckout = () => {
     if (appliedCoupon) {
@@ -47,7 +49,13 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
       <div style={styles.overlay} onClick={onClose} aria-hidden="true" />
       <aside style={styles.sidebar}>
         <div style={styles.header}>
-          <h2 style={styles.title}>Carrito</h2>
+          <div style={styles.headerLeft}>
+            <span style={styles.cartIcon}>🛒</span>
+            <h2 style={styles.title}>Tu Carrito</h2>
+            {items.length > 0 && (
+              <span style={styles.cartBadge}>{items.reduce((s, { quantity }) => s + quantity, 0)}</span>
+            )}
+          </div>
           <button type="button" style={styles.close} onClick={onClose} aria-label="Cerrar">
             ✕
           </button>
@@ -58,19 +66,30 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
           ) : (
             <>
               <ul style={styles.list}>
-                {items.map(({ product, quantity }) => (
-                  <li key={product.id} style={styles.item}>
+                {items.map(({ item, quantity, reservationDate, reservationTime }) => (
+                  <li key={`${item.type}-${item.id}`} style={styles.item}>
+                    {item.image && (
+                      <img src={item.image} alt={item.name} style={styles.itemImage} />
+                    )}
                     <div style={styles.itemInfo}>
-                      <span style={styles.itemName}>{product.name}</span>
+                      <span style={styles.itemName}>{item.name}</span>
                       <span style={styles.itemPrice}>
-                        {formatPrice(product.price)} × {quantity}
+                        {formatPrice(item.price)}
+                        {quantity > 1 && ` × ${quantity}`}
                       </span>
+                      {item.type === 'service' && reservationDate && reservationTime && (
+                        <div style={styles.reservationInfo}>
+                          <span style={styles.reservationText}>
+                            📅 {reservationDate.toLocaleDateString('es-MX')} a las {reservationTime}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div style={styles.itemActions}>
                       <button
                         type="button"
                         style={styles.qtyBtn}
-                        onClick={() => onUpdateQuantity(product.id, Math.max(0, quantity - 1))}
+                        onClick={() => onUpdateQuantity(item.id, Math.max(0, quantity - 1))}
                       >
                         −
                       </button>
@@ -78,9 +97,17 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                       <button
                         type="button"
                         style={styles.qtyBtn}
-                        onClick={() => onUpdateQuantity(product.id, quantity + 1)}
+                        onClick={() => onUpdateQuantity(item.id, quantity + 1)}
                       >
                         +
+                      </button>
+                      <button
+                        type="button"
+                        style={styles.deleteBtn}
+                        onClick={() => onUpdateQuantity(item.id, 0)}
+                        aria-label="Eliminar"
+                      >
+                        🗑️
                       </button>
                     </div>
                   </li>
@@ -98,8 +125,14 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
         </div>
         {items.length > 0 && (
           <div style={styles.footer}>
+            <div style={styles.subtotalRow}>
+              <span style={styles.subtotalLabel}>Subtotal</span>
+              <span style={styles.subtotalAmount}>
+                {formatPrice(subtotal)}
+              </span>
+            </div>
             <button type="button" style={styles.checkoutBtn} onClick={handleCheckout}>
-              Proceder al pago
+              Proceder al Pago
             </button>
           </div>
         )}
@@ -135,7 +168,28 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '16px 20px',
     borderBottom: `1px solid ${colors.border}`,
   },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    position: 'relative',
+  },
+  cartIcon: {
+    fontSize: 20,
+  },
   title: { margin: 0, fontSize: 20, fontWeight: 700, color: colors.textPrimary },
+  cartBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: '50%',
+    backgroundColor: colors.primary,
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   close: {
     width: 44,
     height: 44,
@@ -169,17 +223,49 @@ const styles: Record<string, React.CSSProperties> = {
   },
   item: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 12,
     padding: 12,
-    backgroundColor: colors.ivory,
+    backgroundColor: colors.cream,
     borderRadius: 12,
     border: `1px solid ${colors.border}`,
   },
-  itemInfo: { display: 'flex', flexDirection: 'column', gap: 4 },
-  itemName: { fontSize: 14, fontWeight: 600, color: colors.textPrimary },
-  itemPrice: { fontSize: 13, color: colors.textSecondary },
-  itemActions: { display: 'flex', alignItems: 'center', gap: 8 },
+  itemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    objectFit: 'cover',
+    flexShrink: 0,
+  },
+  itemInfo: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    minWidth: 0,
+  },
+  itemName: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: colors.textPrimary,
+  },
+  itemPrice: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: colors.primary,
+  },
+  reservationInfo: {
+    marginTop: 4,
+  },
+  reservationText: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  itemActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+  },
   qtyBtn: {
     width: 36,
     height: 36,
@@ -190,10 +276,41 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 18,
   },
   qty: { minWidth: 24, textAlign: 'center', fontWeight: 600 },
+  deleteBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    fontSize: 16,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: colors.error,
+  },
   couponSection: { marginTop: 8 },
   footer: {
     padding: 20,
     borderTop: `1px solid ${colors.border}`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  subtotalRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subtotalLabel: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: colors.textPrimary,
+  },
+  subtotalAmount: {
+    fontSize: 18,
+    fontWeight: 700,
+    color: colors.textPrimary,
   },
   checkoutBtn: {
     width: '100%',

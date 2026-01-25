@@ -1,104 +1,185 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_PRODUCTS, MOCK_CATEGORIES } from '../../types/store';
-import type { StoreProduct } from '../../types/store';
+import { MOCK_PRODUCTS, MOCK_SERVICES, MOCK_CATEGORIES, type StoreItem } from '../../types/store';
 import { useStoreCart } from '../../hooks/useStoreCart';
-import { ProductCard } from '../../components/store/ProductCard';
-import { ProductDetailModal } from '../../components/store/ProductDetailModal';
+import { UnifiedItemCard } from '../../components/store/UnifiedItemCard';
+import { ServiceReservationModal } from '../../components/services/ServiceReservationModal';
 import { CartSidebar } from '../../components/store/CartSidebar';
+import { PriceRangeSlider } from '../../components/store/PriceRangeSlider';
 import { colors } from '../../styles/colors';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
-/** Prototipo: solo mock. Sin API ni carrito del kiosk. */
+/** Prototipo: Tienda unificada de Renova Clinic con productos y servicios */
 export const KioskStorePage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
-  const { cart, add, update, totalItems } = useStoreCart();
+  const { cart, add, addServiceWithReservation, update, totalItems } = useStoreCart();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1500]);
   const [showCart, setShowCart] = useState(false);
-  const [detailProduct, setDetailProduct] = useState<StoreProduct | null>(null);
+  const [reservationService, setReservationService] = useState<StoreItem | null>(null);
 
+  // Combinar productos y servicios
+  const allItems: StoreItem[] = useMemo(() => {
+    return [...MOCK_PRODUCTS, ...MOCK_SERVICES];
+  }, []);
+
+  // Filtrar items
   const filtered = useMemo(() => {
-    if (selectedCategory === 'all') return MOCK_PRODUCTS;
-    return MOCK_PRODUCTS.filter((p) => p.category === selectedCategory);
-  }, [selectedCategory]);
+    let items = allItems;
 
-  const handleAdd = (id: number, qty?: number) => {
-    add(id, qty ?? 1);
+    // Filtro por categoría
+    if (selectedCategory !== 'all') {
+      items = items.filter((item) => item.categoryId === selectedCategory);
+    }
+
+    // Filtro por búsqueda
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(query) ||
+          item.description.toLowerCase().includes(query)
+      );
+    }
+
+    // Filtro por precio
+    items = items.filter(
+      (item) => item.price >= priceRange[0] && item.price <= priceRange[1]
+    );
+
+    return items;
+  }, [allItems, selectedCategory, searchQuery, priceRange]);
+
+  const handleAddItem = (item: StoreItem) => {
+    if (item.type === 'service') {
+      setReservationService(item);
+    } else {
+      add(item.id, 1, 'product');
+    }
   };
 
-  const handleBuyNow = () => {
-    navigate(`/kiosk/${deviceId}/store/cart`);
+  const handleConfirmReservation = (date: Date, timeSlot: string, notes?: string) => {
+    if (reservationService && reservationService.type === 'service') {
+      addServiceWithReservation(reservationService.id, date, timeSlot, notes);
+      setReservationService(null);
+    }
   };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: colors.ivory }}>
+      {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
-          <img src={logoHorizontal} alt="CAMSA" style={styles.logo} />
-          <h1 style={styles.title}>Tienda CAMSA</h1>
+          <div style={styles.logoCircle}>
+            <span style={styles.logoR}>R</span>
+          </div>
+          <h1 style={styles.brandName}>Renova Clinic</h1>
         </div>
+        <nav style={styles.nav}>
+          <a href="#" style={styles.navLink}>Inicio</a>
+          <a href="#" style={{ ...styles.navLink, ...styles.navLinkActive }}>Tienda</a>
+          <a href="#" style={styles.navLink}>Nosotros</a>
+          <a href="#" style={styles.navLink}>Contacto</a>
+        </nav>
         <div style={styles.headerRight}>
           <button
             type="button"
-            style={styles.btnSecondary}
-            onClick={() => navigate(`/kiosk/${deviceId}`)}
+            style={styles.cartIconBtn}
+            onClick={() => setShowCart(true)}
           >
-            ← Volver
+            🛒
+            {totalItems > 0 && (
+              <span style={styles.cartBadge}>{totalItems}</span>
+            )}
           </button>
-          {totalItems > 0 && (
-            <button
-              type="button"
-              style={styles.cartBtn}
-              onClick={() => setShowCart(true)}
-            >
-              🛒 Carrito ({totalItems})
-            </button>
-          )}
         </div>
       </header>
 
-      <div style={styles.filters}>
+      {/* Search and Filter Bar */}
+      <div style={styles.searchBar}>
+        <div style={styles.searchInputWrap}>
+          <span style={styles.searchIcon}>🔍</span>
+          <input
+            type="text"
+            placeholder="Buscar productos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+        <select style={styles.sortSelect}>
+          <option>Relevancia</option>
+          <option>Precio: Menor a Mayor</option>
+          <option>Precio: Mayor a Menor</option>
+          <option>Nombre A-Z</option>
+        </select>
+      </div>
+
+      {/* Category Filters */}
+      <div style={styles.categoryFilters}>
         {MOCK_CATEGORIES.map((cat) => (
           <button
             key={cat.id}
             type="button"
             style={{
-              ...styles.filterBtn,
-              ...(selectedCategory === cat.id ? styles.filterBtnActive : {}),
+              ...styles.categoryBtn,
+              ...(selectedCategory === cat.id ? styles.categoryBtnActive : {}),
             }}
             onClick={() => setSelectedCategory(cat.id)}
           >
+            {cat.icon && <span style={styles.categoryIcon}>{cat.icon}</span>}
             {cat.name}
           </button>
         ))}
       </div>
 
+      {/* Price Filter */}
+      <div style={styles.priceFilter}>
+        <label style={styles.priceLabel}>Precio:</label>
+        <div style={styles.priceSliderWrap}>
+          <PriceRangeSlider
+            min={0}
+            max={1500}
+            value={priceRange[1]}
+            onChange={(value) => setPriceRange([priceRange[0], value])}
+          />
+          <div style={styles.priceRangeText}>
+            ${priceRange[0]} - ${priceRange[1]}
+          </div>
+        </div>
+      </div>
+
+      {/* Products Count */}
+      <div style={styles.productsCount}>
+        Mostrando {filtered.length} {filtered.length === 1 ? 'producto' : 'productos'}
+      </div>
+
+      {/* Main Content */}
       <main style={styles.main}>
         {filtered.length === 0 ? (
           <p style={styles.empty}>No hay productos en esta categoría.</p>
         ) : (
           <div style={styles.grid}>
-            {filtered.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={(id) => handleAdd(id)}
-                onViewDetail={(id) => {
-                  const p = MOCK_PRODUCTS.find((x) => x.id === id);
-                  if (p) setDetailProduct(p);
-                }}
+            {filtered.map((item) => (
+              <UnifiedItemCard
+                key={`${item.type}-${item.id}`}
+                item={item}
+                onAdd={handleAddItem}
               />
             ))}
           </div>
         )}
       </main>
 
+      {/* Cart Sidebar */}
       {showCart && (
         <CartSidebar
           cart={cart}
           products={MOCK_PRODUCTS}
+          services={MOCK_SERVICES}
           onClose={() => setShowCart(false)}
           onUpdateQuantity={update}
           onCheckout={() => {
@@ -108,12 +189,12 @@ export const KioskStorePage: React.FC = () => {
         />
       )}
 
-      {detailProduct && (
-        <ProductDetailModal
-          product={detailProduct}
-          onClose={() => setDetailProduct(null)}
-          onAddToCart={(id, qty) => handleAdd(id, qty)}
-          onBuyNow={handleBuyNow}
+      {/* Service Reservation Modal */}
+      {reservationService && reservationService.type === 'service' && (
+        <ServiceReservationModal
+          service={reservationService}
+          onConfirm={handleConfirmReservation}
+          onClose={() => setReservationService(null)}
         />
       )}
     </div>
@@ -126,58 +207,179 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '1rem 2rem',
-    backgroundColor: colors.primary,
-    boxShadow: `0 2px 8px ${colors.shadow}`,
-  },
-  headerLeft: { display: 'flex', alignItems: 'center', gap: 16 },
-  logo: { height: 40 },
-  title: { margin: 0, fontSize: 22, color: colors.white, fontWeight: 700 },
-  headerRight: { display: 'flex', gap: 12, alignItems: 'center' },
-  btnSecondary: {
-    padding: '10px 18px',
-    backgroundColor: 'transparent',
-    color: colors.white,
-    border: `2px solid ${colors.white}`,
-    borderRadius: 8,
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-  cartBtn: {
-    padding: '10px 18px',
     backgroundColor: colors.white,
-    color: colors.primary,
-    border: 'none',
-    borderRadius: 8,
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: 'pointer',
+    borderBottom: `1px solid ${colors.border}`,
   },
-  filters: {
+  headerLeft: {
     display: 'flex',
-    gap: 10,
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logoCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: '50%',
+    backgroundColor: colors.primary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoR: {
+    color: colors.white,
+    fontSize: 20,
+    fontWeight: 700,
+  },
+  brandName: {
+    margin: 0,
+    fontSize: 20,
+    fontWeight: 600,
+    color: colors.textPrimary,
+    fontFamily: 'serif',
+  },
+  nav: {
+    display: 'flex',
+    gap: 24,
+  },
+  navLink: {
+    color: colors.textPrimary,
+    textDecoration: 'none',
+    fontSize: 15,
+    fontWeight: 500,
+    fontFamily: 'serif',
+  },
+  navLinkActive: {
+    fontWeight: 700,
+  },
+  headerRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cartIconBtn: {
+    position: 'relative',
+    width: 40,
+    height: 40,
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    fontSize: 20,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: '50%',
+    backgroundColor: colors.primary,
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchBar: {
+    display: 'flex',
+    gap: 16,
     padding: '1rem 2rem',
     backgroundColor: colors.white,
     borderBottom: `1px solid ${colors.border}`,
   },
-  filterBtn: {
-    padding: '8px 16px',
-    backgroundColor: 'transparent',
+  searchInputWrap: {
+    flex: 1,
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 12,
+    fontSize: 16,
+  },
+  searchInput: {
+    width: '100%',
+    padding: '10px 12px 10px 36px',
+    borderRadius: 8,
+    border: `1px solid ${colors.border}`,
+    fontSize: 14,
+    backgroundColor: colors.white,
+  },
+  sortSelect: {
+    padding: '10px 12px',
+    borderRadius: 8,
+    border: `1px solid ${colors.border}`,
+    fontSize: 14,
+    backgroundColor: colors.white,
+    cursor: 'pointer',
+    minWidth: 150,
+  },
+  categoryFilters: {
+    display: 'flex',
+    gap: 10,
+    padding: '1rem 2rem',
+    backgroundColor: colors.white,
+    borderBottom: `1px solid ${colors.border}`,
+    flexWrap: 'wrap',
+  },
+  categoryBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 16px',
+    backgroundColor: colors.white,
     color: colors.textPrimary,
     border: `1px solid ${colors.border}`,
     borderRadius: 8,
     fontSize: 14,
+    fontWeight: 500,
     cursor: 'pointer',
+    transition: 'all 0.2s',
   },
-  filterBtnActive: {
+  categoryBtnActive: {
     backgroundColor: colors.primary,
     color: colors.white,
     borderColor: colors.primary,
   },
+  categoryIcon: {
+    fontSize: 16,
+  },
+  priceFilter: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '1rem 2rem',
+    backgroundColor: colors.white,
+    borderBottom: `1px solid ${colors.border}`,
+  },
+  priceLabel: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: colors.textPrimary,
+  },
+  priceSliderWrap: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  priceRangeText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    minWidth: 100,
+    textAlign: 'right',
+  },
+  productsCount: {
+    padding: '1rem 2rem',
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
   main: {
     padding: '2rem',
-    maxWidth: 1200,
+    maxWidth: 1400,
     margin: '0 auto',
   },
   grid: {
@@ -189,5 +391,6 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     color: colors.textMuted,
     padding: 48,
+    fontSize: 16,
   },
 };

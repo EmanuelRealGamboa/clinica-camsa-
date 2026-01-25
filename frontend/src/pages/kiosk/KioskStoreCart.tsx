@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '../../types/store';
-import { useStoreCart, getCartProducts } from '../../hooks/useStoreCart';
+import { MOCK_PRODUCTS, MOCK_SERVICES } from '../../types/store';
+import { useStoreCart, getCartItems } from '../../hooks/useStoreCart';
 import { CouponInput, type AppliedCoupon } from '../../components/store/CouponInput';
 import { OrderSummary } from '../../components/store/OrderSummary';
 import {
@@ -23,9 +23,9 @@ export const KioskStoreCart: React.FC = () => {
     getStoredCoupon()
   );
 
-  const items = getCartProducts(cart, MOCK_PRODUCTS);
+  const items = getCartItems(cart, MOCK_PRODUCTS, MOCK_SERVICES);
   const subtotal = items.reduce(
-    (s, { product, quantity }) => s + product.price * quantity,
+    (s, { item, quantity }) => s + item.price * quantity,
     0
   );
 
@@ -75,20 +75,31 @@ export const KioskStoreCart: React.FC = () => {
             <div style={styles.listSection}>
               <h2 style={styles.sectionTitle}>Productos</h2>
               <ul style={styles.list}>
-                {items.map(({ product, quantity }) => (
-                  <li key={product.id} style={styles.item}>
+                {items.map(({ item, quantity, reservationDate, reservationTime }) => (
+                  <li key={`${item.type}-${item.id}`} style={styles.item}>
+                    {item.image && (
+                      <img src={item.image} alt={item.name} style={styles.itemImage} />
+                    )}
                     <div style={styles.itemInfo}>
-                      <span style={styles.itemName}>{product.name}</span>
+                      <span style={styles.itemName}>{item.name}</span>
                       <span style={styles.itemPrice}>
-                        {formatPrice(product.price)} × {quantity}
+                        {formatPrice(item.price)}
+                        {quantity > 1 && ` × ${quantity}`}
                       </span>
+                      {item.type === 'service' && reservationDate && reservationTime && (
+                        <div style={styles.reservationInfo}>
+                          <span style={styles.reservationText}>
+                            📅 {reservationDate.toLocaleDateString('es-MX')} a las {reservationTime}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div style={styles.itemActions}>
                       <button
                         type="button"
                         style={styles.qtyBtn}
                         onClick={() =>
-                          update(product.id, Math.max(0, quantity - 1))
+                          update(item.id, Math.max(0, quantity - 1))
                         }
                       >
                         −
@@ -97,7 +108,7 @@ export const KioskStoreCart: React.FC = () => {
                       <button
                         type="button"
                         style={styles.qtyBtn}
-                        onClick={() => update(product.id, quantity + 1)}
+                        onClick={() => update(item.id, quantity + 1)}
                       >
                         +
                       </button>
@@ -180,16 +191,35 @@ const styles: Record<string, React.CSSProperties> = {
   },
   item: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 12,
     padding: 16,
     backgroundColor: colors.white,
     borderRadius: 12,
     border: `1px solid ${colors.border}`,
   },
-  itemInfo: { display: 'flex', flexDirection: 'column', gap: 4 },
+  itemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    objectFit: 'cover',
+    flexShrink: 0,
+  },
+  itemInfo: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    minWidth: 0,
+  },
   itemName: { fontSize: 15, fontWeight: 600, color: colors.textPrimary },
-  itemPrice: { fontSize: 14, color: colors.textSecondary },
+  itemPrice: { fontSize: 14, fontWeight: 700, color: colors.primary },
+  reservationInfo: {
+    marginTop: 4,
+  },
+  reservationText: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
   itemActions: { display: 'flex', alignItems: 'center', gap: 10 },
   qtyBtn: {
     width: 36,

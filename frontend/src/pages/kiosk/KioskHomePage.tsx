@@ -562,14 +562,7 @@ export const KioskHomePage: React.FC = () => {
               onClick={() => navigate(`/kiosk/${deviceId}/store`)}
               className="kiosk-btn-outline"
             >
-              🛍️ Tienda CAMSA
-            </button>
-            <button
-              style={styles.servicesButton}
-              onClick={() => navigate(`/kiosk/${deviceId}/services`)}
-              className="kiosk-btn-outline"
-            >
-              🏥 Servicios
+              🛍️ Tienda
             </button>
             <button
               style={styles.ordersButton}
@@ -816,22 +809,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     minWidth: 'fit-content',
   },
   storeButton: {
-    padding: '12px 24px',
-    backgroundColor: colors.white,
-    color: colors.primary,
-    border: `2px solid ${colors.primary}`,
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    whiteSpace: 'nowrap',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    minWidth: 'fit-content',
-  },
-  servicesButton: {
     padding: '12px 24px',
     backgroundColor: colors.white,
     color: colors.primary,

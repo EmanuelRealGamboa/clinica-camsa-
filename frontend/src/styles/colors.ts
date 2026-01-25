@@ -1,37 +1,37 @@
 /**
- * Color palette for the Kiosk application
- * Elegant white and gold theme based on Clínica CAMSA branding
+ * Color palette for Renova Clinic
+ * Based on the exact design from Renova Clinic images
  */
 
 export const colors = {
-  // Primary colors (gold/dorado elegante)
-  primary: '#C9A961',        // Dorado elegante cálido
-  primaryLight: '#E5D4B1',   // Dorado claro cálido
-  primaryDark: '#9E8142',    // Dorado oscuro cálido
+  // Primary colors (gold/dorado de Renova Clinic)
+  primary: '#B99B5F',        // Dorado/amarillo dorado de Renova Clinic
+  primaryLight: '#D4B88A',   // Dorado claro
+  primaryDark: '#9A7D4A',    // Dorado oscuro
   primaryMuted: '#E5D4B1',   // Dorado muy suave para fondos sutiles
 
   // Secondary gold tones
-  gold: '#C9A961',
-  goldLight: '#E5D4B1',
-  goldDark: '#9E8142',
-  goldGradientStart: '#E5D4B1',
-  goldGradientEnd: '#9E8142',
+  gold: '#B99B5F',
+  goldLight: '#D4B88A',
+  goldDark: '#9A7D4A',
+  goldGradientStart: '#D4B88A',
+  goldGradientEnd: '#9A7D4A',
 
-  // Neutral colors
+  // Neutral colors (Renova Clinic palette)
   white: '#FFFFFF',
-  ivory: '#FBF9F7',          // Blanco cálido/marfil para fondos
-  cream: '#FAF8F5',          // Crema suave
-  black: '#2D2D2D',          // Negro suave, no tan duro
+  ivory: '#F8F6F1',          // Beige muy claro/off-white de Renova Clinic
+  cream: '#F7F4EF',          // Crema suave de Renova Clinic
+  black: '#36251E',          // Marrón oscuro para texto de Renova Clinic
   gray: '#666666',
   grayLight: '#999999',
-  grayBg: '#FAFAFA',         // Fondo gris muy claro
+  grayBg: '#F8F6F1',         // Fondo beige muy claro
   grayDark: '#333333',
 
-  // Text colors
-  textPrimary: '#2D2D2D',
+  // Text colors (Renova Clinic)
+  textPrimary: '#36251E',    // Marrón oscuro de Renova Clinic
   textSecondary: '#666666',
   textMuted: '#999999',
-  textGold: '#9E8142',
+  textGold: '#B99B5F',
 
   // Status colors (mantenemos para funcionalidad)
   success: '#4CAF50',        // Verde más elegante

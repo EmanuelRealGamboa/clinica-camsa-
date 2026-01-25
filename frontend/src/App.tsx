@@ -10,14 +10,13 @@ import { KioskHomePage } from './pages/kiosk/KioskHomePage';
 import { KioskCategoryPage } from './pages/kiosk/KioskCategoryPage';
 import { KioskFoodPage } from './pages/kiosk/KioskFoodPage';
 import { KioskOrdersPage } from './pages/kiosk/KioskOrdersPage';
-// TODO: Estos componentes están vacíos, comentados temporalmente
-// import { KioskStorePage } from './pages/kiosk/KioskStorePage';
-// import { KioskStoreProductDetail } from './pages/kiosk/KioskStoreProductDetail';
-// import { KioskStoreCart } from './pages/kiosk/KioskStoreCart';
-// import { KioskStoreCheckout } from './pages/kiosk/KioskStoreCheckout';
-// import { KioskServicesPage } from './pages/kiosk/KioskServicesPage';
-// import { KioskServiceDetail } from './pages/kiosk/KioskServiceDetail';
-// import { KioskServiceBooking } from './pages/kiosk/KioskServiceBooking';
+import { KioskStorePage } from './pages/kiosk/KioskStorePage';
+import { KioskStoreProductDetail } from './pages/kiosk/KioskStoreProductDetail';
+import { KioskStoreCart } from './pages/kiosk/KioskStoreCart';
+import { KioskStoreCheckout } from './pages/kiosk/KioskStoreCheckout';
+import { KioskServicesPage } from './pages/kiosk/KioskServicesPage';
+import { KioskServiceDetail } from './pages/kiosk/KioskServiceDetail';
+import { KioskServiceBooking } from './pages/kiosk/KioskServiceBooking';
 
 // Staff Pages
 import LoginPage from './pages/staff/LoginPage';
@@ -42,16 +41,16 @@ function App() {
         <Routes>
           {/* Kiosk Routes - More specific routes first */}
           
-          {/* Store Routes - TODO: Comentadas temporalmente hasta que se implementen los componentes */}
-          {/* <Route path="/kiosk/:deviceId/store/checkout" element={<KioskStoreCheckout />} /> */}
-          {/* <Route path="/kiosk/:deviceId/store/cart" element={<KioskStoreCart />} /> */}
-          {/* <Route path="/kiosk/:deviceId/store/product/:productId" element={<KioskStoreProductDetail />} /> */}
-          {/* <Route path="/kiosk/:deviceId/store" element={<KioskStorePage />} /> */}
+          {/* Store Routes */}
+          <Route path="/kiosk/:deviceId/store/checkout" element={<KioskStoreCheckout />} />
+          <Route path="/kiosk/:deviceId/store/cart" element={<KioskStoreCart />} />
+          <Route path="/kiosk/:deviceId/store/product/:productId" element={<KioskStoreProductDetail />} />
+          <Route path="/kiosk/:deviceId/store" element={<KioskStorePage />} />
           
-          {/* Services Routes - TODO: Comentadas temporalmente hasta que se implementen los componentes */}
-          {/* <Route path="/kiosk/:deviceId/services/:serviceId/booking" element={<KioskServiceBooking />} /> */}
-          {/* <Route path="/kiosk/:deviceId/services/:serviceId" element={<KioskServiceDetail />} /> */}
-          {/* <Route path="/kiosk/:deviceId/services" element={<KioskServicesPage />} /> */}
+          {/* Services Routes */}
+          <Route path="/kiosk/:deviceId/services/:serviceId/booking" element={<KioskServiceBooking />} />
+          <Route path="/kiosk/:deviceId/services/:serviceId" element={<KioskServiceDetail />} />
+          <Route path="/kiosk/:deviceId/services" element={<KioskServicesPage />} />
           
           {/* Other Kiosk Routes */}
           <Route path="/kiosk/:deviceId/food/restaurant/:restaurantId" element={<KioskFoodPage />} />

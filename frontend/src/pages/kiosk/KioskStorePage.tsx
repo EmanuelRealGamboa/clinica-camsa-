@@ -6,6 +6,7 @@ import { UnifiedItemCard } from '../../components/store/UnifiedItemCard';
 import { ServiceReservationModal } from '../../components/services/ServiceReservationModal';
 import { CartSidebar } from '../../components/store/CartSidebar';
 import { RenovaHeader } from '../../components/store/RenovaHeader';
+import { AddToCartNotification } from '../../components/store/AddToCartNotification';
 import { colors } from '../../styles/colors';
 
 /** Prototipo: Tienda unificada de Clínica CAMSA con productos y servicios */
@@ -18,6 +19,7 @@ export const KioskStorePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCart, setShowCart] = useState(false);
   const [reservationService, setReservationService] = useState<StoreItem | null>(null);
+  const [notificationItem, setNotificationItem] = useState<string | null>(null);
 
   // Combinar productos y servicios
   const allItems: StoreItem[] = useMemo(() => {
@@ -51,12 +53,14 @@ export const KioskStorePage: React.FC = () => {
       setReservationService(item);
     } else {
       add(item.id, 1, 'product');
+      setNotificationItem(item.name);
     }
   };
 
   const handleConfirmReservation = (date: Date, timeSlot: string, notes?: string) => {
     if (reservationService && reservationService.type === 'service') {
       addServiceWithReservation(reservationService.id, date, timeSlot, notes);
+      setNotificationItem(reservationService.name);
       setReservationService(null);
     }
   };
@@ -165,6 +169,13 @@ export const KioskStorePage: React.FC = () => {
           onClose={() => setReservationService(null)}
         />
       )}
+
+      {/* Add to Cart Notification */}
+      <AddToCartNotification
+        itemName={notificationItem || ''}
+        isVisible={notificationItem !== null}
+        onClose={() => setNotificationItem(null)}
+      />
     </div>
   );
 };

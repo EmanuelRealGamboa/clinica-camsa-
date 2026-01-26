@@ -12,7 +12,8 @@ interface RenovaHeaderProps {
 export const RenovaHeader: React.FC<RenovaHeaderProps> = ({ activePage = 'home', onCartClick }) => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
-  const { totalItems } = useStoreCart();
+  // Use cartVersion to force re-render when cart changes
+  const { totalItems, cartVersion } = useStoreCart();
 
   return (
     <header style={styles.header}>
@@ -66,7 +67,7 @@ export const RenovaHeader: React.FC<RenovaHeaderProps> = ({ activePage = 'home',
         >
           🛒
           {totalItems > 0 && (
-            <span style={styles.cartBadge}>{totalItems}</span>
+            <span key={cartVersion} style={styles.cartBadge}>{totalItems}</span>
           )}
         </button>
       </div>

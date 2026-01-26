@@ -14,6 +14,9 @@ import { LimitReachedModal } from '../../components/kiosk/LimitReachedModal';
 import { WelcomeModal } from '../../components/kiosk/WelcomeModal';
 import { InitialWelcomeScreen } from '../../components/kiosk/InitialWelcomeScreen';
 import { CannotOrderModal } from '../../components/kiosk/CannotOrderModal';
+import ProductRatingsModal from '../../components/kiosk/ProductRatingsModal';
+import StaffRatingModal from '../../components/kiosk/StaffRatingModal';
+import StayRatingModal from '../../components/kiosk/StayRatingModal';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useKioskState } from '../../hooks/useKioskState';
 import { useSurvey } from '../../contexts/SurveyContext';
@@ -91,7 +94,7 @@ export const KioskHomePage: React.FC = () => {
   const [showCannotOrderModal, setShowCannotOrderModal] = useState(false);
   
   // Survey context
-  const { startSurvey } = useSurvey();
+  const { surveyState, startSurvey, setProductRatings, setStaffRating, completeSurvey } = useSurvey();
 
   useEffect(() => {
     loadHomeData();
@@ -771,6 +774,41 @@ export const KioskHomePage: React.FC = () => {
         show={showCannotOrderModal}
         onClose={() => setShowCannotOrderModal(false)}
       />
+
+      {/* Survey Modals - Global Context - Show from any page */}
+      {surveyState.showProductRatings && surveyState.patientAssignmentId && (
+        <ProductRatingsModal
+          patientAssignmentId={surveyState.patientAssignmentId}
+          onNext={(ratings) => {
+            setProductRatings(ratings);
+          }}
+        />
+      )}
+
+      {surveyState.showStaffRating && surveyState.patientAssignmentId && (
+        <StaffRatingModal
+          staffName={surveyState.staffName}
+          onNext={(rating) => {
+            setStaffRating(rating);
+          }}
+        />
+      )}
+
+      {surveyState.showStayRating && surveyState.patientAssignmentId && (
+        <StayRatingModal
+          onComplete={async (stayRating, comment) => {
+            try {
+              await completeSurvey(stayRating, comment);
+              // After survey completion, session will end automatically via WebSocket
+              navigate(`/kiosk/${deviceId}`, { replace: true });
+            } catch (error: any) {
+              console.error('Error completing survey:', error);
+              const errorMessage = error.response?.data?.error || 'Error al enviar la encuesta. Por favor intenta de nuevo.';
+              alert(errorMessage);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -9,7 +9,14 @@ import { CartModal } from '../../components/kiosk/CartModal';
 import { AddToCartNotification } from '../../components/kiosk/AddToCartNotification';
 import { LimitReachedModal } from '../../components/kiosk/LimitReachedModal';
 import { CannotOrderModal } from '../../components/kiosk/CannotOrderModal';
+import ProductRatingsModal from '../../components/kiosk/ProductRatingsModal';
+import StaffRatingModal from '../../components/kiosk/StaffRatingModal';
+import StayRatingModal from '../../components/kiosk/StayRatingModal';
+import { useWebSocket } from '../../hooks/useWebSocket';
+import { useSurvey } from '../../contexts/SurveyContext';
 import { colors } from '../../styles/colors';
+
+const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
 // Storage key for cart persistence
 const CART_STORAGE_KEY = 'kiosk_cart';
@@ -73,10 +80,68 @@ export const KioskCategoryPage: React.FC = () => {
   const [lastAddedProduct, setLastAddedProduct] = useState<string>('');
   const [showLimitReachedModal, setShowLimitReachedModal] = useState(false);
   const [showCannotOrderModal, setShowCannotOrderModal] = useState(false);
+  
+  // Survey context
+  const { surveyState, startSurvey, setProductRatings, setStaffRating, completeSurvey } = useSurvey();
 
   useEffect(() => {
     loadCategoryData();
   }, [categoryId]);
+
+  // WebSocket to listen for survey_enabled and other messages
+  const wsUrl = deviceId ? `${WS_BASE_URL}/ws/kiosk/orders/?device_uid=${deviceId}` : '';
+  
+  useWebSocket({
+    url: wsUrl,
+    onMessage: (message: any) => {
+      if (message.type === 'survey_enabled') {
+        console.log('Survey enabled via WebSocket - starting survey immediately');
+        const assignmentId = message.assignment_id;
+        
+        // Update can_patient_order to false
+        setPatientInfo(prev => prev ? { ...prev, can_patient_order: false } : null);
+        
+        // Get staff name from patient info or load it
+        const staffName = patientInfo?.staff_name || 'Personal';
+        
+        if (assignmentId) {
+          startSurvey(assignmentId, staffName);
+        } else {
+          // If no assignment_id, try to get it from patient data
+          if (deviceId) {
+            kioskApi.getActivePatient(deviceId).then(patientData => {
+              if (patientData.id) {
+                startSurvey(patientData.id, patientData.staff?.full_name || staffName);
+              }
+            }).catch(error => {
+              console.error('Error loading patient data for survey:', error);
+              // Try with assignment_id from message if available
+              if (assignmentId) {
+                startSurvey(assignmentId, staffName);
+              }
+            });
+          }
+        }
+      } else if (message.type === 'session_ended') {
+        console.log('Session ended - redirecting to home');
+        navigate(`/kiosk/${deviceId}`, { replace: true });
+      } else if (message.type === 'limits_updated') {
+        // Reload patient info to update can_patient_order
+        if (deviceId) {
+          kioskApi.getActivePatient(deviceId).then(patientData => {
+            setPatientInfo(prev => prev ? {
+              ...prev,
+              can_patient_order: patientData.can_patient_order !== false,
+              order_limits: patientData.order_limits || {},
+            } : null);
+          });
+        }
+      }
+    },
+    onOpen: () => console.log('✅ Category WebSocket connected'),
+    onClose: () => console.log('❌ Category WebSocket disconnected'),
+    onError: (error) => console.error('⚠️ Category WebSocket error:', error),
+  });
 
   // Persist cart to localStorage whenever it changes
   useEffect(() => {
@@ -405,6 +470,41 @@ export const KioskCategoryPage: React.FC = () => {
         show={showCannotOrderModal}
         onClose={() => setShowCannotOrderModal(false)}
       />
+
+      {/* Survey Modals - Global Context - Show from any page */}
+      {surveyState.showProductRatings && surveyState.patientAssignmentId && (
+        <ProductRatingsModal
+          patientAssignmentId={surveyState.patientAssignmentId}
+          onNext={(ratings) => {
+            setProductRatings(ratings);
+          }}
+        />
+      )}
+
+      {surveyState.showStaffRating && surveyState.patientAssignmentId && (
+        <StaffRatingModal
+          staffName={surveyState.staffName}
+          onNext={(rating) => {
+            setStaffRating(rating);
+          }}
+        />
+      )}
+
+      {surveyState.showStayRating && surveyState.patientAssignmentId && (
+        <StayRatingModal
+          onComplete={async (stayRating, comment) => {
+            try {
+              await completeSurvey(stayRating, comment);
+              // After survey completion, session will end automatically via WebSocket
+              navigate(`/kiosk/${deviceId}`, { replace: true });
+            } catch (error: any) {
+              console.error('Error completing survey:', error);
+              const errorMessage = error.response?.data?.error || 'Error al enviar la encuesta. Por favor intenta de nuevo.';
+              alert(errorMessage);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

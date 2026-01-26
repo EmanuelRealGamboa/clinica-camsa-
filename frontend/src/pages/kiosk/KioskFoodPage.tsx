@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { kioskApi } from '../../api/kiosk';
+import ProductRatingsModal from '../../components/kiosk/ProductRatingsModal';
+import StaffRatingModal from '../../components/kiosk/StaffRatingModal';
+import StayRatingModal from '../../components/kiosk/StayRatingModal';
+import { useWebSocket } from '../../hooks/useWebSocket';
+import { useSurvey } from '../../contexts/SurveyContext';
 import { colors } from '../../styles/colors';
+
+const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
 // Mock data for restaurants - this will be replaced with API data later
 const MOCK_RESTAURANTS = [
@@ -67,11 +74,56 @@ export const KioskFoodPage: React.FC = () => {
   const [patientInfo, setPatientInfo] = useState<{
     full_name: string;
     room_code: string;
+    staff_name?: string;
   } | null>(null);
+
+  // Survey context
+  const { surveyState, startSurvey, setProductRatings, setStaffRating, completeSurvey } = useSurvey();
 
   useEffect(() => {
     loadData();
   }, [deviceId]);
+
+  // WebSocket to listen for survey_enabled and other messages
+  const wsUrl = deviceId ? `${WS_BASE_URL}/ws/kiosk/orders/?device_uid=${deviceId}` : '';
+  
+  useWebSocket({
+    url: wsUrl,
+    onMessage: (message: any) => {
+      if (message.type === 'survey_enabled') {
+        console.log('Survey enabled via WebSocket - starting survey immediately');
+        const assignmentId = message.assignment_id;
+        
+        // Get staff name from patient info or load it
+        const staffName = patientInfo?.staff_name || 'Personal';
+        
+        if (assignmentId) {
+          startSurvey(assignmentId, staffName);
+        } else {
+          // If no assignment_id, try to get it from patient data
+          if (deviceId) {
+            kioskApi.getActivePatient(deviceId).then(patientData => {
+              if (patientData.id) {
+                startSurvey(patientData.id, patientData.staff?.full_name || staffName);
+              }
+            }).catch(error => {
+              console.error('Error loading patient data for survey:', error);
+              // Try with assignment_id from message if available
+              if (assignmentId) {
+                startSurvey(assignmentId, staffName);
+              }
+            });
+          }
+        }
+      } else if (message.type === 'session_ended') {
+        console.log('Session ended - redirecting to home');
+        navigate(`/kiosk/${deviceId}`, { replace: true });
+      }
+    },
+    onOpen: () => console.log('✅ Food WebSocket connected'),
+    onClose: () => console.log('❌ Food WebSocket disconnected'),
+    onError: (error) => console.error('⚠️ Food WebSocket error:', error),
+  });
 
   const loadData = async () => {
     try {
@@ -80,11 +132,12 @@ export const KioskFoodPage: React.FC = () => {
       // Load patient info
       if (deviceId) {
         try {
-          const patientData = await kioskApi.getActivePatient(deviceId);
-          setPatientInfo({
-            full_name: patientData.patient.full_name,
-            room_code: patientData.room.code,
-          });
+      const patientData = await kioskApi.getActivePatient(deviceId);
+      setPatientInfo({
+        full_name: patientData.patient.full_name,
+        room_code: patientData.room.code,
+        staff_name: patientData.staff?.full_name,
+      });
         } catch (error) {
           console.error('Error loading patient data:', error);
         }
@@ -227,6 +280,41 @@ export const KioskFoodPage: React.FC = () => {
           Más restaurantes se unirán pronto. ¡Mantente atento!
         </p>
       </div>
+
+      {/* Survey Modals - Global Context - Show from any page */}
+      {surveyState.showProductRatings && surveyState.patientAssignmentId && (
+        <ProductRatingsModal
+          patientAssignmentId={surveyState.patientAssignmentId}
+          onNext={(ratings) => {
+            setProductRatings(ratings);
+          }}
+        />
+      )}
+
+      {surveyState.showStaffRating && surveyState.patientAssignmentId && (
+        <StaffRatingModal
+          staffName={surveyState.staffName}
+          onNext={(rating) => {
+            setStaffRating(rating);
+          }}
+        />
+      )}
+
+      {surveyState.showStayRating && surveyState.patientAssignmentId && (
+        <StayRatingModal
+          onComplete={async (stayRating, comment) => {
+            try {
+              await completeSurvey(stayRating, comment);
+              // After survey completion, session will end automatically via WebSocket
+              navigate(`/kiosk/${deviceId}`, { replace: true });
+            } catch (error: any) {
+              console.error('Error completing survey:', error);
+              const errorMessage = error.response?.data?.error || 'Error al enviar la encuesta. Por favor intenta de nuevo.';
+              alert(errorMessage);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

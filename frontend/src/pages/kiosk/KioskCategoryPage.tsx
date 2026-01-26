@@ -8,7 +8,7 @@ import { ProductCard } from '../../components/kiosk/ProductCard';
 import { CartModal } from '../../components/kiosk/CartModal';
 import { AddToCartNotification } from '../../components/kiosk/AddToCartNotification';
 import { LimitReachedModal } from '../../components/kiosk/LimitReachedModal';
-import CannotOrderModal from '../../components/kiosk/CannotOrderModal';
+import { CannotOrderModal } from '../../components/kiosk/CannotOrderModal';
 import { colors } from '../../styles/colors';
 
 // Storage key for cart persistence
@@ -401,11 +401,10 @@ export const KioskCategoryPage: React.FC = () => {
       />
 
       {/* Cannot Order Modal */}
-      {showCannotOrderModal && (
-        <CannotOrderModal
-          onClose={() => setShowCannotOrderModal(false)}
-        />
-      )}
+      <CannotOrderModal
+        show={showCannotOrderModal}
+        onClose={() => setShowCannotOrderModal(false)}
+      />
     </div>
   );
 };

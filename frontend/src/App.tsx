@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { AdminProtectedRoute } from './auth/AdminProtectedRoute';
+import { SurveyProvider } from './contexts/SurveyContext';
 
 // Kiosk Pages
 import KioskPage from './pages/kiosk/KioskPage';
@@ -40,8 +41,9 @@ import InventoryPage from './pages/admin/InventoryPage';
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
+      <SurveyProvider>
+        <BrowserRouter>
+          <Routes>
           {/* Kiosk Routes - More specific routes first */}
           
           {/* Clínica CAMSA Routes */}
@@ -160,7 +162,8 @@ function App() {
           <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </SurveyProvider>
     </AuthProvider>
   );
 }

@@ -320,8 +320,8 @@ const KioskPage: React.FC = () => {
 
           setSuccessModal({
             show: true,
-            title: 'Order Placed!',
-            message: `Your order #${response.order.id} has been placed successfully. Our staff will prepare it shortly.`,
+            title: '¡Pedido realizado!',
+            message: `Tu pedido #${response.order.id} se ha realizado correctamente. Nuestro equipo lo preparará en breve.`,
           });
 
           setCart(new Map());
@@ -331,10 +331,10 @@ const KioskPage: React.FC = () => {
           setShowOrders(true);
           loadActiveOrders();
         } catch (err: any) {
-          const errorMsg = err.response?.data?.error || 'Failed to place order';
+          const errorMsg = err.response?.data?.error || 'No se pudo realizar el pedido';
           setConfirmModal({
             show: true,
-            title: 'Order Failed',
+            title: 'Error al realizar el pedido',
             message: errorMsg,
             onConfirm: () => setConfirmModal({ ...confirmModal, show: false }),
             confirmText: 'OK',
@@ -529,7 +529,7 @@ const KioskPage: React.FC = () => {
                     ))}
                   </div>
                   <div style={styles.orderTime}>
-                    Placed: {new Date(order.placed_at).toLocaleString()}
+                    Realizado: {new Date(order.placed_at).toLocaleString('es-MX')}
                   </div>
                 </div>
               ))}

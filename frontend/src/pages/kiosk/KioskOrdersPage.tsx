@@ -490,9 +490,9 @@ export const KioskOrdersPage: React.FC = () => {
                       </div>
                       {order.delivered_at && (
                         <div style={styles.deliveredInfo}>
-                          <span style={styles.deliveredLabel}>Delivered:</span>
+                          <span style={styles.deliveredLabel}>Entregado:</span>
                           <span style={styles.deliveredTime}>
-                            {new Date(order.delivered_at).toLocaleString('en-US', {
+                            {new Date(order.delivered_at).toLocaleString('es-MX', {
                               month: 'short',
                               day: 'numeric',
                               hour: '2-digit',

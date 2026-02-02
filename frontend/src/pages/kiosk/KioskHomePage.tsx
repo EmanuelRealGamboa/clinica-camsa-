@@ -626,13 +626,6 @@ export const KioskHomePage: React.FC = () => {
           )}
           <div style={styles.headerRight}>
             <button
-              style={styles.storeButton}
-              onClick={() => navigate(`/kiosk/${deviceId}/store`)}
-              className="kiosk-btn-outline"
-            >
-              🛍️ Tienda
-            </button>
-            <button
               style={styles.ordersButton}
               onClick={handleViewOrders}
               className="kiosk-btn-outline"
@@ -915,22 +908,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    minWidth: 'fit-content',
-  },
-  storeButton: {
-    padding: '12px 24px',
-    backgroundColor: colors.white,
-    color: colors.primary,
-    border: `2px solid ${colors.primary}`,
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    whiteSpace: 'nowrap',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
     minWidth: 'fit-content',
   },
   ordersButton: {

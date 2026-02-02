@@ -13,10 +13,10 @@ interface Step {
 }
 
 const steps: Step[] = [
-  { id: 1, status: 'PLACED', label: 'Placed', icon: '✓' },
-  { id: 2, status: 'PREPARING', label: 'Preparing', icon: '✓' },
-  { id: 3, status: 'READY', label: 'Ready', icon: '3' },
-  { id: 4, status: 'DELIVERED', label: 'Delivered', icon: '4' },
+  { id: 1, status: 'PLACED', label: 'Realizado', icon: '✓' },
+  { id: 2, status: 'PREPARING', label: 'Preparando', icon: '✓' },
+  { id: 3, status: 'READY', label: 'Listo', icon: '3' },
+  { id: 4, status: 'DELIVERED', label: 'Entregado', icon: '4' },
 ];
 
 export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ currentStatus }) => {
@@ -84,7 +84,7 @@ export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ curren
       {/* Cancelled Status */}
       {currentStatus === 'CANCELLED' && (
         <div style={styles.cancelledBadge}>
-          Order Cancelled
+          Pedido cancelado
         </div>
       )}
     </div>

@@ -11,16 +11,6 @@ import { KioskHomePage } from './pages/kiosk/KioskHomePage';
 import { KioskCategoryPage } from './pages/kiosk/KioskCategoryPage';
 import { KioskFoodPage } from './pages/kiosk/KioskFoodPage';
 import { KioskOrdersPage } from './pages/kiosk/KioskOrdersPage';
-import { KioskStorePage } from './pages/kiosk/KioskStorePage';
-import { KioskStoreProductDetail } from './pages/kiosk/KioskStoreProductDetail';
-import { KioskStoreCart } from './pages/kiosk/KioskStoreCart';
-import { KioskStoreCheckout } from './pages/kiosk/KioskStoreCheckout';
-import { KioskServicesPage } from './pages/kiosk/KioskServicesPage';
-import { KioskServiceDetail } from './pages/kiosk/KioskServiceDetail';
-import { KioskServiceBooking } from './pages/kiosk/KioskServiceBooking';
-import { RedirectToStore } from './pages/kiosk/RedirectToStore';
-import { RenovaHomePage } from './pages/kiosk/RenovaHomePage';
-import { RenovaAboutPage } from './pages/kiosk/RenovaAboutPage';
 
 // Staff Pages
 import LoginPage from './pages/staff/LoginPage';
@@ -45,23 +35,6 @@ function App() {
         <BrowserRouter>
           <Routes>
           {/* Kiosk Routes - More specific routes first */}
-          
-          {/* Clínica CAMSA Routes */}
-          <Route path="/kiosk/:deviceId/renova/about" element={<RenovaAboutPage />} />
-          <Route path="/kiosk/:deviceId/renova/home" element={<RenovaHomePage />} />
-          
-          {/* Store Routes - Tienda Unificada (Productos y Servicios) */}
-          <Route path="/kiosk/:deviceId/store/checkout" element={<KioskStoreCheckout />} />
-          <Route path="/kiosk/:deviceId/store/cart" element={<KioskStoreCart />} />
-          <Route path="/kiosk/:deviceId/store/product/:productId" element={<KioskStoreProductDetail />} />
-          <Route path="/kiosk/:deviceId/store" element={<KioskStorePage />} />
-          
-          {/* Services Routes - Redirigir a tienda unificada */}
-          <Route path="/kiosk/:deviceId/services/:serviceId/booking" element={<KioskServiceBooking />} />
-          <Route path="/kiosk/:deviceId/services/:serviceId" element={<KioskServiceDetail />} />
-          <Route path="/kiosk/:deviceId/services" element={<RedirectToStore />} />
-          
-          {/* Other Kiosk Routes */}
           <Route path="/kiosk/:deviceId/food/restaurant/:restaurantId" element={<KioskFoodPage />} />
           <Route path="/kiosk/:deviceId/food" element={<KioskFoodPage />} />
           <Route path="/kiosk/:deviceId/category/:categoryId" element={<KioskCategoryPage />} />

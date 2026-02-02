@@ -879,7 +879,7 @@ const responsiveStyles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
   },
   ordersSection: {
-    padding: '16px',
+    padding: '12px 16px',
   },
   ordersHeader: {
     flexDirection: 'column',
@@ -888,26 +888,27 @@ const responsiveStyles: { [key: string]: React.CSSProperties } = {
     marginBottom: '20px',
   },
   ordersTitle: {
-    fontSize: '24px',
+    fontSize: '20px',
   },
   orderCard: {
-    marginBottom: '16px',
+    marginBottom: '12px',
   },
   orderCardHeader: {
     flexDirection: 'column',
     gap: '12px',
-    padding: '16px 20px',
+    padding: '14px 16px',
   },
   orderNumber: {
-    fontSize: '18px',
+    fontSize: '16px',
   },
   orderTime: {
-    fontSize: '13px',
+    fontSize: '12px',
   },
   detailsButton: {
-    width: '100%',
-    padding: '10px 16px',
-    fontSize: '13px',
+    width: 'auto',
+    padding: '8px 14px',
+    fontSize: '12px',
+    alignSelf: 'flex-start',
   },
 };
 

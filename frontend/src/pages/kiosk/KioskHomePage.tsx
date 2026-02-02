@@ -20,6 +20,7 @@ import StayRatingModal from '../../components/kiosk/StayRatingModal';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useKioskState } from '../../hooks/useKioskState';
 import { useSurvey } from '../../contexts/SurveyContext';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
@@ -43,6 +44,7 @@ export const KioskHomePage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isMobile } = useWindowSize();
 
   // Refs for category carousels (for scroll targeting)
   const categoryRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
@@ -600,33 +602,38 @@ export const KioskHomePage: React.FC = () => {
     );
   }
 
+  const headerStyles = { ...styles.header, ...(isMobile && responsiveStyles.header) };
+  const headerLeftStyles = { ...styles.headerLeft, ...(isMobile && responsiveStyles.headerLeft) };
+  const headerInfoStyles = { ...styles.headerInfo, ...(isMobile && responsiveStyles.headerInfo) };
+  const roomInfoStyles = { ...styles.roomInfo, ...(isMobile && responsiveStyles.roomInfo) };
+
   return (
     <div style={styles.container}>
       {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <img src={logoHorizontal} alt="Clínica CAMSA" style={styles.logo} />
-          <div style={styles.headerDivider} />
+      <header style={headerStyles}>
+        <div style={headerLeftStyles}>
+          <img src={logoHorizontal} alt="Clínica CAMSA" style={{ ...styles.logo, ...(isMobile && responsiveStyles.logo) }} />
+          {!isMobile && <div style={styles.headerDivider} />}
           <div>
-            <h1 style={styles.headerTitle}>Servicio a Habitación</h1>
+            <h1 style={{ ...styles.headerTitle, ...(isMobile && responsiveStyles.headerTitle) }}>Servicio a Habitación</h1>
             {patientInfo && (
               <>
-                <p style={styles.welcomeText}>Bienvenido, {patientInfo.full_name}</p>
-                <p style={styles.nurseText}>Tu enfermera: {patientInfo.staff_name}</p>
+                <p style={{ ...styles.welcomeText, ...(isMobile && responsiveStyles.welcomeText) }}>Bienvenido, {patientInfo.full_name}</p>
+                <p style={{ ...styles.nurseText, ...(isMobile && responsiveStyles.nurseText) }}>Tu enfermera: {patientInfo.staff_name}</p>
               </>
             )}
           </div>
         </div>
-        <div style={styles.headerInfo}>
+        <div style={headerInfoStyles}>
           {patientInfo && (
-            <div style={styles.roomInfo}>
-              <div style={styles.roomLabel}>Habitación: {patientInfo.room_code}</div>
-              <div style={styles.deviceLabel}>Dispositivo: {deviceId}</div>
+            <div style={roomInfoStyles}>
+              <div style={{ ...styles.roomLabel, ...(isMobile && responsiveStyles.roomLabel) }}>Habitación: {patientInfo.room_code}</div>
+              <div style={{ ...styles.deviceLabel, ...(isMobile && responsiveStyles.deviceLabel) }}>Dispositivo: {deviceId}</div>
             </div>
           )}
-          <div style={styles.headerRight}>
+          <div style={{ ...styles.headerRight, ...(isMobile && responsiveStyles.headerRight) }}>
             <button
-              style={styles.ordersButton}
+              style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}
               onClick={handleViewOrders}
               className="kiosk-btn-outline"
             >
@@ -634,7 +641,7 @@ export const KioskHomePage: React.FC = () => {
             </button>
             {cartTotal > 0 && (
               <button
-                style={styles.cartButton}
+                style={{ ...styles.cartButton, ...(isMobile && responsiveStyles.button) }}
                 onClick={() => setShowCart(true)}
                 className="kiosk-btn-primary"
               >
@@ -931,6 +938,58 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+  },
+};
+
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  header: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    padding: '10px 12px',
+    gap: '8px',
+  },
+  headerLeft: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: '8px',
+    width: '100%',
+  },
+  headerInfo: {
+    flexDirection: 'column',
+    width: '100%',
+    gap: '8px',
+    alignItems: 'stretch',
+  },
+  logo: {
+    height: '36px',
+  },
+  headerTitle: {
+    fontSize: '16px',
+  },
+  welcomeText: {
+    fontSize: '12px',
+  },
+  nurseText: {
+    fontSize: '12px',
+  },
+  roomInfo: {
+    padding: '6px 12px',
+  },
+  roomLabel: {
+    fontSize: '13px',
+  },
+  deviceLabel: {
+    fontSize: '10px',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: '8px',
+  },
+  button: {
+    padding: '8px 12px',
+    fontSize: '13px',
+    width: 'auto',
   },
 };
 

@@ -48,7 +48,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       }}
     >
       {/* Image Container */}
-      <div style={styles.imageContainer}>
+      <div style={{
+        ...styles.imageContainer,
+        ...(isMobile && variant === 'carousel' && responsiveStyles.carouselImageContainer),
+      }}>
         {product.image_url_full && (
           <img
             src={product.image_url_full}
@@ -92,9 +95,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Content */}
-      <div style={{ ...styles.content, ...(isMobile && responsiveStyles.content) }}>
-        <h3 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>{product.name}</h3>
-        <p style={{ ...styles.description, ...(isMobile && responsiveStyles.description) }}>{product.description}</p>
+      <div style={{
+        ...styles.content,
+        ...(isMobile && responsiveStyles.content),
+        ...(isMobile && variant === 'carousel' && responsiveStyles.carouselContent),
+      }}>
+        <h3 style={{
+          ...styles.title,
+          ...(isMobile && responsiveStyles.title),
+          ...(isMobile && variant === 'carousel' && responsiveStyles.carouselTitle),
+        }}>{product.name}</h3>
+        <p style={{
+          ...styles.description,
+          ...(isMobile && responsiveStyles.description),
+          ...(isMobile && variant === 'carousel' && responsiveStyles.carouselDescription),
+        }}>{product.description}</p>
 
         {/* Price for FOOD items */}
         {hasPrice && (
@@ -104,16 +119,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
 
-        {/* Benefit */}
-        {mainBenefit && !isOutOfStock && (
+        {/* Benefit - hidden in carousel mobile for compactness */}
+        {mainBenefit && !isOutOfStock && !(isMobile && variant === 'carousel') && (
           <div style={styles.benefit}>
             <span style={styles.benefitIcon}>{mainBenefit.icon}</span>
             <span style={styles.benefitText}>{mainBenefit.text}</span>
           </div>
         )}
 
-        {/* Rating - Large stars */}
-        {product.rating !== undefined && product.rating > 0 && (
+        {/* Rating - hidden in carousel mobile for compactness */}
+        {product.rating !== undefined && product.rating > 0 && !(isMobile && variant === 'carousel') && (
           <div style={styles.ratingContainer}>
             <StarRating
               rating={product.rating}
@@ -126,7 +141,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Action Button */}
-      <div style={{ ...styles.actions, ...(isMobile && responsiveStyles.actions) }}>
+      <div style={{
+        ...styles.actions,
+        ...(isMobile && responsiveStyles.actions),
+        ...(isMobile && variant === 'carousel' && responsiveStyles.carouselActions),
+      }}>
         {isOutOfStock ? (
           <button
             style={{
@@ -144,6 +163,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               ...styles.addButton,
               ...(isFood ? styles.foodButton : {}),
               ...(isMobile && responsiveStyles.addButton),
+              ...(isMobile && variant === 'carousel' && responsiveStyles.carouselAddButton),
             }}
             onClick={() => onAddToCart(product.id)}
           >
@@ -325,8 +345,30 @@ const responsiveStyles: { [key: string]: React.CSSProperties } = {
     borderRadius: '12px',
   },
   carouselCard: {
-    minWidth: '260px',
-    maxWidth: '260px',
+    minWidth: '160px',
+    maxWidth: '160px',
+  },
+  carouselImageContainer: {
+    height: '110px',
+  },
+  carouselContent: {
+    padding: '12px',
+    gap: '4px',
+  },
+  carouselTitle: {
+    fontSize: '13px',
+    marginBottom: '2px',
+  },
+  carouselDescription: {
+    fontSize: '12px',
+    WebkitLineClamp: 1,
+  },
+  carouselActions: {
+    padding: '0 12px 12px 12px',
+  },
+  carouselAddButton: {
+    padding: '8px',
+    fontSize: '12px',
   },
   content: {
     padding: '16px',

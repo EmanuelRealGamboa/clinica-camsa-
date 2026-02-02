@@ -1,5 +1,6 @@
 import React from 'react';
 import { colors } from '../../styles/colors';
+import { useWindowSize } from '../../utils/responsive';
 
 interface OrderStatusProgressProps {
   currentStatus: 'PLACED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED';
@@ -20,6 +21,8 @@ const steps: Step[] = [
 ];
 
 export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ currentStatus }) => {
+  const { isMobile } = useWindowSize();
+
   const getStepIndex = (status: string): number => {
     const index = steps.findIndex(s => s.status === status);
     return index === -1 ? 0 : index;
@@ -34,10 +37,24 @@ export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ curren
     return 'pending';
   };
 
+  const containerStyles = { ...styles.container, ...(isMobile && responsiveStyles.container) };
+  const progressBarStyles = { ...styles.progressBarContainer, ...(isMobile && responsiveStyles.progressBarContainer) };
+  const stepCircleStyles = (isCompleted: boolean, isCurrent: boolean) => ({
+    ...styles.stepCircle,
+    ...(isMobile && responsiveStyles.stepCircle),
+    ...(isCompleted && styles.stepCircleCompleted),
+    ...(isCurrent && styles.stepCircleCurrent),
+  });
+  const stepLabelStyles = (isCurrent: boolean) => ({
+    ...styles.stepLabel,
+    ...(isMobile && responsiveStyles.stepLabel),
+    ...(isCurrent && styles.stepLabelCurrent),
+  });
+
   return (
-    <div style={styles.container}>
+    <div style={containerStyles}>
       {/* Progress Bar Background */}
-      <div style={styles.progressBarContainer}>
+      <div style={progressBarStyles}>
         <div style={styles.progressBarBg} />
         <div
           style={{
@@ -57,23 +74,12 @@ export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ curren
           return (
             <div key={step.id} style={styles.stepWrapper}>
               {/* Step Circle */}
-              <div
-                style={{
-                  ...styles.stepCircle,
-                  ...(isCompleted && styles.stepCircleCompleted),
-                  ...(isCurrent && styles.stepCircleCurrent),
-                }}
-              >
+              <div style={stepCircleStyles(isCompleted, isCurrent)}>
                 {isCompleted ? '✓' : step.id}
               </div>
 
               {/* Step Label */}
-              <div
-                style={{
-                  ...styles.stepLabel,
-                  ...(isCurrent && styles.stepLabelCurrent),
-                }}
-              >
+              <div style={stepLabelStyles(isCurrent)}>
                 {step.label}
               </div>
             </div>
@@ -83,7 +89,7 @@ export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ curren
 
       {/* Cancelled Status */}
       {currentStatus === 'CANCELLED' && (
-        <div style={styles.cancelledBadge}>
+        <div style={{ ...styles.cancelledBadge, ...(isMobile && responsiveStyles.cancelledBadge) }}>
           Pedido cancelado
         </div>
       )}
@@ -174,5 +180,31 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: 'center',
     fontSize: '16px',
     fontWeight: 'bold',
+  },
+};
+
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  container: {
+    padding: '24px 12px 12px 12px',
+  },
+  progressBarContainer: {
+    top: '36px',
+    left: '12%',
+    right: '12%',
+  },
+  stepCircle: {
+    width: '32px',
+    height: '32px',
+    fontSize: '12px',
+    marginBottom: '8px',
+    border: '2px solid #e0e0e0',
+  },
+  stepLabel: {
+    fontSize: '11px',
+  },
+  cancelledBadge: {
+    marginTop: '12px',
+    padding: '10px 16px',
+    fontSize: '14px',
   },
 };

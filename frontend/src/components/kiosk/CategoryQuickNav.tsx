@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ProductCategory } from '../../types';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 
 interface CategoryQuickNavProps {
@@ -17,6 +18,8 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
   orderLimits = {},
   currentCounts = new Map(),
 }) => {
+  const { isMobile } = useWindowSize();
+
   // Get limit info for a category
   const getLimitInfo = (category: ProductCategory) => {
     const categoryType = category.category_type;
@@ -51,14 +54,18 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
     };
   };
 
+  const containerStyles = { ...styles.container, ...(isMobile && responsiveStyles.container) };
+  const headerStyles = { ...styles.header, ...(isMobile && responsiveStyles.header) };
+  const navContainerStyles = { ...styles.navContainer, ...(isMobile && responsiveStyles.navContainer) };
+
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h2 style={styles.title}>Categorias</h2>
-        <p style={styles.subtitle}>Selecciona una categoria para ver sus productos</p>
+    <div style={containerStyles}>
+      <div style={headerStyles}>
+        <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>Categorias</h2>
+        <p style={{ ...styles.subtitle, ...(isMobile && responsiveStyles.subtitle) }}>Selecciona una categoria para ver sus productos</p>
       </div>
 
-      <div style={styles.navContainer}>
+      <div style={navContainerStyles}>
         {categories.map((category) => {
           const limitInfo = getLimitInfo(category);
           const isLimitReached = limitInfo?.hasLimit && limitInfo?.isReached;
@@ -68,6 +75,7 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
               key={category.id}
               style={{
                 ...styles.categoryButton,
+                ...(isMobile && responsiveStyles.categoryButton),
                 ...(isLimitReached ? styles.categoryButtonDisabled : {}),
               }}
               onClick={() => {
@@ -93,10 +101,10 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
               }}
               className="category-nav-button"
             >
-              <div style={styles.iconWrapper}>
-                <span style={styles.icon}>{category.icon || '📦'}</span>
+              <div style={{ ...styles.iconWrapper, ...(isMobile && responsiveStyles.iconWrapper) }}>
+                <span style={{ ...styles.icon, ...(isMobile && responsiveStyles.icon) }}>{category.icon || '📦'}</span>
               </div>
-              <span style={styles.categoryName}>{category.name}</span>
+              <span style={{ ...styles.categoryName, ...(isMobile && responsiveStyles.categoryName) }}>{category.name}</span>
               {limitInfo && (
                 <span style={{
                   ...styles.limitBadge,
@@ -191,6 +199,41 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '12px',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
+  },
+};
+
+const responsiveStyles: { [key: string]: React.CSSProperties } = {
+  container: {
+    padding: '20px 16px',
+    marginBottom: '16px',
+  },
+  header: {
+    marginBottom: '16px',
+  },
+  title: {
+    fontSize: '20px',
+  },
+  subtitle: {
+    fontSize: '13px',
+  },
+  navContainer: {
+    gap: '10px',
+    justifyContent: 'center',
+  },
+  categoryButton: {
+    padding: '12px 16px',
+    minWidth: '100px',
+    gap: '8px',
+  },
+  iconWrapper: {
+    width: '50px',
+    height: '50px',
+  },
+  icon: {
+    fontSize: '24px',
+  },
+  categoryName: {
+    fontSize: '13px',
   },
 };
 

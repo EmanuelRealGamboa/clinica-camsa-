@@ -291,11 +291,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   closeButton: {
     width: '40px',
     height: '40px',
+    minWidth: '40px',
+    minHeight: '40px',
+    flexShrink: 0,
     borderRadius: '50%',
-    border: `2px solid ${colors.primary}`,
+    border: `1px solid ${colors.primaryMuted}`,
     backgroundColor: colors.white,
-    color: colors.primary,
-    fontSize: '20px',
+    color: colors.textSecondary,
+    fontSize: '18px',
+    fontWeight: 400,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -423,13 +427,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: 'center',
   },
   removeButton: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '10px',
-    border: `1px solid ${colors.error}`,
-    backgroundColor: 'transparent',
-    fontSize: '18px',
+    width: '36px',
+    height: '36px',
+    minWidth: '36px',
+    flexShrink: 0,
+    borderRadius: '8px',
+    border: 'none',
+    backgroundColor: colors.cream,
+    color: colors.textMuted,
+    fontSize: '16px',
     cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     transition: 'all 0.2s',
   },
   footer: {
@@ -492,7 +502,9 @@ const responsiveStyles: { [key: string]: React.CSSProperties } = {
   closeButton: {
     width: '36px',
     height: '36px',
-    fontSize: '18px',
+    minWidth: '36px',
+    minHeight: '36px',
+    fontSize: '16px',
   },
   cartItem: {
     gap: '8px',
@@ -546,15 +558,11 @@ const responsiveStyles: { [key: string]: React.CSSProperties } = {
     minWidth: '18px',
   },
   removeButton: {
-    width: '24px',
-    height: '24px',
-    fontSize: '12px',
+    width: '32px',
+    height: '32px',
+    minWidth: '32px',
+    fontSize: '14px',
     padding: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '6px',
-    flexShrink: 0,
   },
   itemsContainer: {
     padding: '12px',
@@ -581,13 +589,46 @@ const responsiveStyles: { [key: string]: React.CSSProperties } = {
   },
 };
 
-// Add hover effects for buttons
+// Add hover effects for buttons (override responsive.css full-width on mobile)
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
+  .cart-close-btn {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+  }
+  @media (max-width: 767px) {
+    .cart-close-btn {
+      width: 36px !important;
+      min-width: 36px !important;
+      max-width: 36px !important;
+      height: 36px !important;
+    }
+  }
   .cart-close-btn:hover {
     background-color: ${colors.primary} !important;
     color: ${colors.white} !important;
     transform: scale(1.05);
+  }
+
+  .cart-remove-btn {
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    height: 36px !important;
+  }
+  @media (max-width: 767px) {
+    .cart-remove-btn {
+      width: 32px !important;
+      min-width: 32px !important;
+      max-width: 32px !important;
+      height: 32px !important;
+    }
+  }
+  .cart-remove-btn:hover {
+    background-color: ${colors.primaryMuted} !important;
+    color: ${colors.error} !important;
   }
 
   .cart-qty-btn:hover {
@@ -601,11 +642,6 @@ styleSheet.textContent = `
     transform: scale(0.95);
   }
 
-  .cart-remove-btn:hover {
-    background-color: ${colors.error} !important;
-    border-color: ${colors.error} !important;
-    transform: scale(1.05);
-  }
 
   .cart-checkout-btn:hover {
     background-color: ${colors.primary} !important;

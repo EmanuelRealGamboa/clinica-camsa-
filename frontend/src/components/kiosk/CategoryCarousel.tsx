@@ -23,12 +23,12 @@ export const CategoryCarousel: React.FC<CategoryCarouselProps> = ({
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
-    const scrollAmount = isMobile ? -280 : -320;
+    const scrollAmount = isMobile ? -170 : -320;
     carouselRef.current?.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
   const scrollRight = () => {
-    const scrollAmount = isMobile ? 280 : 320;
+    const scrollAmount = isMobile ? 170 : 320;
     carouselRef.current?.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
@@ -93,17 +93,17 @@ export const CategoryCarousel: React.FC<CategoryCarouselProps> = ({
           </button>
         )}
 
-        {/* Products Container - grid 2 cols on mobile, carousel on desktop */}
+        {/* Products Container - carousel with smaller cards on mobile */}
         <div ref={carouselRef} style={{
           ...styles.carousel,
-          ...(isMobile && responsiveStyles.grid),
+          ...(isMobile && responsiveStyles.carousel),
         }}>
           {products.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
               onAddToCart={onAddToCart}
-              variant={isMobile ? 'grid' : 'carousel'}
+              variant="carousel"
             />
           ))}
         </div>
@@ -259,16 +259,6 @@ const responsiveStyles: { [key: string]: React.CSSProperties } = {
   carousel: {
     padding: '8px',
     gap: '12px',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '12px',
-    padding: '8px 12px',
-    overflow: 'visible',
-    overflowX: 'visible',
-    overflowY: 'visible',
-    flexWrap: 'wrap',
   },
   viewAllButton: {
     width: '100%',

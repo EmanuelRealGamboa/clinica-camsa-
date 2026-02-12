@@ -52,13 +52,13 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
             style={{ ...styles.messageCard, ...styles.linkCard, ...responsiveStyles.messageCard }}
             className="welcome-card products-card"
           >
-            <div style={{ ...styles.iconCircle, ...responsiveStyles.iconCircle }}>
-              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🛒</span>
-            </div>
             <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Conoce nuestros productos</h2>
             <p style={{ ...styles.messageText, ...responsiveStyles.messageText }}>
               Explora nuestra tienda en línea y descubre más opciones disponibles.
             </p>
+            <div style={{ ...styles.iconCircleBottom, ...responsiveStyles.iconCircleBottom }}>
+              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🛒</span>
+            </div>
           </a>
         </div>
 
@@ -158,6 +158,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'center',
     margin: '0 auto 24px auto',
   },
+  iconCircleBottom: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '50%',
+    backgroundColor: colors.primaryLight,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '24px auto 0 auto',
+  },
   icon: {
     fontSize: '50px',
   },
@@ -249,6 +259,11 @@ const getResponsiveStyles = (isMobile: boolean) => {
       width: '80px',
       height: '80px',
       marginBottom: '16px',
+    },
+    iconCircleBottom: {
+      width: '64px',
+      height: '64px',
+      marginTop: '16px',
     },
     icon: {
       fontSize: '40px',

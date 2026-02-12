@@ -1,5 +1,6 @@
 import React from 'react';
 import { colors } from '../../styles/colors';
+import { TIENDA_CAMSA_URL } from '../../constants/urls';
 
 interface WaitingForSurveyModalProps {
   onReturnToMenu: () => void;
@@ -20,18 +21,36 @@ const WaitingForSurveyModal: React.FC<WaitingForSurveyModalProps> = ({ onReturnT
           <p style={styles.note}>
             Mientras tanto, puedes regresar al menú, pero no podrás realizar nuevas órdenes a menos que tu enfermera las cree por ti.
           </p>
-          <button
-            onClick={onReturnToMenu}
-            style={styles.button}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = colors.primaryDark;
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = colors.primary;
-            }}
-          >
-            Volver al Menú
-          </button>
+          <div style={styles.buttonsContainer}>
+            <button
+              type="button"
+              onClick={() => window.open(TIENDA_CAMSA_URL, '_blank', 'noopener,noreferrer')}
+              style={styles.tiendaButton}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors.primaryMuted;
+                e.currentTarget.style.borderColor = colors.primaryDark;
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = colors.white;
+                e.currentTarget.style.borderColor = colors.primary;
+              }}
+            >
+              <span style={styles.tiendaButtonIcon}>🛒</span>
+              <span>Conoce nuestros productos</span>
+            </button>
+            <button
+              onClick={onReturnToMenu}
+              style={styles.button}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors.primaryDark;
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = colors.primary;
+              }}
+            >
+              Volver al Menú
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -99,6 +118,35 @@ const styles: { [key: string]: React.CSSProperties } = {
     lineHeight: 1.5,
     fontStyle: 'italic',
     margin: 0,
+  },
+  buttonsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    width: '100%',
+    marginTop: '10px',
+  },
+  tiendaButton: {
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `3px solid ${colors.primary}`,
+    borderRadius: '12px',
+    padding: '18px 36px',
+    fontSize: '18px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    width: '100%',
+    boxShadow: `0 4px 16px ${colors.shadowGold}`,
+    minHeight: '56px',
+  },
+  tiendaButtonIcon: {
+    fontSize: '28px',
+    lineHeight: 1,
   },
   button: {
     backgroundColor: colors.primary,

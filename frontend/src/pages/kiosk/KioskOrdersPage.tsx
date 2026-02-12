@@ -13,6 +13,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 import { useSurvey } from '../../contexts/SurveyContext';
 import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
+import { TIENDA_CAMSA_URL } from '../../constants/urls';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
@@ -313,6 +314,10 @@ export const KioskOrdersPage: React.FC = () => {
     navigate(`/kiosk/${deviceId}`);
   };
 
+  const handleOpenTienda = () => {
+    window.open(TIENDA_CAMSA_URL, '_blank', 'noopener,noreferrer');
+  };
+
   const handleSatisfactionSubmit = async (rating: number, comment?: string) => {
     if (!satisfactionModal.orderId || !deviceId) return;
 
@@ -411,15 +416,26 @@ export const KioskOrdersPage: React.FC = () => {
               </div>
             </div>
           )}
-          {!hasActiveOrders && (
-            <button 
-              style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }} 
-              onClick={handleNewOrder}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="button"
+              style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }}
+              onClick={handleOpenTienda}
               className="kiosk-btn-outline"
+              title="Conoce nuestros productos"
             >
-              Ver Menú
+              🛒 Conoce productos
             </button>
-          )}
+            {!hasActiveOrders && (
+              <button 
+                style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }} 
+                onClick={handleNewOrder}
+                className="kiosk-btn-outline"
+              >
+                Ver Menú
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -433,6 +449,28 @@ export const KioskOrdersPage: React.FC = () => {
             </button>
           )}
         </div>
+
+        {hasActiveOrders && (
+          <div
+            style={{
+              ...styles.tiendaBanner,
+              ...(isMobile && responsiveStyles.tiendaBanner),
+            }}
+          >
+            <button
+              type="button"
+              onClick={handleOpenTienda}
+              style={{
+                ...styles.tiendaBannerButton,
+                ...(isMobile && responsiveStyles.tiendaBannerButton),
+              }}
+              className="kiosk-btn-outline"
+            >
+              <span style={styles.tiendaBannerIcon}>🛒</span>
+              <span>Conoce nuestros productos</span>
+            </button>
+          </div>
+        )}
 
         {activeOrders.length === 0 ? (
           <div style={styles.emptyState}>
@@ -735,6 +773,29 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
   },
+  tiendaBanner: {
+    marginBottom: '24px',
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  tiendaBannerButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px 32px',
+    backgroundColor: colors.white,
+    color: colors.primary,
+    border: `2px solid ${colors.primary}`,
+    borderRadius: '12px',
+    fontSize: '18px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: `0 4px 12px ${colors.shadowGold}`,
+  },
+  tiendaBannerIcon: {
+    fontSize: '24px',
+  },
   ordersList: {
     display: 'flex',
     flexDirection: 'column',
@@ -886,6 +947,15 @@ const responsiveStyles: { [key: string]: React.CSSProperties } = {
     gap: '12px',
     alignItems: 'stretch',
     marginBottom: '20px',
+  },
+  tiendaBanner: {
+    marginBottom: '16px',
+  },
+  tiendaBannerButton: {
+    width: '100%',
+    padding: '14px 24px',
+    fontSize: '16px',
+    justifyContent: 'center',
   },
   ordersTitle: {
     fontSize: '20px',

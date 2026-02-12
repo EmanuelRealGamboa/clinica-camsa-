@@ -22,6 +22,7 @@ import { useKioskState } from '../../hooks/useKioskState';
 import { useSurvey } from '../../contexts/SurveyContext';
 import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
+import { TIENDA_CAMSA_URL } from '../../constants/urls';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
@@ -39,9 +40,6 @@ interface PatientInfo {
 
 // Storage key for cart persistence
 const CART_STORAGE_KEY = 'kiosk_cart';
-
-// External store URL - opens in new tab without affecting kiosk flow
-const TIENDA_CAMSA_URL = 'https://tienda-camsa-production.up.railway.app/';
 
 export const KioskHomePage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
@@ -646,7 +644,7 @@ export const KioskHomePage: React.FC = () => {
               className="kiosk-btn-outline"
               title="Conoce nuestros productos"
             >
-              Conoce productos
+              🛒 Conoce productos
             </button>
             <button
               style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}

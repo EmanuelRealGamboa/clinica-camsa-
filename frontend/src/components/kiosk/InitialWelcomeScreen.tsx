@@ -45,15 +45,21 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
             </p>
           </div>
 
-          <div style={{ ...styles.messageCard, ...responsiveStyles.messageCard }}>
+          <a
+            href="https://tienda-camsa-production.up.railway.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...styles.messageCard, ...styles.linkCard, ...responsiveStyles.messageCard }}
+            className="welcome-card products-card"
+          >
             <div style={{ ...styles.iconCircle, ...responsiveStyles.iconCircle }}>
-              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🍽️</span>
+              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🛒</span>
             </div>
-            <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Ordena Comida</h2>
+            <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Conoce nuestros productos</h2>
             <p style={{ ...styles.messageText, ...responsiveStyles.messageText }}>
-              También puedes ordenar alimentos adicionales desde nuestro menú.
+              Explora nuestra tienda en línea y descubre más opciones disponibles.
             </p>
-          </div>
+          </a>
         </div>
 
         <button
@@ -135,6 +141,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '40px 30px',
     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  },
+  linkCard: {
+    textDecoration: 'none',
+    color: 'inherit',
+    display: 'block',
+    cursor: 'pointer',
   },
   iconCircle: {
     width: '100px',

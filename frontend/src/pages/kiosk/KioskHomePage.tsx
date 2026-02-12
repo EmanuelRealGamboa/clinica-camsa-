@@ -40,6 +40,9 @@ interface PatientInfo {
 // Storage key for cart persistence
 const CART_STORAGE_KEY = 'kiosk_cart';
 
+// External store URL - opens in new tab without affecting kiosk flow
+const TIENDA_CAMSA_URL = 'https://tienda-camsa-production.up.railway.app/';
+
 export const KioskHomePage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
@@ -575,6 +578,10 @@ export const KioskHomePage: React.FC = () => {
     navigate(`/kiosk/${deviceId}/orders`);
   };
 
+  const handleOpenTienda = () => {
+    window.open(TIENDA_CAMSA_URL, '_blank', 'noopener,noreferrer');
+  };
+
   const handleLimitReachedClose = () => {
     setShowLimitReachedModal(false);
   };
@@ -632,6 +639,15 @@ export const KioskHomePage: React.FC = () => {
             </div>
           )}
           <div style={{ ...styles.headerRight, ...(isMobile && responsiveStyles.headerRight) }}>
+            <button
+              type="button"
+              style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}
+              onClick={handleOpenTienda}
+              className="kiosk-btn-outline"
+              title="Conoce nuestros productos"
+            >
+              Conoce productos
+            </button>
             <button
               style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}
               onClick={handleViewOrders}

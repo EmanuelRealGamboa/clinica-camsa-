@@ -1,5 +1,6 @@
 import React from 'react';
 import { colors } from '../../styles/colors';
+import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
 import { useWindowSize } from '../../utils/responsive';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
@@ -46,7 +47,7 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
           </div>
 
           <a
-            href="https://tienda-camsa-production.up.railway.app/"
+            href={TIENDA_CAMSA_URL}
             target="_blank"
             rel="noopener noreferrer"
             style={{ ...styles.messageCard, ...styles.linkCard, ...responsiveStyles.messageCard }}
@@ -58,6 +59,22 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
             </p>
             <div style={{ ...styles.iconCircleBottom, ...responsiveStyles.iconCircleBottom }}>
               <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🛒</span>
+            </div>
+          </a>
+
+          <a
+            href={RESTAURANTES_CAMSA_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...styles.messageCard, ...styles.linkCard, ...responsiveStyles.messageCard }}
+            className="welcome-card products-card"
+          >
+            <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Pedir comida</h2>
+            <p style={{ ...styles.messageText, ...responsiveStyles.messageText }}>
+              Ordena comida de restaurantes cercanos y disfrútala en la clínica.
+            </p>
+            <div style={{ ...styles.iconCircleBottom, ...responsiveStyles.iconCircleBottom }}>
+              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🍽️</span>
             </div>
           </a>
         </div>

@@ -22,7 +22,7 @@ import { useKioskState } from '../../hooks/useKioskState';
 import { useSurvey } from '../../contexts/SurveyContext';
 import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
-import { TIENDA_CAMSA_URL } from '../../constants/urls';
+import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
@@ -580,6 +580,10 @@ export const KioskHomePage: React.FC = () => {
     window.open(TIENDA_CAMSA_URL, '_blank', 'noopener,noreferrer');
   };
 
+  const handleOpenRestaurantes = () => {
+    window.open(RESTAURANTES_CAMSA_URL, '_blank', 'noopener,noreferrer');
+  };
+
   const handleLimitReachedClose = () => {
     setShowLimitReachedModal(false);
   };
@@ -645,6 +649,15 @@ export const KioskHomePage: React.FC = () => {
               title="Conoce nuestros productos"
             >
               🛒 Conoce productos
+            </button>
+            <button
+              type="button"
+              style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}
+              onClick={handleOpenRestaurantes}
+              className="kiosk-btn-outline"
+              title="Pedir comida"
+            >
+              🍽️ Pedir comida
             </button>
             <button
               style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}

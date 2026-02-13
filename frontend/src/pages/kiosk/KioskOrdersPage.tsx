@@ -13,7 +13,7 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 import { useSurvey } from '../../contexts/SurveyContext';
 import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
-import { TIENDA_CAMSA_URL } from '../../constants/urls';
+import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
@@ -318,6 +318,10 @@ export const KioskOrdersPage: React.FC = () => {
     window.open(TIENDA_CAMSA_URL, '_blank', 'noopener,noreferrer');
   };
 
+  const handleOpenRestaurantes = () => {
+    window.open(RESTAURANTES_CAMSA_URL, '_blank', 'noopener,noreferrer');
+  };
+
   const handleSatisfactionSubmit = async (rating: number, comment?: string) => {
     if (!satisfactionModal.orderId || !deviceId) return;
 
@@ -426,6 +430,15 @@ export const KioskOrdersPage: React.FC = () => {
             >
               🛒 Conoce productos
             </button>
+            <button
+              type="button"
+              style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }}
+              onClick={handleOpenRestaurantes}
+              className="kiosk-btn-outline"
+              title="Pedir comida"
+            >
+              🍽️ Pedir comida
+            </button>
             {!hasActiveOrders && (
               <button 
                 style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }} 
@@ -457,18 +470,32 @@ export const KioskOrdersPage: React.FC = () => {
               ...(isMobile && responsiveStyles.tiendaBanner),
             }}
           >
-            <button
-              type="button"
-              onClick={handleOpenTienda}
-              style={{
-                ...styles.tiendaBannerButton,
-                ...(isMobile && responsiveStyles.tiendaBannerButton),
-              }}
-              className="kiosk-btn-outline"
-            >
-              <span style={styles.tiendaBannerIcon}>🛒</span>
-              <span>Conoce nuestros productos</span>
-            </button>
+            <div style={styles.tiendaBannerButtons}>
+              <button
+                type="button"
+                onClick={handleOpenTienda}
+                style={{
+                  ...styles.tiendaBannerButton,
+                  ...(isMobile && responsiveStyles.tiendaBannerButton),
+                }}
+                className="kiosk-btn-outline"
+              >
+                <span style={styles.tiendaBannerIcon}>🛒</span>
+                <span>Conoce productos</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenRestaurantes}
+                style={{
+                  ...styles.tiendaBannerButton,
+                  ...(isMobile && responsiveStyles.tiendaBannerButton),
+                }}
+                className="kiosk-btn-outline"
+              >
+                <span style={styles.tiendaBannerIcon}>🍽️</span>
+                <span>Pedir comida</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -776,6 +803,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   tiendaBanner: {
     marginBottom: '24px',
     display: 'flex',
+    justifyContent: 'center',
+  },
+  tiendaBannerButtons: {
+    display: 'flex',
+    gap: '16px',
+    flexWrap: 'wrap',
     justifyContent: 'center',
   },
   tiendaBannerButton: {

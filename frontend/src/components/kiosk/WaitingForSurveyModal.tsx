@@ -1,6 +1,6 @@
 import React from 'react';
 import { colors } from '../../styles/colors';
-import { TIENDA_CAMSA_URL } from '../../constants/urls';
+import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
 
 interface WaitingForSurveyModalProps {
   onReturnToMenu: () => void;
@@ -37,6 +37,22 @@ const WaitingForSurveyModal: React.FC<WaitingForSurveyModalProps> = ({ onReturnT
             >
               <span style={styles.tiendaButtonIcon}>🛒</span>
               <span>Conoce nuestros productos</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => window.open(RESTAURANTES_CAMSA_URL, '_blank', 'noopener,noreferrer')}
+              style={styles.tiendaButton}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = colors.primaryMuted;
+                e.currentTarget.style.borderColor = colors.primaryDark;
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = colors.white;
+                e.currentTarget.style.borderColor = colors.primary;
+              }}
+            >
+              <span style={styles.tiendaButtonIcon}>🍽️</span>
+              <span>Pedir comida</span>
             </button>
             <button
               onClick={onReturnToMenu}

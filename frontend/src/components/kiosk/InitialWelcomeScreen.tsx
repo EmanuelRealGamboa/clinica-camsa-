@@ -19,15 +19,65 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
 }) => {
   const { isMobile } = useWindowSize();
   const isButtonDisabled = !patientAssigned || loading;
-  
   const responsiveStyles = getResponsiveStyles(isMobile);
-  
+
+  const hexagonClipPath = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)';
+
+  const HexagonBlock = ({
+    icon,
+    title,
+    description,
+    href,
+    className = '',
+  }: {
+    icon: string;
+    title: string;
+    description: string;
+    href?: string;
+    className?: string;
+  }) => {
+    const content = (
+      <>
+        <div
+          className="hexagon-shape"
+          style={{ ...styles.hexagonShape, ...(responsiveStyles.hexagonShape || {}), clipPath: hexagonClipPath, WebkitClipPath: hexagonClipPath }}
+        >
+          <div style={{ ...styles.hexagonInner, ...responsiveStyles.hexagonInner }}>
+            <span style={{ ...styles.hexagonIcon, ...responsiveStyles.hexagonIcon }}>{icon}</span>
+            <span style={{ ...styles.hexagonTitle, ...responsiveStyles.hexagonTitle }}>{title}</span>
+          </div>
+        </div>
+        <p style={{ ...styles.hexagonDescription, ...responsiveStyles.hexagonDescription }}>{description}</p>
+      </>
+    );
+
+    if (href) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.hexagonWrapper}
+          className={`hexagon-link ${className}`}
+        >
+          {content}
+        </a>
+      );
+    }
+
+    return (
+      <div style={styles.hexagonWrapper} className={className}>
+        {content}
+      </div>
+    );
+  };
+
   return (
     <div style={{ ...styles.container, ...responsiveStyles.container }}>
-      {/* Logo Section */}
+      {/* Logo Section - Badge gris claro */}
       <div style={{ ...styles.logoContainer, ...responsiveStyles.logoContainer }}>
-        <div style={{ ...styles.logoPlaceholder, ...responsiveStyles.logoPlaceholder }}>
-          <img src={logoHorizontal} alt="Clínica CAMSA" style={styles.logoImage} />
+        <div style={{ ...styles.logoBadge, ...responsiveStyles.logoBadge }}>
+          <img src={logoHorizontal} alt="Clínica CAMSA" style={{ ...styles.logoImage, ...responsiveStyles.logoImage }} />
         </div>
       </div>
 
@@ -35,65 +85,51 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
       <div style={styles.content}>
         <h1 style={{ ...styles.title, ...responsiveStyles.title }}>¡Bienvenido!</h1>
 
-        <div style={{ ...styles.messageContainer, ...responsiveStyles.messageContainer }}>
-          <div style={{ ...styles.messageCard, ...responsiveStyles.messageCard }}>
-            <div style={{ ...styles.iconCircle, ...responsiveStyles.iconCircle }}>
-              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🎁</span>
-            </div>
-            <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Cortesías Gratuitas</h2>
-            <p style={{ ...styles.messageText, ...responsiveStyles.messageText }}>
-              Durante tu consulta, disfruta de bebidas y snacks completamente gratis.
-            </p>
+        {/* Hexagons - Layout 1-2 */}
+        <div style={{ ...styles.hexagonsContainer, ...responsiveStyles.hexagonsContainer }}>
+          {/* Top row - single hexagon (Cortesías) */}
+          <div style={{ ...styles.hexagonRowTop, ...responsiveStyles.hexagonRowTop }}>
+            <HexagonBlock
+              icon="🎁"
+              title="Cortesías Gratuitas"
+              description="Durante tu consulta, disfruta de bebidas y snacks completamente gratis."
+            />
           </div>
-
-          <a
-            href={TIENDA_CAMSA_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ ...styles.messageCard, ...styles.linkCard, ...responsiveStyles.messageCard }}
-            className="welcome-card products-card"
-          >
-            <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Conoce nuestros productos</h2>
-            <p style={{ ...styles.messageText, ...responsiveStyles.messageText }}>
-              Explora nuestra tienda en línea y descubre más opciones disponibles.
-            </p>
-            <div style={{ ...styles.iconCircleBottom, ...responsiveStyles.iconCircleBottom }}>
-              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🛒</span>
-            </div>
-          </a>
-
-          <a
-            href={RESTAURANTES_CAMSA_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ ...styles.messageCard, ...styles.linkCard, ...responsiveStyles.messageCard }}
-            className="welcome-card products-card"
-          >
-            <h2 style={{ ...styles.messageTitle, ...responsiveStyles.messageTitle }}>Pedir comida</h2>
-            <p style={{ ...styles.messageText, ...responsiveStyles.messageText }}>
-              Ordena comida de restaurantes cercanos y disfrútala en la clínica.
-            </p>
-            <div style={{ ...styles.iconCircleBottom, ...responsiveStyles.iconCircleBottom }}>
-              <span style={{ ...styles.icon, ...responsiveStyles.icon }}>🍽️</span>
-            </div>
-          </a>
+          {/* Bottom row - two hexagons (Tienda, Pedir comida) */}
+          <div style={{ ...styles.hexagonRowBottom, ...responsiveStyles.hexagonRowBottom }}>
+            <HexagonBlock
+              icon="🛒"
+              title="Conoce nuestros productos"
+              description="Explora nuestra tienda en línea y descubre más opciones disponibles."
+              href={TIENDA_CAMSA_URL}
+            />
+            <HexagonBlock
+              icon="🍽️"
+              title="Pedir comida"
+              description="Ordena comida de restaurantes cercanos y disfrútala en la clínica."
+              href={RESTAURANTES_CAMSA_URL}
+            />
+          </div>
         </div>
 
-        <button
-          style={isButtonDisabled 
-            ? { ...styles.buttonDisabled, ...responsiveStyles.button } 
-            : { ...styles.button, ...responsiveStyles.button }}
-          onClick={onViewMenu}
-          disabled={isButtonDisabled}
-        >
-          {loading ? 'Verificando...' : patientAssigned ? 'Ver Menú' : 'Esperando registro...'}
-        </button>
-
-        {!patientAssigned && (
-          <p style={{ ...styles.waitingMessage, ...responsiveStyles.waitingMessage }}>
-            Por favor espera a que tu enfermera te registre en el sistema
-          </p>
-        )}
+        {/* Barra inferior - Esperando registro / Ver Menú */}
+        <div style={styles.bottomSection}>
+          <button
+            style={isButtonDisabled
+              ? { ...styles.buttonBarDisabled, ...responsiveStyles.buttonBar }
+              : { ...styles.buttonBar, ...responsiveStyles.buttonBar }}
+            onClick={onViewMenu}
+            disabled={isButtonDisabled}
+            className="welcome-button-bar"
+          >
+            {loading ? 'Verificando...' : patientAssigned ? 'Ver Menú' : 'Esperando registro...'}
+          </button>
+          {!patientAssigned && (
+            <p style={{ ...styles.waitingMessage, ...responsiveStyles.waitingMessage }}>
+              Por favor espera a que tu enfermera te registre en el sistema
+            </p>
+          )}
+        </div>
 
         <p style={{ ...styles.footer, ...responsiveStyles.footer }}>
           Dispositivo: {deviceUid}
@@ -106,7 +142,7 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.ivory,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -114,22 +150,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '40px 20px',
   },
   logoContainer: {
-    marginBottom: '60px',
+    marginBottom: '40px',
   },
-  logoPlaceholder: {
-    width: '300px',
-    height: '120px',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: '20px',
+  logoBadge: {
+    backgroundColor: colors.cream,
+    borderRadius: '16px',
+    padding: '20px 40px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-    padding: '20px',
+    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
   },
   logoImage: {
     maxWidth: '100%',
-    maxHeight: '100%',
+    maxHeight: '80px',
     height: 'auto',
     width: 'auto',
     objectFit: 'contain',
@@ -140,191 +174,207 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '100%',
   },
   title: {
-    fontSize: '56px',
+    fontSize: '48px',
     fontWeight: 'bold',
-    color: colors.white,
-    margin: '0 0 60px 0',
-    textShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+    color: colors.textPrimary,
+    margin: '0 0 48px 0',
   },
-  messageContainer: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '30px',
-    marginBottom: '60px',
+  hexagonsContainer: {
+    marginBottom: '48px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '32px',
   },
-  messageCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: '20px',
-    padding: '40px 30px',
-    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  hexagonRowTop: {
+    display: 'flex',
+    justifyContent: 'center',
   },
-  linkCard: {
+  hexagonRowBottom: {
+    display: 'flex',
+    gap: '40px',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+  },
+  hexagonWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     textDecoration: 'none',
     color: 'inherit',
-    display: 'block',
     cursor: 'pointer',
   },
-  iconCircle: {
-    width: '100px',
-    height: '100px',
-    borderRadius: '50%',
-    backgroundColor: colors.primaryLight,
+  hexagonShape: {
+    width: '200px',
+    height: '230px',
+    background: 'linear-gradient(135deg, #fde880 0%, #d9a70f 45%, #b78a0b 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: '0 auto 24px auto',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
   },
-  iconCircleBottom: {
-    width: '80px',
-    height: '80px',
-    borderRadius: '50%',
-    backgroundColor: colors.primaryLight,
+  hexagonInner: {
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: '24px auto 0 auto',
+    gap: '12px',
+    padding: '20px',
   },
-  icon: {
-    fontSize: '50px',
+  hexagonIcon: {
+    fontSize: '48px',
+    lineHeight: 1,
   },
-  messageTitle: {
-    fontSize: '28px',
-    fontWeight: 'bold',
-    color: colors.primary,
-    margin: '0 0 16px 0',
-  },
-  messageText: {
-    fontSize: '18px',
-    color: colors.gray,
-    lineHeight: '1.6',
-    margin: 0,
-  },
-  button: {
-    padding: '24px 80px',
-    backgroundColor: colors.white,
-    color: colors.primary,
-    border: `3px solid ${colors.white}`,
-    borderRadius: '50px',
-    fontSize: '28px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.2)',
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
-  },
-  buttonDisabled: {
-    padding: '24px 80px',
-    backgroundColor: colors.grayLight,
+  hexagonTitle: {
+    fontSize: '16px',
+    fontWeight: 600,
     color: colors.white,
-    border: `3px solid ${colors.grayLight}`,
-    borderRadius: '50px',
-    fontSize: '28px',
-    fontWeight: 'bold',
-    cursor: 'not-allowed',
-    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.2)',
-    textTransform: 'uppercase',
-    letterSpacing: '1px',
-    opacity: 0.7,
+    textAlign: 'center',
   },
-  footer: {
-    marginTop: '40px',
-    fontSize: '14px',
-    color: 'rgba(255, 255, 255, 0.7)',
+  hexagonDescription: {
+    marginTop: '16px',
+    fontSize: '15px',
+    color: colors.textSecondary,
+    lineHeight: 1.5,
+    maxWidth: '220px',
+  },
+  bottomSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: '600px',
+    margin: '0 auto',
+  },
+  buttonBar: {
+    width: '100%',
+    padding: '20px 48px',
+    backgroundColor: colors.primary,
+    color: colors.white,
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '20px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '1px',
+    boxShadow: `0 4px 12px ${colors.shadowGold}`,
+  },
+  buttonBarDisabled: {
+    width: '100%',
+    padding: '20px 48px',
+    backgroundColor: colors.primary,
+    color: colors.white,
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '20px',
+    fontWeight: 600,
+    cursor: 'not-allowed',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '1px',
+    opacity: 0.85,
+    boxShadow: `0 4px 12px ${colors.shadowGold}`,
   },
   waitingMessage: {
-    marginTop: '20px',
-    fontSize: '18px',
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontStyle: 'italic',
+    marginTop: '16px',
+    fontSize: '16px',
+    color: colors.textSecondary,
+  },
+  footer: {
+    marginTop: '32px',
+    fontSize: '14px',
+    color: colors.textMuted,
   },
 };
 
-// Responsive styles helper
-const getResponsiveStyles = (isMobile: boolean) => {
-  if (!isMobile) {
-    return {};
-  }
-  
-  return {
+const getResponsiveStyles = (isMobile: boolean): { [key: string]: React.CSSProperties } => {
+  const base = {
     container: {
-      padding: '20px 16px',
+      padding: '24px 16px',
     },
     logoContainer: {
-      marginBottom: '30px',
+      marginBottom: '24px',
     },
-    logoPlaceholder: {
-      width: '100%',
-      maxWidth: '280px',
-      height: '100px',
-      padding: '15px',
+    logoBadge: {
+      padding: '16px 24px',
+    },
+    logoImage: {
+      maxHeight: '60px',
     },
     title: {
-      fontSize: '36px',
-      marginBottom: '30px',
+      fontSize: '32px',
+      marginBottom: '32px',
     },
-    messageContainer: {
-      gridTemplateColumns: '1fr',
-      gap: '20px',
-      marginBottom: '30px',
+    hexagonsContainer: {
+      marginBottom: '32px',
+      gap: '28px',
+      flexDirection: 'column' as const,
     },
-    messageCard: {
-      padding: '24px 20px',
+    hexagonRowTop: {},
+    hexagonRowBottom: {
+      flexDirection: 'column' as const,
+      gap: '24px',
     },
-    iconCircle: {
-      width: '80px',
-      height: '80px',
-      marginBottom: '16px',
+    hexagonShape: {
+      width: '160px',
+      height: '184px',
     },
-    iconCircleBottom: {
-      width: '64px',
-      height: '64px',
-      marginTop: '16px',
+    hexagonInner: {
+      gap: '8px',
+      padding: '12px',
     },
-    icon: {
+    hexagonIcon: {
       fontSize: '40px',
     },
-    messageTitle: {
-      fontSize: '22px',
-      marginBottom: '12px',
+    hexagonTitle: {
+      fontSize: '14px',
     },
-    messageText: {
-      fontSize: '15px',
+    hexagonDescription: {
+      marginTop: '12px',
+      fontSize: '14px',
+      maxWidth: '180px',
     },
-    button: {
-      padding: '18px 32px',
-      fontSize: '18px',
-      width: '100%',
-      maxWidth: '100%',
+    buttonBar: {
+      padding: '16px 24px',
+      fontSize: '16px',
     },
     waitingMessage: {
-      fontSize: '15px',
-      marginTop: '16px',
+      fontSize: '14px',
+      marginTop: '12px',
     },
     footer: {
       fontSize: '12px',
       marginTop: '24px',
     },
   };
+
+  if (!isMobile) {
+    return {};
+  }
+
+  return base as { [key: string]: React.CSSProperties };
 };
 
-// Add hover effect
+// Inject global styles for hover effects
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   @media (hover: hover) {
-    .welcome-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+    .hexagon-link:hover .hexagon-shape,
+    .hexagon-link:hover [style*="clip-path"] {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
     }
 
-    .welcome-button:hover:not(:disabled) {
-      transform: scale(1.05);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    .welcome-button-bar:hover:not(:disabled) {
+      background-color: #9A7D4A !important;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(201, 169, 97, 0.4) !important;
     }
 
-    .welcome-button:active:not(:disabled) {
-      transform: scale(0.98);
+    .welcome-button-bar:active:not(:disabled) {
+      transform: translateY(0);
     }
   }
 `;

@@ -146,16 +146,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: '40px 20px',
+    justifyContent: 'space-between',
+    padding: 'min(3vh, 24px) min(4vw, 32px)',
+    boxSizing: 'border-box',
   },
   logoContainer: {
-    marginBottom: '40px',
+    flexShrink: 0,
   },
   logoBadge: {
     backgroundColor: colors.cream,
     borderRadius: '16px',
-    padding: '20px 40px',
+    padding: 'min(2vh, 20px) min(4vw, 48px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -163,28 +164,33 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   logoImage: {
     maxWidth: '100%',
-    maxHeight: '80px',
+    maxHeight: 'clamp(70px, 10vh, 120px)',
     height: 'auto',
     width: 'auto',
     objectFit: 'contain',
   },
   content: {
     textAlign: 'center',
-    maxWidth: '900px',
+    maxWidth: 'min(1100px, 95vw)',
     width: '100%',
-  },
-  title: {
-    fontSize: '48px',
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    margin: '0 0 48px 0',
-  },
-  hexagonsContainer: {
-    marginBottom: '48px',
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '32px',
+    justifyContent: 'center',
+    gap: 'clamp(16px, 2.5vh, 28px)',
+  },
+  title: {
+    fontSize: 'clamp(36px, 5vw, 72px)',
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    margin: 0,
+  },
+  hexagonsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 'clamp(20px, 3vh, 36px)',
   },
   hexagonRowTop: {
     display: 'flex',
@@ -192,7 +198,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   hexagonRowBottom: {
     display: 'flex',
-    gap: '40px',
+    gap: 'clamp(24px, 4vw, 56px)',
     justifyContent: 'center',
     flexWrap: 'wrap',
   },
@@ -205,8 +211,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
   },
   hexagonShape: {
-    width: '200px',
-    height: '230px',
+    width: 'clamp(220px, 22vw, 320px)',
+    height: 'clamp(253px, 25vw, 368px)',
     background: 'linear-gradient(135deg, #fde880 0%, #d9a70f 45%, #b78a0b 100%)',
     display: 'flex',
     alignItems: 'center',
@@ -219,42 +225,43 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '12px',
-    padding: '20px',
+    gap: 'clamp(10px, 1.5vh, 18px)',
+    padding: 'clamp(16px, 2vw, 28px)',
   },
   hexagonIcon: {
-    fontSize: '48px',
+    fontSize: 'clamp(48px, 5vw, 72px)',
     lineHeight: 1,
   },
   hexagonTitle: {
-    fontSize: '16px',
+    fontSize: 'clamp(16px, 1.8vw, 24px)',
     fontWeight: 600,
     color: colors.white,
     textAlign: 'center',
   },
   hexagonDescription: {
-    marginTop: '16px',
-    fontSize: '15px',
+    marginTop: 'clamp(12px, 1.5vh, 20px)',
+    fontSize: 'clamp(15px, 1.6vw, 20px)',
     color: colors.textSecondary,
-    lineHeight: 1.5,
-    maxWidth: '220px',
+    lineHeight: 1.4,
+    maxWidth: 'clamp(260px, 28vw, 380px)',
   },
   bottomSection: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     width: '100%',
-    maxWidth: '600px',
+    maxWidth: 'min(700px, 90vw)',
     margin: '0 auto',
+    flexShrink: 0,
   },
   buttonBar: {
     width: '100%',
-    padding: '20px 48px',
+    padding: 'clamp(18px, 2.2vh, 28px) clamp(32px, 4vw, 56px)',
     backgroundColor: colors.primary,
     color: colors.white,
     border: 'none',
     borderRadius: '8px',
-    fontSize: '20px',
+    fontSize: 'clamp(18px, 2vw, 26px)',
     fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s ease',
@@ -264,12 +271,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   buttonBarDisabled: {
     width: '100%',
-    padding: '20px 48px',
+    padding: 'clamp(18px, 2.2vh, 28px) clamp(32px, 4vw, 56px)',
     backgroundColor: colors.primary,
     color: colors.white,
     border: 'none',
     borderRadius: '8px',
-    fontSize: '20px',
+    fontSize: 'clamp(18px, 2vw, 26px)',
     fontWeight: 600,
     cursor: 'not-allowed',
     textTransform: 'uppercase' as const,
@@ -278,83 +285,26 @@ const styles: { [key: string]: React.CSSProperties } = {
     boxShadow: `0 4px 12px ${colors.shadowGold}`,
   },
   waitingMessage: {
-    marginTop: '16px',
-    fontSize: '16px',
+    marginTop: 'clamp(10px, 1.2vh, 16px)',
+    fontSize: 'clamp(15px, 1.6vw, 19px)',
     color: colors.textSecondary,
   },
   footer: {
-    marginTop: '32px',
-    fontSize: '14px',
+    flexShrink: 0,
+    marginTop: 'clamp(12px, 1.5vh, 20px)',
+    fontSize: 'clamp(12px, 1.2vw, 15px)',
     color: colors.textMuted,
   },
 };
 
 const getResponsiveStyles = (isMobile: boolean): { [key: string]: React.CSSProperties } => {
-  const base = {
-    container: {
-      padding: '24px 16px',
-    },
-    logoContainer: {
-      marginBottom: '24px',
-    },
-    logoBadge: {
-      padding: '16px 24px',
-    },
-    logoImage: {
-      maxHeight: '60px',
-    },
-    title: {
-      fontSize: '32px',
-      marginBottom: '32px',
-    },
-    hexagonsContainer: {
-      marginBottom: '32px',
-      gap: '28px',
-      flexDirection: 'column' as const,
-    },
-    hexagonRowTop: {},
+  if (!isMobile) return {};
+
+  return {
     hexagonRowBottom: {
       flexDirection: 'column' as const,
-      gap: '24px',
     },
-    hexagonShape: {
-      width: '160px',
-      height: '184px',
-    },
-    hexagonInner: {
-      gap: '8px',
-      padding: '12px',
-    },
-    hexagonIcon: {
-      fontSize: '40px',
-    },
-    hexagonTitle: {
-      fontSize: '14px',
-    },
-    hexagonDescription: {
-      marginTop: '12px',
-      fontSize: '14px',
-      maxWidth: '180px',
-    },
-    buttonBar: {
-      padding: '16px 24px',
-      fontSize: '16px',
-    },
-    waitingMessage: {
-      fontSize: '14px',
-      marginTop: '12px',
-    },
-    footer: {
-      fontSize: '12px',
-      marginTop: '24px',
-    },
-  };
-
-  if (!isMobile) {
-    return {};
-  }
-
-  return base as { [key: string]: React.CSSProperties };
+  } as { [key: string]: React.CSSProperties };
 };
 
 // Inject global styles for hover effects

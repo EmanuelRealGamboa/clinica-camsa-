@@ -106,31 +106,32 @@ const ProductRatingsModal: React.FC<ProductRatingsModalProps> = ({
   const StarRating: React.FC<{
     value: number;
     onChange: (value: number) => void;
-  }> = ({ value, onChange }) => (
-    <div style={styles.starContainer}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          style={{
-            ...styles.starButton,
-            color: star <= value ? colors.primary : colors.gray,
-          }}
-          onClick={() => onChange(star)}
-          onMouseEnter={(e) => {
-            if (star <= value) {
-              e.currentTarget.style.color = colors.primaryDark;
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = star <= value ? colors.primary : colors.gray;
-          }}
-        >
-          ★
-        </button>
-      ))}
-    </div>
-  );
+  }> = ({ value, onChange }) => {
+    const [hoverValue, setHoverValue] = useState<number>(0);
+    const displayValue = hoverValue || value;
+
+    return (
+      <div style={styles.starContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            style={{
+              ...styles.starButton,
+              color: star <= displayValue ? colors.latte : colors.grayLight,
+              transform: star <= displayValue ? 'scale(1.08)' : 'scale(1)',
+            }}
+            onClick={() => onChange(star)}
+            onMouseEnter={() => setHoverValue(star)}
+            onMouseLeave={() => setHoverValue(0)}
+            aria-label={`Calificar con ${star} estrellas`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -158,6 +159,9 @@ const ProductRatingsModal: React.FC<ProductRatingsModalProps> = ({
         <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>
           1. Califica los productos que ordenaste
         </h2>
+        <p style={styles.legendText}>
+          Tu opinión nos ayuda a mejorar. Califica cada producto de 1 a 5 estrellas.
+        </p>
 
         <div style={styles.ordersContainer}>
           {orders.map((order) => (
@@ -202,10 +206,10 @@ const ProductRatingsModal: React.FC<ProductRatingsModalProps> = ({
             ...(isMobile && responsiveStyles.nextButton),
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors.primaryDark;
+            e.currentTarget.style.backgroundColor = colors.mocha;
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = colors.primary;
+            e.currentTarget.style.backgroundColor = colors.espresso;
           }}
         >
           Continuar
@@ -246,6 +250,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: colors.textPrimary,
     marginBottom: '30px',
     textAlign: 'center',
+  },
+  legendText: {
+    margin: '0 0 22px 0',
+    textAlign: 'center',
+    fontSize: '17px',
+    color: colors.textSecondary,
+    fontWeight: 500,
   },
   ordersContainer: {
     marginBottom: '30px',
@@ -304,20 +315,21 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   starContainer: {
     display: 'flex',
-    gap: '5px',
+    gap: '8px',
     justifyContent: 'center',
   },
   starButton: {
     background: 'none',
     border: 'none',
-    fontSize: '28px',
+    fontSize: '42px',
     cursor: 'pointer',
     padding: 0,
-    transition: 'color 0.2s',
+    transition: 'color 0.2s, transform 0.2s',
+    lineHeight: 1,
   },
   nextButton: {
     width: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.espresso,
     color: colors.white,
     border: 'none',
     borderRadius: '8px',

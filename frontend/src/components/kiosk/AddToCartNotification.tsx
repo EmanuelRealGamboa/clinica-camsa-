@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { colors } from '../../styles/colors';
+import { useWindowSize } from '../../utils/responsive';
 
 interface AddToCartNotificationProps {
   show: boolean;
@@ -13,14 +14,15 @@ export const AddToCartNotification: React.FC<AddToCartNotificationProps> = ({
   onHide,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const { isMobile } = useWindowSize();
 
   useEffect(() => {
     if (show) {
       setIsVisible(true);
       const timer = setTimeout(() => {
         setIsVisible(false);
-        setTimeout(onHide, 300); // Wait for fade out animation
-      }, 2000);
+        setTimeout(onHide, 250); // Wait for fade out animation
+      }, 1300);
 
       return () => clearTimeout(timer);
     }
@@ -32,8 +34,22 @@ export const AddToCartNotification: React.FC<AddToCartNotificationProps> = ({
     <div
       style={{
         ...styles.notification,
+        ...(isMobile
+          ? {
+              top: 'auto',
+              bottom: '16px',
+              left: '50%',
+              right: 'auto',
+              width: 'calc(100vw - 32px)',
+              maxWidth: '420px',
+              transform: isVisible
+                ? 'translate(-50%, 0)'
+                : 'translate(-50%, 20px)',
+            }
+          : {
+              transform: isVisible ? 'translateY(0)' : 'translateY(-20px)',
+            }),
         opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateY(0)' : 'translateY(-20px)',
       }}
     >
       <div style={styles.icon}>✓</div>

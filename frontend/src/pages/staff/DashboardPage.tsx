@@ -421,6 +421,34 @@ const DashboardPage: React.FC = () => {
           <div style={styles.loading}>Cargando...</div>
         ) : (
           <>
+            {/* Quick Actions at top */}
+            <div style={styles.actionsSection}>
+              <h2 style={{fontSize: isMobile ? '20px' : '24px'}}>Acciones Rápidas</h2>
+              <div style={{
+                ...styles.actionsGrid,
+                gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(250px, 1fr))',
+                gap: isMobile ? '15px' : '20px'
+              }}>
+                <Link to="/staff/orders" style={styles.actionCard} className="action-card">
+                  <div style={{...styles.actionIcon, backgroundColor: colors.primary}}>📦</div>
+                  <h3>Ver Órdenes</h3>
+                  <p>Ver y gestionar todas las órdenes de tus habitaciones asignadas</p>
+                </Link>
+
+                <Link to="/staff/inventory" style={styles.actionCard} className="action-card">
+                  <div style={{...styles.actionIcon, backgroundColor: colors.primaryDark}}>📊</div>
+                  <h3>Ver Inventario</h3>
+                  <p>Consultar niveles de stock actuales de todos los productos</p>
+                </Link>
+
+                <button onClick={() => setShowPatientModal(true)} style={styles.actionCardButton} className="action-card-button">
+                  <div style={{...styles.actionIcon, backgroundColor: colors.primary}}>👤</div>
+                  <h3>Registrar Paciente</h3>
+                  <p>Agregar un nuevo paciente al sistema</p>
+                </button>
+              </div>
+            </div>
+
             {/* Active Patient Assignment */}
             {activeAssignment && (
               <div style={styles.activePatientSection}>
@@ -470,6 +498,23 @@ const DashboardPage: React.FC = () => {
               </div>
             )}
 
+            {/* Simple orders summary instead of detailed stats */}
+            <div style={styles.ordersSummarySection}>
+              <h2 style={{fontSize: isMobile ? '18px' : '22px'}}>Resumen de Órdenes</h2>
+              <div style={styles.ordersSummaryBox}>
+                {stats.activeOrders > 0 ? (
+                  <p style={{ margin: 0 }}>
+                    Tienes <strong>{stats.activeOrders}</strong> orden(es) activas en este momento.
+                    Revisa la pantalla de <strong>Órdenes</strong> para gestionarlas.
+                  </p>
+                ) : (
+                  <p style={{ margin: 0 }}>
+                    No hay órdenes activas en este momento. Se mostrarán aquí cuando lleguen nuevas órdenes.
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Device & Room Info */}
             <div style={styles.deviceSection}>
               <h2>Mis Dispositivos y Habitaciones Asignadas</h2>
@@ -512,60 +557,6 @@ const DashboardPage: React.FC = () => {
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Stats */}
-            <div style={styles.statsSection}>
-              <h2 style={{fontSize: isMobile ? '20px' : '24px'}}>Estadísticas de Órdenes</h2>
-              <div style={{
-                ...styles.statsGrid,
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-                gap: isMobile ? '15px' : '20px'
-              }}>
-                <div style={styles.statCard} className="stat-card">
-                  <div style={styles.statIcon}>📋</div>
-                  <div style={styles.statValue}>{stats.activeOrders}</div>
-                  <div style={styles.statLabel}>Órdenes Activas</div>
-                </div>
-                <div style={styles.statCard} className="stat-card">
-                  <div style={styles.statIcon}>✅</div>
-                  <div style={styles.statValue}>{stats.readyOrders}</div>
-                  <div style={styles.statLabel}>Listas para Entrega</div>
-                </div>
-                <div style={styles.statCard} className="stat-card">
-                  <div style={styles.statIcon}>📊</div>
-                  <div style={styles.statValue}>{stats.todayOrders}</div>
-                  <div style={styles.statLabel}>Órdenes de Hoy</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div style={styles.actionsSection}>
-              <h2 style={{fontSize: isMobile ? '20px' : '24px'}}>Acciones Rápidas</h2>
-              <div style={{
-                ...styles.actionsGrid,
-                gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(250px, 1fr))',
-                gap: isMobile ? '15px' : '20px'
-              }}>
-                <Link to="/staff/orders" style={styles.actionCard} className="action-card">
-                  <div style={{...styles.actionIcon, backgroundColor: colors.primary}}>📦</div>
-                  <h3>Ver Órdenes</h3>
-                  <p>Ver y gestionar todas las órdenes de tus habitaciones asignadas</p>
-                </Link>
-
-                <Link to="/staff/inventory" style={styles.actionCard} className="action-card">
-                  <div style={{...styles.actionIcon, backgroundColor: colors.primaryDark}}>📊</div>
-                  <h3>Ver Inventario</h3>
-                  <p>Consultar niveles de stock actuales de todos los productos</p>
-                </Link>
-
-                <button onClick={() => setShowPatientModal(true)} style={styles.actionCardButton} className="action-card-button">
-                  <div style={{...styles.actionIcon, backgroundColor: colors.primary}}>👤</div>
-                  <h3>Registrar Paciente</h3>
-                  <p>Agregar un nuevo paciente al sistema</p>
-                </button>
-              </div>
             </div>
           </>
         )}
@@ -1006,10 +997,24 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 'bold',
     color: colors.primary,
     marginBottom: '8px',
+
   },
   statLabel: {
     fontSize: '14px',
     color: '#7f8c8d',
+  },
+  ordersSummarySection: {
+    marginBottom: '30px',
+  },
+  ordersSummaryBox: {
+    marginTop: '12px',
+    padding: '16px 18px',
+    borderRadius: '10px',
+    backgroundColor: colors.cream,
+    border: `1px solid ${colors.primaryMuted}`,
+    color: colors.textPrimary,
+    fontSize: '14px',
+    boxShadow: colors.shadowGold,
   },
   actionsSection: {
     marginBottom: '30px',

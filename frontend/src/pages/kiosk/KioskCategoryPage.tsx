@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, ClipboardList, ShoppingCart, Sparkles } from 'lucide-react';
 import { productsApi } from '../../api/products';
 import { ordersApi } from '../../api/orders';
 import { kioskApi } from '../../api/kiosk';
 import type { Product, ProductCategory } from '../../types';
 import { ProductCard } from '../../components/kiosk/ProductCard';
+import { MobileHeaderMenu, type MobileHeaderMenuAction } from '../../components/kiosk/MobileHeaderMenu';
 import { CartModal } from '../../components/kiosk/CartModal';
 import { AddToCartNotification } from '../../components/kiosk/AddToCartNotification';
 import { LimitReachedModal } from '../../components/kiosk/LimitReachedModal';
@@ -14,6 +16,7 @@ import StaffRatingModal from '../../components/kiosk/StaffRatingModal';
 import StayRatingModal from '../../components/kiosk/StayRatingModal';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useSurvey } from '../../contexts/SurveyContext';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
@@ -31,6 +34,7 @@ export const KioskCategoryPage: React.FC = () => {
   const { deviceId, categoryId } = useParams<{ deviceId: string; categoryId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isMobile } = useWindowSize();
 
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<ProductCategory | null>(null);
@@ -374,6 +378,15 @@ export const KioskCategoryPage: React.FC = () => {
   };
 
   const cartTotal = Array.from(cart.values()).reduce((sum, qty) => sum + qty, 0);
+  const mobileMenuActions: MobileHeaderMenuAction[] = [
+    {
+      id: 'orders',
+      label: 'Mis Ordenes',
+      icon: <ClipboardList size={16} />,
+      group: 'navigation',
+      onClick: handleViewOrders,
+    },
+  ];
 
   if (loading) {
     return (
@@ -387,35 +400,74 @@ export const KioskCategoryPage: React.FC = () => {
   return (
     <div style={styles.container}>
       {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <button style={styles.backButton} onClick={handleBack} className="cat-back-btn">
-            ← Volver
+      <header style={{ ...styles.header, ...(isMobile ? styles.mobileHeader : {}) }}>
+        <div style={{ ...styles.headerLeft, ...(isMobile ? styles.mobileHeaderLeft : {}) }}>
+          <button
+            style={{ ...styles.backButton, ...(isMobile ? styles.mobileBackButton : {}) }}
+            onClick={handleBack}
+            className="cat-back-btn"
+          >
+            <ArrowLeft size={16} />
+            <span style={{ display: isMobile ? 'none' : 'inline' }}>Volver</span>
           </button>
           <div>
-            <h1 style={styles.headerTitle}>
+            <h1 style={{ ...styles.headerTitle, ...(isMobile ? styles.mobileHeaderTitle : {}) }}>
               {category?.icon && <span style={styles.categoryIcon}>{category.icon}</span>}
               {category?.name || 'Productos'}
             </h1>
-            <p style={styles.headerSubtitle}>
+            <p style={{ ...styles.headerSubtitle, ...(isMobile ? styles.mobileHeaderSubtitle : {}) }}>
               {patientInfo ? `Habitación: ${patientInfo.room_code}` : `Dispositivo: ${deviceId}`}
             </p>
           </div>
         </div>
-        <div style={styles.headerRight}>
-          <button style={styles.ordersButton} onClick={handleViewOrders} className="cat-orders-btn">
-            Mis Órdenes
-          </button>
-          {cartTotal > 0 && (
-            <button style={styles.cartButton} onClick={() => setShowCart(true)} className="cat-cart-btn">
-              🛒 Carrito ({cartTotal})
-            </button>
+        <div style={{ ...styles.headerRight, ...(isMobile ? styles.mobileHeaderRight : {}) }}>
+          {isMobile ? (
+            <div style={styles.mobileControlsWrap}>
+              {cartTotal > 0 && (
+                <button
+                  style={{ ...styles.cartButton, ...styles.mobileCartButton }}
+                  onClick={() => setShowCart(true)}
+                  aria-label="Carrito"
+                >
+                  <ShoppingCart size={16} style={{ flexShrink: 0 }} />
+                  <span style={{ ...styles.mobileCartBadge }}>{cartTotal}</span>
+                </button>
+              )}
+              <div style={styles.mobileMenuWrap}>
+                <MobileHeaderMenu actions={mobileMenuActions} buttonLabel="Menu categoria" />
+              </div>
+            </div>
+          ) : (
+            <>
+              <button style={styles.ordersButton} onClick={handleViewOrders} className="cat-orders-btn">
+                <ClipboardList size={16} />
+                Mis Órdenes
+              </button>
+              {cartTotal > 0 && (
+                <button style={styles.cartButton} onClick={() => setShowCart(true)} className="cat-cart-btn">
+                  <ShoppingCart size={16} />
+                  Carrito ({cartTotal})
+                </button>
+              )}
+            </>
           )}
         </div>
       </header>
 
       {/* Products Grid */}
       <div style={styles.content}>
+        <div style={styles.summaryBar}>
+          <div style={styles.summaryLeft}>
+            <Sparkles size={16} color={colors.primaryDark} />
+            <span style={styles.summaryText}>
+              {products.length} producto{products.length === 1 ? '' : 's'} disponibles
+            </span>
+          </div>
+          {category?.description && (
+            <span style={styles.summaryDescription}>{category.description}</span>
+          )}
+        </div>
+
         {products.length === 0 ? (
           <div style={styles.emptyState}>
             <p style={styles.emptyText}>No hay productos disponibles en esta categoría</p>
@@ -512,7 +564,7 @@ export const KioskCategoryPage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: colors.ivory,
+    backgroundColor: '#1A0D05',
     paddingBottom: '40px',
   },
   loading: {
@@ -521,8 +573,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: colors.ivory,
-    color: colors.textSecondary,
+    backgroundColor: '#1A0D05',
+    color: colors.cream,
   },
   spinner: {
     width: '48px',
@@ -534,87 +586,195 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   header: {
     backgroundColor: colors.white,
-    padding: '24px 40px',
+    padding: '20px 32px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: `0 2px 12px ${colors.shadowGold}`,
-    marginBottom: '32px',
-    borderBottom: `2px solid ${colors.primaryMuted}`,
+    boxShadow: `0 2px 10px ${colors.shadow}`,
+    marginBottom: '20px',
+    borderBottom: `1px solid ${colors.parchment}`,
+    position: 'sticky',
+    top: 0,
+    zIndex: 5,
+  },
+  mobileHeader: {
+    padding: '14px 14px 10px',
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+    gap: '8px',
   },
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '24px',
+    gap: '18px',
+  },
+  mobileHeaderLeft: {
+    width: '100%',
+    minWidth: 0,
+    gap: '10px',
   },
   backButton: {
-    padding: '10px 20px',
+    padding: '10px 14px',
     backgroundColor: colors.white,
-    color: colors.primary,
-    border: `2px solid ${colors.primary}`,
+    color: colors.textSecondary,
+    border: `1px solid ${colors.parchment}`,
     borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    fontSize: '15px',
+    fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  mobileBackButton: {
+    padding: 0,
+    width: '36px',
+    height: '36px',
+    borderRadius: '999px',
+    fontSize: '13px',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: '28px',
-    fontWeight: 'bold',
+    fontSize: '34px',
+    fontWeight: 700,
     color: colors.textPrimary,
     margin: 0,
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
   },
+  mobileHeaderTitle: {
+    fontSize: '26px',
+    gap: '8px',
+    lineHeight: 1.1,
+  },
   categoryIcon: {
     fontSize: '32px',
   },
   headerSubtitle: {
-    fontSize: '16px',
-    color: colors.textSecondary,
+    fontSize: '14px',
+    color: colors.textMuted,
     margin: '8px 0 0 0',
+  },
+  mobileHeaderSubtitle: {
+    marginTop: '6px',
+    fontSize: '12px',
   },
   headerRight: {
     display: 'flex',
-    gap: '16px',
+    gap: '12px',
   },
-  ordersButton: {
-    padding: '12px 24px',
-    backgroundColor: colors.white,
-    color: colors.primary,
-    border: `2px solid ${colors.primary}`,
-    borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
+  mobileHeaderRight: {
+    width: '100%',
+    justifyContent: 'flex-end',
   },
-  cartButton: {
-    padding: '12px 24px',
+  mobileControlsWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: '8px',
+    width: '100%',
+  },
+  mobileMenuWrap: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+  },
+  mobileCartButton: {
+    width: '44px',
+    height: '44px',
+    padding: 0,
+    borderRadius: '10px',
+    justifyContent: 'center',
+    position: 'relative',
+    boxShadow: `0 2px 8px ${colors.shadow}`,
+  },
+  mobileCartBadge: {
+    position: 'absolute',
+    top: '-6px',
+    right: '-6px',
+    minWidth: '18px',
+    height: '18px',
+    padding: '0 4px',
+    borderRadius: '9px',
     backgroundColor: colors.primary,
     color: colors.white,
-    border: `2px solid ${colors.primary}`,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '10px',
+    fontWeight: 700,
+  },
+  ordersButton: {
+    padding: '10px 16px',
+    backgroundColor: colors.white,
+    color: colors.textSecondary,
+    border: `1px solid ${colors.parchment}`,
     borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    fontSize: '14px',
+    fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  cartButton: {
+    padding: '10px 16px',
+    backgroundColor: colors.primaryMuted,
+    color: colors.primaryDark,
+    border: `1px solid ${colors.primary}`,
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
   },
   content: {
-    padding: '0 40px',
+    padding: '0 24px',
+    maxWidth: '1480px',
+    margin: '0 auto',
+  },
+  summaryBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '10px',
+    backgroundColor: colors.white,
+    border: `1px solid ${colors.parchment}`,
+    borderRadius: '10px',
+    padding: '10px 14px',
+    marginBottom: '16px',
+  },
+  summaryLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  summaryText: {
+    fontSize: '14px',
+    color: colors.textPrimary,
+    fontWeight: 600,
+  },
+  summaryDescription: {
+    fontSize: '13px',
+    color: colors.textMuted,
   },
   productsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '24px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+    gap: '18px',
   },
   emptyState: {
     textAlign: 'center',
     padding: '80px 20px',
     backgroundColor: colors.white,
-    borderRadius: '16px',
-    border: `1px solid ${colors.primaryMuted}`,
+    borderRadius: '14px',
+    border: `1px solid ${colors.parchment}`,
   },
   emptyText: {
     fontSize: '18px',
@@ -622,13 +782,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: '24px',
   },
   emptyButton: {
-    padding: '14px 32px',
+    padding: '12px 22px',
     backgroundColor: colors.white,
-    color: colors.primary,
-    border: `2px solid ${colors.primary}`,
+    color: colors.textSecondary,
+    border: `1px solid ${colors.parchment}`,
     borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    fontSize: '15px',
+    fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
@@ -643,25 +803,26 @@ styleSheet.textContent = `
   }
 
   .cat-back-btn:hover {
-    background-color: ${colors.primary} !important;
-    color: ${colors.white} !important;
+    border-color: ${colors.primary} !important;
+    color: ${colors.primaryDark} !important;
+    transform: translateY(-1px);
   }
 
   .cat-orders-btn:hover {
-    background-color: ${colors.primary} !important;
-    color: ${colors.white} !important;
-    transform: scale(1.02);
+    border-color: ${colors.primary} !important;
+    color: ${colors.primaryDark} !important;
+    transform: translateY(-1px);
   }
 
   .cat-cart-btn:hover {
-    background-color: ${colors.primaryDark} !important;
-    transform: scale(1.02);
-    box-shadow: 0 4px 12px ${colors.shadowGold};
+    background-color: ${colors.primaryLight} !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px ${colors.shadow};
   }
 
   .cat-empty-btn:hover {
-    background-color: ${colors.primary} !important;
-    color: ${colors.white} !important;
+    border-color: ${colors.primary} !important;
+    color: ${colors.primaryDark} !important;
   }
 `;
 if (!document.head.querySelector('[data-category-page-styles]')) {

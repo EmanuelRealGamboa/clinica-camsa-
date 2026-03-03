@@ -90,7 +90,14 @@ export interface Product {
 export interface ProductCategory {
   id: number;
   name: string;
-  description: string;
+  // Optional fields because backend/category endpoints can differ slightly between admin y público
+  description?: string;
+  icon?: string | null;
+  icon_image_url?: string | null;
+  category_type?: string;
+  sort_order?: number;
+  show_in_carousel?: boolean;
+  carousel_order?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;

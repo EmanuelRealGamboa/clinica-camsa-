@@ -74,6 +74,15 @@ export const InventoryViewPage: React.FC = () => {
     return { label: 'Bueno', color: '#27ae60' };
   };
 
+  // Helper para contar productos con stock bajo en el resumen
+  const isLowStock = (item: InventoryItem) => {
+    if (!item.inventoried) return false;
+    const available = item.available ?? 0;
+    // Consideramos bajo stock tanto cuando marca needs_reorder
+    // como cuando la cantidad disponible es muy baja
+    return item.needs_reorder || available === 0 || available < 10;
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -144,7 +153,7 @@ export const InventoryViewPage: React.FC = () => {
             <div style={styles.summaryItem}>
               <span style={styles.summaryLabel}>Stock Bajo:</span>
               <span style={{ ...styles.summaryValue, color: '#e74c3c' }}>
-                {filteredInventory.filter(i => i.needs_reorder).length}
+                {filteredInventory.filter(isLowStock).length}
               </span>
             </div>
           </div>

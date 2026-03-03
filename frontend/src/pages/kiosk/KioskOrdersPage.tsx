@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { PackageSearch, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
 import { ordersApi } from '../../api/orders';
 import { kioskApi } from '../../api/kiosk';
 import { OrderStatusProgress } from '../../components/kiosk/OrderStatusProgress';
@@ -12,9 +13,13 @@ import StayRatingModal from '../../components/kiosk/StayRatingModal';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useSurvey } from '../../contexts/SurveyContext';
 import { useWindowSize } from '../../utils/responsive';
+import { MobileHeaderMenu, type MobileHeaderMenuAction } from '../../components/kiosk/MobileHeaderMenu';
 import { colors } from '../../styles/colors';
 import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
+import iconTe from '../../assets/icons/te.png';
+import iconStore from '../../assets/icons/store.png';
+import iconComida from '../../assets/icons/comida.png';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
@@ -384,6 +389,51 @@ export const KioskOrdersPage: React.FC = () => {
     ...styles.headerInfo,
     ...(isMobile && responsiveStyles.headerInfo),
   };
+  const mobileMenuActions: MobileHeaderMenuAction[] = [
+    {
+      id: 'products',
+      label: 'Conoce productos',
+      icon: (
+        <img
+          src={iconStore}
+          alt="Conoce productos"
+          style={{ width: 18, height: 18, objectFit: 'contain' }}
+          draggable={false}
+        />
+      ),
+      onClick: handleOpenTienda,
+    },
+    {
+      id: 'food',
+      label: 'Pedir comida',
+      icon: (
+        <img
+          src={iconComida}
+          alt="Pedir comida"
+          style={{ width: 18, height: 18, objectFit: 'contain' }}
+          draggable={false}
+        />
+      ),
+      onClick: handleOpenRestaurantes,
+    },
+    ...(!hasActiveOrders
+      ? [
+          {
+            id: 'new-order',
+            label: 'Ver menu',
+            icon: (
+              <img
+                src={iconTe}
+                alt="Ver menú"
+                style={{ width: 18, height: 18, objectFit: 'contain' }}
+                draggable={false}
+              />
+            ),
+            onClick: handleNewOrder,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div style={styles.container}>
@@ -420,35 +470,53 @@ export const KioskOrdersPage: React.FC = () => {
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <button
-              type="button"
-              style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }}
-              onClick={handleOpenTienda}
-              className="kiosk-btn-outline"
-              title="Conoce nuestros productos"
-            >
-              🛒 Conoce productos
-            </button>
-            <button
-              type="button"
-              style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }}
-              onClick={handleOpenRestaurantes}
-              className="kiosk-btn-outline"
-              title="Pedir comida"
-            >
-              🍽️ Pedir comida
-            </button>
-            {!hasActiveOrders && (
-              <button 
-                style={{ ...styles.viewMenuButton, ...(isMobile && responsiveStyles.button) }} 
-                onClick={handleNewOrder}
+          {isMobile ? (
+            <div style={styles.mobileMenuWrap}>
+              <MobileHeaderMenu actions={mobileMenuActions} buttonLabel="Menu de ordenes" />
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                style={styles.viewMenuButton}
+                onClick={handleOpenTienda}
                 className="kiosk-btn-outline"
+                title="Conoce nuestros productos"
               >
-                Ver Menú
+                <img
+                  src={iconStore}
+                  alt="Conoce productos"
+                  style={{ width: 18, height: 18, objectFit: 'contain' }}
+                  draggable={false}
+                />
+                Conoce productos
               </button>
-            )}
-          </div>
+              <button
+                type="button"
+                style={styles.viewMenuButton}
+                onClick={handleOpenRestaurantes}
+                className="kiosk-btn-outline"
+                title="Pedir comida"
+              >
+                <img
+                  src={iconComida}
+                  alt="Pedir comida"
+                  style={{ width: 18, height: 18, objectFit: 'contain' }}
+                  draggable={false}
+                />
+                Pedir comida
+              </button>
+              {!hasActiveOrders && (
+                <button
+                  style={styles.viewMenuButton}
+                  onClick={handleNewOrder}
+                  className="kiosk-btn-outline"
+                >
+                  Ver Menú
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -480,7 +548,12 @@ export const KioskOrdersPage: React.FC = () => {
                 }}
                 className="kiosk-btn-outline"
               >
-                <span style={styles.tiendaBannerIcon}>🛒</span>
+                <img
+                  src={iconStore}
+                  alt="Conoce productos"
+                  style={{ width: 20, height: 20, objectFit: 'contain' }}
+                  draggable={false}
+                />
                 <span>Conoce productos</span>
               </button>
               <button
@@ -492,7 +565,12 @@ export const KioskOrdersPage: React.FC = () => {
                 }}
                 className="kiosk-btn-outline"
               >
-                <span style={styles.tiendaBannerIcon}>🍽️</span>
+                <img
+                  src={iconComida}
+                  alt="Pedir comida"
+                  style={{ width: 20, height: 20, objectFit: 'contain' }}
+                  draggable={false}
+                />
                 <span>Pedir comida</span>
               </button>
             </div>
@@ -501,7 +579,9 @@ export const KioskOrdersPage: React.FC = () => {
 
         {activeOrders.length === 0 ? (
           <div style={styles.emptyState}>
-            <div style={styles.emptyIcon}>📋</div>
+            <div style={styles.emptyIcon}>
+              <ClipboardList size={54} />
+            </div>
             <h3>No tienes pedidos activos</h3>
             <p>Realiza tu primer pedido para comenzar</p>
             <button style={styles.startOrderButton} onClick={handleNewOrder}>
@@ -531,7 +611,15 @@ export const KioskOrdersPage: React.FC = () => {
                       style={{ ...styles.detailsButton, ...(isMobile && responsiveStyles.detailsButton) }}
                       onClick={() => toggleOrderDetails(order.id)}
                     >
-                      {isExpanded ? (isMobile ? 'Ocultar ▲' : 'Ocultar Detalles ▲') : (isMobile ? 'Ver ▼' : 'Ver Detalles ▼')}
+                      {isExpanded ? (
+                        <>
+                          {isMobile ? 'Ocultar' : 'Ocultar Detalles'} <ChevronUp size={14} />
+                        </>
+                      ) : (
+                        <>
+                          {isMobile ? 'Ver' : 'Ver Detalles'} <ChevronDown size={14} />
+                        </>
+                      )}
                     </button>
                   </div>
 
@@ -651,7 +739,7 @@ export const KioskOrdersPage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: colors.ivory,
+    backgroundColor: '#1A0D05',
   },
   loading: {
     display: 'flex',
@@ -659,8 +747,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: colors.ivory,
-    color: colors.textSecondary,
+    backgroundColor: '#1A0D05',
+    color: colors.cream,
   },
   spinner: {
     width: '48px',
@@ -679,8 +767,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: `0 2px 12px ${colors.shadowGold}`,
-    borderBottom: `1px solid ${colors.primaryMuted}`,
+    boxShadow: `0 2px 10px ${colors.shadow}`,
+    borderBottom: `1px solid ${colors.parchment}`,
   },
   headerLeft: {
     display: 'flex',
@@ -747,6 +835,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  mobileMenuWrap: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    width: '100%',
   },
   ordersSection: {
     padding: '40px',
@@ -762,14 +858,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   ordersTitle: {
     fontSize: '32px',
     fontWeight: 'bold',
-    color: colors.textPrimary,
+    color: colors.cream,
     margin: 0,
+    fontFamily: 'var(--font-serif)',
   },
   newOrderButton: {
     padding: '14px 28px',
-    backgroundColor: colors.primary,
-    color: colors.white,
-    border: `2px solid ${colors.primary}`,
+    backgroundColor: colors.ivory,
+    color: colors.primaryDark,
+    border: `1px solid ${colors.primary}`,
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: '600',
@@ -781,19 +878,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '80px 20px',
     backgroundColor: colors.white,
     borderRadius: '12px',
-    boxShadow: `0 2px 12px ${colors.shadowGold}`,
-    border: `1px solid ${colors.primaryMuted}`,
+    boxShadow: `0 4px 18px ${colors.shadow}`,
+    border: `1px solid ${colors.parchment}`,
   },
   emptyIcon: {
-    fontSize: '64px',
+    color: colors.primary,
     marginBottom: '20px',
+    display: 'flex',
+    justifyContent: 'center',
   },
   startOrderButton: {
     marginTop: '24px',
     padding: '14px 32px',
-    backgroundColor: colors.primary,
-    color: colors.white,
-    border: `2px solid ${colors.primary}`,
+    backgroundColor: colors.ivory,
+    color: colors.primaryDark,
+    border: `1px solid ${colors.primary}`,
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: '600',
@@ -818,16 +917,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '16px 32px',
     backgroundColor: colors.white,
     color: colors.primary,
-    border: `2px solid ${colors.primary}`,
+    border: `1px solid ${colors.primary}`,
     borderRadius: '12px',
     fontSize: '18px',
     fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    boxShadow: `0 4px 12px ${colors.shadowGold}`,
-  },
-  tiendaBannerIcon: {
-    fontSize: '24px',
+    boxShadow: `0 3px 10px ${colors.shadow}`,
   },
   ordersList: {
     display: 'flex',
@@ -837,8 +933,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   orderCard: {
     backgroundColor: colors.white,
     borderRadius: '12px',
-    boxShadow: `0 2px 12px ${colors.shadowGold}`,
-    border: `1px solid ${colors.primaryMuted}`,
+    boxShadow: `0 4px 14px ${colors.shadow}`,
+    border: `1px solid ${colors.parchment}`,
     overflow: 'hidden',
   },
   orderCardHeader: {
@@ -861,15 +957,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
   },
   detailsButton: {
-    padding: '10px 20px',
-    backgroundColor: colors.primary,
-    color: colors.white,
-    border: `2px solid ${colors.primary}`,
+    padding: '10px 16px',
+    backgroundColor: colors.ivory,
+    color: colors.primaryDark,
+    border: `1px solid ${colors.primary}`,
     borderRadius: '6px',
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
   },
   orderDetails: {
     padding: '24px 32px',
@@ -1024,18 +1123,19 @@ styleSheet.textContent = `
   }
 
   .kiosk-btn-outline {
-    background-color: ${colors.white} !important;
-    color: ${colors.primary} !important;
-    border: 2px solid ${colors.primary} !important;
+    background-color: ${colors.ivory} !important;
+    color: ${colors.primaryDark} !important;
+    border: 1px solid ${colors.primary} !important;
   }
 
   .kiosk-btn-outline:hover {
-    background-color: ${colors.primary} !important;
-    color: ${colors.white} !important;
+    background-color: ${colors.primaryMuted} !important;
+    color: ${colors.primaryDark} !important;
+    transform: translateY(-1px);
   }
 
   .kiosk-btn-outline:active {
-    background-color: ${colors.primaryDark} !important;
+    background-color: ${colors.cream} !important;
     border-color: ${colors.primaryDark} !important;
   }
 `;

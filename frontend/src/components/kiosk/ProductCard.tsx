@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingCart, Check } from 'lucide-react';
 import type { Product } from '../../types';
 import { StarRating } from './StarRating';
 import { useWindowSize } from '../../utils/responsive';
-import { colors } from '../../styles/colors';
+import { colors, gradients } from '../../styles/colors';
 
 interface ProductCardProps {
   product: Product;
@@ -16,410 +18,335 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   variant = 'grid',
 }) => {
   const { isMobile } = useWindowSize();
+  const [added, setAdded] = useState(false);
   const isOutOfStock = product.is_available === false;
   const mainBenefit = product.benefits && product.benefits.length > 0 ? product.benefits[0] : null;
   const mainTag = product.tags && product.tags.length > 0 ? product.tags[0] : null;
   const isFood = product.category_type === 'FOOD';
   const hasPrice = isFood && product.price !== undefined && product.price !== null && product.price > 0;
 
-  const baseCardStyles = variant === 'carousel'
-    ? { ...styles.card, ...styles.carouselCard }
-    : styles.card;
+  const isCarousel = variant === 'carousel';
+  const isMobileCarousel = isMobile && isCarousel;
 
-  const cardStyles = {
-    ...baseCardStyles,
-    ...(isMobile && responsiveStyles.card),
-    ...(isMobile && variant === 'carousel' && responsiveStyles.carouselCard),
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(price);
+
+  const handleAddToCart = () => {
+    if (isOutOfStock) return;
+    setAdded(true);
+    onAddToCart(product.id);
+    setTimeout(() => setAdded(false), 1100);
   };
 
-  // Format price as Mexican Pesos
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-    }).format(price);
-  };
+  const cardWidth = isMobileCarousel ? '160px' : isCarousel ? '280px' : undefined;
 
   return (
-    <div
+    <motion.div
+      whileHover={!isOutOfStock ? { y: -6, scale: 1.02 } : {}}
+      whileTap={!isOutOfStock ? { scale: 0.98 } : {}}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
       style={{
-        ...cardStyles,
-        opacity: isOutOfStock ? 0.6 : 1,
+        ...cardBase,
+        minWidth: cardWidth,
+        maxWidth: cardWidth,
+        opacity: isOutOfStock ? 0.65 : 1,
       }}
     >
-      {/* Image Container */}
+      {/* Image */}
       <div style={{
-        ...styles.imageContainer,
-        ...(isMobile && variant === 'carousel' && responsiveStyles.carouselImageContainer),
+        ...imageWrap,
+        height: isMobileCarousel ? '110px' : '200px',
       }}>
         {product.image_url_full && (
           <img
             src={product.image_url_full}
             alt={product.name}
             style={{
-              ...styles.image,
-              filter: isOutOfStock ? 'grayscale(100%)' : 'none',
+              ...imageStyle,
+              filter: isOutOfStock ? 'grayscale(90%) brightness(0.75)' : 'none',
             }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
           />
         )}
 
-        {/* Tag Badge */}
+        {/* Tag badge */}
         {mainTag && !isOutOfStock && (
-          <div
-            style={{
-              ...styles.tagBadge,
-              backgroundColor: mainTag.color,
-            }}
-          >
+          <div style={{ ...tagBadge, backgroundColor: mainTag.color }}>
             {mainTag.icon && <span style={{ marginRight: '4px' }}>{mainTag.icon}</span>}
             {mainTag.name}
           </div>
         )}
 
-        {/* Food Badge (for paid items) */}
+        {/* Food paid badge */}
         {isFood && !isOutOfStock && !mainTag && (
-          <div style={styles.foodBadge}>
+          <div style={{ ...tagBadge, backgroundColor: colors.caramel }}>
             Pago adicional
           </div>
         )}
 
-        {/* Out of Stock Badge */}
+        {/* Out of stock overlay */}
         {isOutOfStock && (
-          <div style={styles.outOfStockBadge}>
-            Agotado
+          <div style={outOfStockOverlay}>
+            <span style={outOfStockText}>AGOTADO</span>
           </div>
         )}
+
+        {/* Gold shimmer line at top */}
+        <div style={topLine} />
       </div>
 
       {/* Content */}
       <div style={{
-        ...styles.content,
-        ...(isMobile && responsiveStyles.content),
-        ...(isMobile && variant === 'carousel' && responsiveStyles.carouselContent),
+        ...contentStyle,
+        padding: isMobileCarousel ? '10px 10px 0' : '18px 18px 0',
+        gap: isMobileCarousel ? '4px' : '8px',
       }}>
         <h3 style={{
-          ...styles.title,
-          ...(isMobile && responsiveStyles.title),
-          ...(isMobile && variant === 'carousel' && responsiveStyles.carouselTitle),
-        }}>{product.name}</h3>
-        <p style={{
-          ...styles.description,
-          ...(isMobile && responsiveStyles.description),
-          ...(isMobile && variant === 'carousel' && responsiveStyles.carouselDescription),
-        }}>{product.description}</p>
+          ...titleStyle,
+          fontSize: isMobileCarousel ? '13px' : '16px',
+        }}>
+          {product.name}
+        </h3>
 
-        {/* Price for FOOD items */}
-        {hasPrice && (
-          <div style={styles.priceContainer}>
-            <span style={styles.priceLabel}>Precio:</span>
-            <span style={styles.price}>{formatPrice(product.price!)}</span>
+        {!isMobileCarousel && (
+          <p style={descStyle}>{product.description}</p>
+        )}
+
+        {/* Price */}
+        {hasPrice && !isMobileCarousel && (
+          <div style={priceRow}>
+            <span style={priceLabel}>Precio:</span>
+            <span style={priceValue}>{formatPrice(product.price!)}</span>
           </div>
         )}
 
-        {/* Benefit - hidden in carousel mobile for compactness */}
-        {mainBenefit && !isOutOfStock && !(isMobile && variant === 'carousel') && (
-          <div style={styles.benefit}>
-            <span style={styles.benefitIcon}>{mainBenefit.icon}</span>
-            <span style={styles.benefitText}>{mainBenefit.text}</span>
+        {/* Benefit chip */}
+        {mainBenefit && !isOutOfStock && !isMobileCarousel && (
+          <div style={benefitChip}>
+            <span style={{ fontSize: '14px' }}>{mainBenefit.icon}</span>
+            <span style={benefitText}>{mainBenefit.text}</span>
           </div>
         )}
 
-        {/* Rating - hidden in carousel mobile for compactness */}
-        {product.rating !== undefined && product.rating > 0 && !(isMobile && variant === 'carousel') && (
-          <div style={styles.ratingContainer}>
-            <StarRating
-              rating={product.rating}
-              size="large"
-              showCount={false}
-              count={product.rating_count}
-            />
+        {/* Rating */}
+        {product.rating !== undefined && product.rating > 0 && !isMobileCarousel && (
+          <div style={{ marginBottom: '4px' }}>
+            <StarRating rating={product.rating} size="large" showCount={false} count={product.rating_count} />
           </div>
         )}
       </div>
 
-      {/* Action Button */}
+      {/* Action button */}
       <div style={{
-        ...styles.actions,
-        ...(isMobile && responsiveStyles.actions),
-        ...(isMobile && variant === 'carousel' && responsiveStyles.carouselActions),
+        padding: isMobileCarousel ? '8px 10px 10px' : '10px 18px 18px',
       }}>
         {isOutOfStock ? (
-          <button
-            style={{
-              ...styles.addButton,
-              ...styles.disabledButton,
-              ...(isMobile && responsiveStyles.addButton),
-            }}
-            disabled
-          >
+          <button style={disabledBtn} disabled>
             No disponible
           </button>
         ) : (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.95 }}
             style={{
-              ...styles.addButton,
-              ...(isFood ? styles.foodButton : {}),
-              ...(isMobile && responsiveStyles.addButton),
-              ...(isMobile && variant === 'carousel' && responsiveStyles.carouselAddButton),
+              ...addBtn,
+              background: added ? gradients.gold : undefined,
+              backgroundColor: added ? undefined : colors.white,
+              color: added ? colors.white : colors.textPrimary,
+              padding: isMobileCarousel ? '8px 6px' : '13px 16px',
+              fontSize: isMobileCarousel ? '12px' : '14px',
             }}
-            onClick={() => onAddToCart(product.id)}
+            onClick={handleAddToCart}
           >
-            {isFood 
-              ? (isMobile ? 'Agregar (+)' : 'Agregar (Pago adicional)')
-              : 'Agregar a la Orden'}
-          </button>
+            <AnimatePresence mode="wait">
+              {added ? (
+                <motion.span
+                  key="added"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}
+                >
+                  <Check size={isMobileCarousel ? 13 : 16} />
+                  {!isMobileCarousel && '¡Agregado!'}
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="add"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}
+                >
+                  <ShoppingCart size={isMobileCarousel ? 13 : 15} />
+                  {isMobileCarousel
+                    ? 'Agregar'
+                    : (isFood ? 'Agregar (Pago)' : 'Agregar a la Orden')}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: '16px',
-    boxShadow: `0 2px 8px ${colors.shadow}`,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'all 0.3s ease',
-    cursor: 'pointer',
-    border: `1px solid ${colors.primaryMuted}`,
-  },
-  carouselCard: {
-    minWidth: '280px',
-    maxWidth: '280px',
-  },
-  imageContainer: {
-    position: 'relative',
-    width: '100%',
-    height: '200px',
-    backgroundColor: colors.cream,
-    borderBottom: `1px solid ${colors.primaryMuted}`,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'contain',
-    padding: '10px',
-  },
-  tagBadge: {
-    position: 'absolute',
-    top: '12px',
-    right: '12px',
-    color: colors.white,
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    display: 'flex',
-    alignItems: 'center',
-    boxShadow: `0 2px 4px ${colors.shadowDark}`,
-  },
-  outOfStockBadge: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    color: colors.white,
-    padding: '12px 24px',
-    borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    zIndex: 10,
-  },
-  content: {
-    padding: '20px',
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  title: {
-    fontSize: '17px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-    margin: 0,
-    marginBottom: '6px',
-  },
-  description: {
-    fontSize: '14px',
-    color: colors.textSecondary,
-    margin: 0,
-    lineHeight: '1.4',
-    display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
-  },
-  benefit: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    backgroundColor: colors.primaryMuted,
-    padding: '8px 12px',
-    borderRadius: '8px',
-    marginTop: '4px',
-    border: `1px solid ${colors.primary}`,
-  },
-  benefitIcon: {
-    fontSize: '16px',
-  },
-  benefitText: {
-    fontSize: '13px',
-    color: colors.primaryDark,
-    fontWeight: '600',
-  },
-  ratingContainer: {
-    marginTop: '12px',
-    marginBottom: '8px',
-  },
-  actions: {
-    padding: '0 20px 20px 20px',
-  },
-  addButton: {
-    width: '100%',
-    padding: '14px',
-    backgroundColor: colors.white,
-    color: colors.primary,
-    border: `2px solid ${colors.primary}`,
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  disabledButton: {
-    backgroundColor: colors.grayBg,
-    color: colors.grayLight,
-    borderColor: colors.grayLight,
-    cursor: 'not-allowed',
-  },
-  foodBadge: {
-    position: 'absolute',
-    top: '12px',
-    right: '12px',
-    backgroundColor: colors.primary,
-    color: colors.white,
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-  },
-  priceContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    backgroundColor: colors.primaryMuted,
-    padding: '10px 14px',
-    borderRadius: '8px',
-    marginTop: '8px',
-    border: `1px solid ${colors.primary}`,
-  },
-  priceLabel: {
-    fontSize: '14px',
-    color: colors.primaryDark,
-    fontWeight: '500',
-  },
-  price: {
-    fontSize: '20px',
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  foodButton: {
-    backgroundColor: colors.primary,
-    color: colors.white,
-  },
+/* ─── Styles ─────────────────────────────────────────── */
+
+const cardBase: React.CSSProperties = {
+  backgroundColor: colors.ivory,
+  borderRadius: '18px',
+  boxShadow: `0 4px 18px ${colors.shadow}`,
+  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+  border: `1px solid ${colors.parchment}`,
+  cursor: 'pointer',
+  position: 'relative',
 };
 
-// Responsive styles for mobile
-const responsiveStyles: { [key: string]: React.CSSProperties } = {
-  card: {
-    borderRadius: '12px',
-  },
-  carouselCard: {
-    minWidth: '160px',
-    maxWidth: '160px',
-  },
-  carouselImageContainer: {
-    height: '110px',
-  },
-  carouselContent: {
-    padding: '12px',
-    gap: '4px',
-  },
-  carouselTitle: {
-    fontSize: '13px',
-    marginBottom: '2px',
-  },
-  carouselDescription: {
-    fontSize: '12px',
-    WebkitLineClamp: 1,
-  },
-  carouselActions: {
-    padding: '0 12px 12px 12px',
-  },
-  carouselAddButton: {
-    padding: '8px',
-    fontSize: '12px',
-  },
-  content: {
-    padding: '16px',
-    gap: '6px',
-  },
-  title: {
-    fontSize: '15px',
-    marginBottom: '4px',
-  },
-  description: {
-    fontSize: '13px',
-    WebkitLineClamp: 2,
-  },
-  actions: {
-    padding: '0 16px 16px 16px',
-  },
-  addButton: {
-    padding: '12px',
-    fontSize: '14px',
-  },
+const imageWrap: React.CSSProperties = {
+  position: 'relative',
+  width: '100%',
+  backgroundColor: colors.white,
+  overflow: 'hidden',
 };
 
-// Add CSS animations for button click effect and card hover
-const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-  @keyframes buttonPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(0.95); }
-    100% { transform: scale(1); }
-  }
+const imageStyle: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain',
+  display: 'block',
+  transition: 'transform 0.4s ease',
+  padding: '8px',
+};
 
-  /* Product card hover */
-  [style*="border-radius: 16px"][style*="cursor: pointer"]:hover {
-    border-color: ${colors.primary} !important;
-    box-shadow: 0 4px 16px ${colors.shadowGold} !important;
-    transform: translateY(-2px);
-  }
+const tagBadge: React.CSSProperties = {
+  position: 'absolute',
+  top: '10px',
+  right: '10px',
+  color: colors.white,
+  padding: '4px 9px',
+  borderRadius: '20px',
+  fontSize: '10px',
+  fontWeight: 600,
+  display: 'flex',
+  alignItems: 'center',
+  boxShadow: `0 1px 4px rgba(0,0,0,0.12)`,
+  zIndex: 2,
+};
 
-  /* Add button hover - white to gold */
-  [style*="border: 2px solid"][style*="${colors.primary}"]:not(:disabled):hover {
-    background-color: ${colors.primary} !important;
-    color: ${colors.white} !important;
-  }
+const outOfStockOverlay: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  backgroundColor: 'rgba(44, 24, 16, 0.52)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 3,
+};
 
-  [style*="border: 2px solid"][style*="${colors.primary}"]:not(:disabled):active {
-    background-color: ${colors.primaryDark} !important;
-    border-color: ${colors.primaryDark} !important;
-    animation: buttonPulse 0.3s ease;
-  }
-`;
-if (!document.head.querySelector('[data-product-card-styles]')) {
-  styleSheet.setAttribute('data-product-card-styles', 'true');
-  document.head.appendChild(styleSheet);
-}
+const outOfStockText: React.CSSProperties = {
+  color: colors.white,
+  fontSize: '14px',
+  fontWeight: 700,
+  letterSpacing: '2px',
+};
+
+const topLine: React.CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  height: '1px',
+  backgroundColor: colors.parchment,
+};
+
+const contentStyle: React.CSSProperties = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+const titleStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-sans)',
+  fontWeight: 700,
+  color: colors.textPrimary,
+  margin: 0,
+  lineHeight: 1.3,
+};
+
+const descStyle: React.CSSProperties = {
+  fontSize: '13px',
+  color: colors.textSecondary,
+  margin: 0,
+  lineHeight: 1.5,
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+};
+
+const priceRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  backgroundColor: colors.white,
+  padding: '8px 12px',
+  borderRadius: '8px',
+  border: `1px solid ${colors.parchment}`,
+};
+
+const priceLabel: React.CSSProperties = {
+  fontSize: '13px',
+  color: colors.textSecondary,
+  fontWeight: 500,
+};
+
+const priceValue: React.CSSProperties = {
+  fontSize: '18px',
+  fontWeight: 700,
+  color: colors.textPrimary,
+};
+
+const benefitChip: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '6px',
+  backgroundColor: colors.white,
+  padding: '7px 10px',
+  borderRadius: '8px',
+  border: `1px solid ${colors.parchment}`,
+};
+
+const benefitText: React.CSSProperties = {
+  fontSize: '12px',
+  color: colors.textSecondary,
+  fontWeight: 500,
+};
+
+const addBtn: React.CSSProperties = {
+  width: '100%',
+  border: `1px solid ${colors.parchment}`,
+  borderRadius: '10px',
+  fontWeight: 700,
+  cursor: 'pointer',
+  transition: 'box-shadow 0.2s',
+  boxShadow: `0 1px 6px ${colors.shadow}`,
+  letterSpacing: '0.2px',
+  fontFamily: 'inherit',
+};
+
+const disabledBtn: React.CSSProperties = {
+  width: '100%',
+  padding: '13px 16px',
+  backgroundColor: colors.grayBg,
+  color: colors.grayLight,
+  border: `2px solid ${colors.border}`,
+  borderRadius: '10px',
+  fontSize: '14px',
+  fontWeight: 600,
+  cursor: 'not-allowed',
+  fontFamily: 'inherit',
+};

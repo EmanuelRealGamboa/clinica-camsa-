@@ -68,7 +68,14 @@ class ProductCategory(models.Model):
         _('icon'),
         max_length=50,
         blank=True,
-        help_text=_('Icon emoji or icon name for category (e.g., "🍵", "🍪", "🍓")')
+        help_text=_('Icon emoji or icon name for category (e.g., "🍵", "🍪", "🍓"). Deprecated in favor of icon_image.')
+    )
+    icon_image = models.ImageField(
+        _('icon image'),
+        upload_to='category-icons/',
+        blank=True,
+        null=True,
+        help_text=_('Icon image file for category (PNG/JPG). Recommended size 64x64, square, transparent background.')
     )
     category_type = models.CharField(
         _('category type'),

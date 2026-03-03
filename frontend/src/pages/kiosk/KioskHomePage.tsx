@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ClipboardList, ShoppingCart, Loader2 } from 'lucide-react';
 import { productsApi } from '../../api/products';
 import { ordersApi } from '../../api/orders';
 import { kioskApi } from '../../api/kiosk';
@@ -7,6 +9,7 @@ import type { Product, ProductCategory } from '../../types';
 import { HeroSection } from '../../components/kiosk/HeroSection';
 import { CategoryCarousel } from '../../components/kiosk/CategoryCarousel';
 import { CategoryQuickNav } from '../../components/kiosk/CategoryQuickNav';
+import { MobileHeaderMenu, type MobileHeaderMenuAction } from '../../components/kiosk/MobileHeaderMenu';
 import { CartModal } from '../../components/kiosk/CartModal';
 import { AddToCartNotification } from '../../components/kiosk/AddToCartNotification';
 import { OrderLimitsIndicator } from '../../components/kiosk/OrderLimitsIndicator';
@@ -21,9 +24,12 @@ import { useWebSocket } from '../../hooks/useWebSocket';
 import { useKioskState } from '../../hooks/useKioskState';
 import { useSurvey } from '../../contexts/SurveyContext';
 import { useWindowSize } from '../../utils/responsive';
-import { colors } from '../../styles/colors';
+import { colors, gradients } from '../../styles/colors';
 import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
+import iconTe from '../../assets/icons/te.png';
+import iconStore from '../../assets/icons/store.png';
+import iconComida from '../../assets/icons/comida.png';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
 
@@ -85,16 +91,30 @@ export const KioskHomePage: React.FC = () => {
   const [activeOrdersItems, setActiveOrdersItems] = useState<Map<string, number>>(new Map());
 
   // Use kiosk state hook for persistent state management
-  const { hasSeenWelcome, setHasSeenWelcome, updateActivity } = useKioskState(
+  const { hasSeenWelcome, setHasSeenWelcome, updateActivity, resetState } = useKioskState(
     deviceId || '',
     patientId
   );
 
   const [showWelcomeModal, setShowWelcomeModal] = useState(!hasSeenWelcome);
+  const [welcomeModalMode, setWelcomeModalMode] = useState<'welcome' | 'limitsUpdated'>('welcome');
   const [showInitialWelcome, setShowInitialWelcome] = useState(true);
   const [checkingPatient, setCheckingPatient] = useState(false);
   const [patientAssigned, setPatientAssigned] = useState(false);
   const [showCannotOrderModal, setShowCannotOrderModal] = useState(false);
+
+  // Keep modal visibility synced with persisted welcome state
+  useEffect(() => {
+    if (!showInitialWelcome && !loading) {
+      // Keep limits-updated modal open until user explicitly closes it
+      if (welcomeModalMode !== 'limitsUpdated') {
+        setShowWelcomeModal(!hasSeenWelcome);
+        if (!hasSeenWelcome) {
+          setWelcomeModalMode('welcome');
+        }
+      }
+    }
+  }, [hasSeenWelcome, showInitialWelcome, loading, welcomeModalMode]);
   
   // Survey context
   const { surveyState, startSurvey, setProductRatings, setStaffRating, completeSurvey } = useSurvey();
@@ -272,28 +292,16 @@ export const KioskHomePage: React.FC = () => {
       setMostOrderedProducts(mostOrdered);
 
       // Load products for each category (for carousels)
-      // Try most ordered first, fallback to all products if empty or error
+      // Cargar todos los productos de cada categoría para poder deslizarlos todos
       const productsMap = new Map<number, Product[]>();
       for (const category of categories) {
         let products: Product[] = [];
-
         try {
-          // First try to get most ordered products
-          products = await productsApi.getMostOrderedByCategory(category.id, 5);
+          // Traer todos los productos de la categoría (sin límite)
+          products = await productsApi.getProductsByCategory(category.id);
         } catch (error) {
-          console.log(`Most ordered endpoint not available for category ${category.id}, using fallback`);
+          console.error(`Error loading products for category ${category.id}:`, error);
           products = [];
-        }
-
-        // If no most-ordered products (empty or error), fallback to all products
-        if (!products || products.length === 0) {
-          try {
-            const allProducts = await productsApi.getProductsByCategory(category.id);
-            products = allProducts.slice(0, 5);
-          } catch (fallbackError) {
-            console.error(`Error loading fallback products for category ${category.id}:`, fallbackError);
-            products = [];
-          }
         }
 
         productsMap.set(category.id, products);
@@ -349,6 +357,10 @@ export const KioskHomePage: React.FC = () => {
       }
     } else if (message.type === 'patient_assigned') {
       console.log('New patient assigned - updating state and reloading');
+      // New assignment must always show WelcomeModal
+      resetState();
+      setWelcomeModalMode('welcome');
+      setShowWelcomeModal(false);
       // Update patient assigned state immediately for button enable
       setPatientAssigned(true);
       // Reload home data when a new patient is assigned
@@ -360,8 +372,11 @@ export const KioskHomePage: React.FC = () => {
       loadHomeData();
     } else if (message.type === 'limits_updated') {
       console.log('Order limits updated by staff - reloading patient data');
-      // When staff updates limits, reload patient data to get new limits
-      loadHomeData();
+      // Reload patient data and show modal with updated limits
+      loadHomeData().then(() => {
+        setWelcomeModalMode('limitsUpdated');
+        setShowWelcomeModal(true);
+      });
     } else if (message.type === 'survey_enabled') {
       console.log('Survey enabled via WebSocket - starting survey immediately');
       // When survey is enabled, start survey immediately using global context
@@ -390,6 +405,7 @@ export const KioskHomePage: React.FC = () => {
       } : null);
     } else if (message.type === 'session_ended') {
       console.log('Patient session ended by staff - returning to welcome screen');
+      resetState();
       // Reset all state to show initial welcome screen
       setPatientInfo(null);
       setPatientId(null);
@@ -589,12 +605,56 @@ export const KioskHomePage: React.FC = () => {
   };
 
   const cartTotal = Array.from(cart.values()).reduce((sum, qty) => sum + qty, 0);
+  const mobileMenuActions: MobileHeaderMenuAction[] = [
+    {
+      id: 'products',
+      label: 'Productos',
+      icon: (
+        <img
+          src={iconStore}
+          alt="Productos"
+          style={{ width: 18, height: 18, objectFit: 'contain' }}
+          draggable={false}
+        />
+      ),
+      group: 'navigation',
+      onClick: handleOpenTienda,
+    },
+    {
+      id: 'food',
+      label: 'Comida',
+      icon: (
+        <img
+          src={iconComida}
+          alt="Comida"
+          style={{ width: 18, height: 18, objectFit: 'contain' }}
+          draggable={false}
+        />
+      ),
+      group: 'navigation',
+      onClick: handleOpenRestaurantes,
+    },
+    {
+      id: 'orders',
+      label: 'Ordenes',
+      icon: (
+        <img
+          src={iconTe}
+          alt="Órdenes"
+          style={{ width: 18, height: 18, objectFit: 'contain' }}
+          draggable={false}
+        />
+      ),
+      group: 'navigation',
+      onClick: handleViewOrders,
+    }
+  ];
 
   if (loading) {
     return (
       <div style={styles.loading}>
-        <div style={styles.spinner}></div>
-        <p>Cargando...</p>
+        <Loader2 size={44} color={colors.primary} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
+        <p style={{ color: colors.textSecondary, fontWeight: 500 }}>Cargando...</p>
       </div>
     );
   }
@@ -611,73 +671,144 @@ export const KioskHomePage: React.FC = () => {
     );
   }
 
-  const headerStyles = { ...styles.header, ...(isMobile && responsiveStyles.header) };
-  const headerLeftStyles = { ...styles.headerLeft, ...(isMobile && responsiveStyles.headerLeft) };
-  const headerInfoStyles = { ...styles.headerInfo, ...(isMobile && responsiveStyles.headerInfo) };
-  const roomInfoStyles = { ...styles.roomInfo, ...(isMobile && responsiveStyles.roomInfo) };
-
   return (
     <div style={styles.container}>
       {/* Header */}
-      <header style={headerStyles}>
-        <div style={headerLeftStyles}>
-          <img src={logoHorizontal} alt="Clínica CAMSA" style={{ ...styles.logo, ...(isMobile && responsiveStyles.logo) }} />
+      <motion.header
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        style={{
+          ...styles.header,
+          ...(isMobile && responsiveStyles.header),
+          flexDirection: isMobile ? 'column' : 'row',
+          padding: isMobile ? '10px 14px' : '14px 36px',
+        }}
+      >
+        {/* Left: logo + title */}
+        <div style={{ ...styles.headerLeft, ...(isMobile && responsiveStyles.headerLeft) }}>
+          <img src={logoHorizontal} alt="Clínica CAMSA" style={{ height: isMobile ? 36 : 48, width: 'auto' }} />
           {!isMobile && <div style={styles.headerDivider} />}
           <div>
-            <h1 style={{ ...styles.headerTitle, ...(isMobile && responsiveStyles.headerTitle) }}>Servicio a Habitación</h1>
+            <h1 style={{ ...styles.headerTitle, fontSize: isMobile ? '15px' : '20px', fontFamily: 'var(--font-serif)' }}>
+              Servicio a Habitación
+            </h1>
             {patientInfo && (
               <>
-                <p style={{ ...styles.welcomeText, ...(isMobile && responsiveStyles.welcomeText) }}>Bienvenido, {patientInfo.full_name}</p>
-                <p style={{ ...styles.nurseText, ...(isMobile && responsiveStyles.nurseText) }}>Tu enfermera: {patientInfo.staff_name}</p>
+                <p style={{ ...styles.welcomeText, fontSize: isMobile ? '12px' : '13px' }}>
+                  Bienvenido, {patientInfo.full_name}
+                </p>
+                <p style={{ ...styles.nurseText, fontSize: isMobile ? '11px' : '12px' }}>
+                  Tu enfermera: {patientInfo.staff_name}
+                </p>
               </>
             )}
           </div>
         </div>
-        <div style={headerInfoStyles}>
+
+        {/* Right: room info + nav buttons */}
+        <div style={{
+          ...styles.headerInfo,
+          ...(isMobile && responsiveStyles.headerInfo),
+          flexDirection: isMobile ? 'column' : 'row',
+        }}>
           {patientInfo && (
-            <div style={roomInfoStyles}>
-              <div style={{ ...styles.roomLabel, ...(isMobile && responsiveStyles.roomLabel) }}>Habitación: {patientInfo.room_code}</div>
-              <div style={{ ...styles.deviceLabel, ...(isMobile && responsiveStyles.deviceLabel) }}>Dispositivo: {deviceId}</div>
+            <div style={{ ...styles.roomInfo, ...(isMobile && responsiveStyles.roomInfo) }}>
+              <div style={{ ...styles.roomLabel, fontSize: isMobile ? '12px' : '14px' }}>
+                Habitación: {patientInfo.room_code}
+              </div>
+              <div style={{ ...styles.deviceLabel }}>Dispositivo: {deviceId}</div>
             </div>
           )}
-          <div style={{ ...styles.headerRight, ...(isMobile && responsiveStyles.headerRight) }}>
-            <button
-              type="button"
-              style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}
-              onClick={handleOpenTienda}
-              className="kiosk-btn-outline"
-              title="Conoce nuestros productos"
-            >
-              🛒 Conoce productos
-            </button>
-            <button
-              type="button"
-              style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}
-              onClick={handleOpenRestaurantes}
-              className="kiosk-btn-outline"
-              title="Pedir comida"
-            >
-              🍽️ Pedir comida
-            </button>
-            <button
-              style={{ ...styles.ordersButton, ...(isMobile && responsiveStyles.button) }}
-              onClick={handleViewOrders}
-              className="kiosk-btn-outline"
-            >
-              Mis Órdenes
-            </button>
-            {cartTotal > 0 && (
-              <button
-                style={{ ...styles.cartButton, ...(isMobile && responsiveStyles.button) }}
-                onClick={() => setShowCart(true)}
-                className="kiosk-btn-primary"
+          {isMobile ? (
+            <div style={styles.mobileControlsWrap}>
+              {cartTotal > 0 && (
+                <motion.button
+                  initial={{ scale: 0.92, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.92, opacity: 0 }}
+                  whileTap={{ scale: 0.96 }}
+                  style={{ ...styles.cartButton, ...styles.mobileCartButton }}
+                  onClick={() => setShowCart(true)}
+                  aria-label="Carrito"
+                >
+                  <ShoppingCart size={16} style={{ flexShrink: 0 }} />
+                  <span style={{ ...cartBadge, ...styles.mobileCartBadge }}>{cartTotal}</span>
+                </motion.button>
+              )}
+              <div style={styles.mobileMenuWrap}>
+                <MobileHeaderMenu actions={mobileMenuActions} buttonLabel="Menu principal" />
+              </div>
+            </div>
+          ) : (
+            <div style={styles.headerRight}>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                style={styles.navButton}
+                onClick={handleOpenTienda}
+                title="Conoce nuestros productos"
               >
-                🛒 Carrito ({cartTotal})
-              </button>
-            )}
-          </div>
+                <img
+                  src={iconStore}
+                  alt="Conoce productos"
+                  style={{ width: 18, height: 18, objectFit: 'contain', marginRight: 6, flexShrink: 0 }}
+                  draggable={false}
+                />
+                Conoce productos
+              </motion.button>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                style={styles.navButton}
+                onClick={handleOpenRestaurantes}
+                title="Pedir comida"
+              >
+                <img
+                  src={iconComida}
+                  alt="Pedir comida"
+                  style={{ width: 18, height: 18, objectFit: 'contain', marginRight: 6, flexShrink: 0 }}
+                  draggable={false}
+                />
+                Pedir comida
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                style={styles.navButton}
+                onClick={handleViewOrders}
+              >
+                <img
+                  src={iconTe}
+                  alt="Mis órdenes"
+                  style={{ width: 18, height: 18, objectFit: 'contain', marginRight: 6, flexShrink: 0 }}
+                  draggable={false}
+                />
+                Mis Órdenes
+              </motion.button>
+              <AnimatePresence>
+                {cartTotal > 0 && (
+                  <motion.button
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    whileHover={{ scale: 1.05, y: -1 }}
+                    whileTap={{ scale: 0.96 }}
+                    style={styles.cartButton}
+                    onClick={() => setShowCart(true)}
+                  >
+                    <ShoppingCart size={16} style={{ marginRight: '6px', flexShrink: 0 }} />
+                    Carrito
+                    <span style={cartBadge}>{cartTotal}</span>
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
-      </header>
+      </motion.header>
 
       {/* Hero Section - Featured Product */}
       {featuredProduct && (
@@ -790,9 +921,13 @@ export const KioskHomePage: React.FC = () => {
         show={showWelcomeModal}
         patientName={patientInfo?.full_name || ''}
         orderLimits={patientInfo?.order_limits}
+        mode={welcomeModalMode}
         onClose={() => {
           setShowWelcomeModal(false);
-          setHasSeenWelcome(true);
+          if (welcomeModalMode === 'welcome') {
+            setHasSeenWelcome(true);
+          }
+          setWelcomeModalMode('welcome');
         }}
       />
 
@@ -840,11 +975,26 @@ export const KioskHomePage: React.FC = () => {
   );
 };
 
+const cartBadge: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: '20px',
+  height: '20px',
+  padding: '0 5px',
+  backgroundColor: colors.white,
+  color: colors.espresso,
+  borderRadius: '10px',
+  fontSize: '12px',
+  fontWeight: 700,
+  marginLeft: '8px',
+};
+
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: colors.ivory,
-    paddingBottom: '40px',
+    backgroundColor: '#1A0D05',
+    paddingBottom: '48px',
   },
   loading: {
     display: 'flex',
@@ -852,84 +1002,69 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: colors.ivory,
-    color: colors.textSecondary,
-  },
-  spinner: {
-    width: '48px',
-    height: '48px',
-    border: `4px solid ${colors.primaryMuted}`,
-    borderTop: `4px solid ${colors.primary}`,
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
+    backgroundColor: '#1A0D05',
+    color: colors.textMuted,
   },
   header: {
     position: 'sticky',
     top: 0,
     zIndex: 100,
     backgroundColor: colors.white,
-    padding: '16px 40px',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: `0 2px 12px ${colors.shadowGold}`,
-    borderBottom: `1px solid ${colors.primaryMuted}`,
-    flexWrap: 'wrap',
-    gap: '16px',
+    boxShadow: `0 2px 16px ${colors.shadowGold}, 0 1px 4px ${colors.shadow}`,
+    borderBottom: `2px solid ${colors.primaryMuted}`,
+    gap: '12px',
   },
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '20px',
-  },
-  logo: {
-    height: '50px',
-    width: 'auto',
+    gap: '18px',
+    flexShrink: 0,
   },
   headerDivider: {
     width: '1px',
-    height: '40px',
-    backgroundColor: colors.primaryMuted,
+    height: '36px',
+    backgroundColor: colors.parchment,
   },
   headerTitle: {
-    fontSize: '22px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-    margin: '0 0 4px 0',
+    fontWeight: 700,
+    color: colors.espresso,
+    margin: '0 0 3px 0',
+    lineHeight: 1.2,
   },
   welcomeText: {
-    fontSize: '14px',
     color: colors.primary,
     margin: '2px 0',
-    fontWeight: '500',
+    fontWeight: 600,
   },
   nurseText: {
-    fontSize: '13px',
     color: colors.textSecondary,
-    margin: '2px 0 0 0',
+    margin: '1px 0 0 0',
   },
   headerInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '24px',
-    flexWrap: 'wrap',
+    gap: '16px',
     justifyContent: 'flex-end',
     flex: '1 1 auto',
     minWidth: 0,
+    flexWrap: 'wrap',
   },
   roomInfo: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
     gap: '2px',
-    padding: '8px 16px',
+    padding: '7px 14px',
     backgroundColor: colors.cream,
-    borderRadius: '8px',
-    border: `1px solid ${colors.primaryMuted}`,
+    borderRadius: '10px',
+    border: `1px solid ${colors.parchment}`,
+    flexShrink: 0,
   },
   roomLabel: {
-    fontSize: '15px',
-    fontWeight: '600',
+    fontWeight: 700,
     color: colors.primary,
   },
   deviceLabel: {
@@ -938,146 +1073,106 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   headerRight: {
     display: 'flex',
-    gap: '12px',
-    flexWrap: 'wrap',
+    gap: '8px',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    minWidth: 'fit-content',
   },
-  ordersButton: {
-    padding: '12px 24px',
+  mobileMenuWrap: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+  },
+  mobileControlsWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: '8px',
+  },
+  mobileCartButton: {
+    width: '44px',
+    height: '44px',
+    padding: '0',
+    borderRadius: '10px',
+    boxShadow: `0 2px 8px ${colors.shadowGold}`,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  mobileCartBadge: {
+    position: 'absolute',
+    top: '-6px',
+    right: '-6px',
+    marginLeft: 0,
+    minWidth: '18px',
+    height: '18px',
+    fontSize: '10px',
+    padding: '0 4px',
+  },
+  navButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '10px 18px',
     backgroundColor: colors.white,
     color: colors.primary,
     border: `2px solid ${colors.primary}`,
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '600',
+    borderRadius: '10px',
+    fontSize: '14px',
+    fontWeight: 700,
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
+    fontFamily: 'inherit',
+    letterSpacing: '0.2px',
+    whiteSpace: 'nowrap',
   },
   cartButton: {
-    padding: '12px 24px',
-    backgroundColor: colors.primary,
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '10px 18px',
+    background: gradients.gold,
     color: colors.white,
-    border: `2px solid ${colors.primary}`,
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '600',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '14px',
+    fontWeight: 700,
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
+    fontFamily: 'inherit',
+    boxShadow: `0 3px 12px ${colors.shadowGold}`,
+    whiteSpace: 'nowrap',
   },
 };
 
 const responsiveStyles: { [key: string]: React.CSSProperties } = {
   header: {
-    flexDirection: 'column',
     alignItems: 'flex-start',
-    padding: '10px 12px',
     gap: '8px',
   },
   headerLeft: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: '8px',
+    gap: '10px',
     width: '100%',
   },
   headerInfo: {
-    flexDirection: 'column',
     width: '100%',
     gap: '8px',
     alignItems: 'stretch',
   },
-  logo: {
-    height: '36px',
-  },
-  headerTitle: {
-    fontSize: '16px',
-  },
-  welcomeText: {
-    fontSize: '12px',
-  },
-  nurseText: {
-    fontSize: '12px',
-  },
   roomInfo: {
-    padding: '6px 12px',
-  },
-  roomLabel: {
-    fontSize: '13px',
-  },
-  deviceLabel: {
-    fontSize: '10px',
+    padding: '5px 10px',
+    alignItems: 'flex-start',
   },
   headerRight: {
-    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    gap: '8px',
+    gap: '6px',
   },
   button: {
     padding: '8px 12px',
-    fontSize: '13px',
-    width: 'auto',
+    fontSize: '12px',
   },
 };
 
-// Add keyframes and button hover styles
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-  }
-
-  .kiosk-btn-outline {
-    background-color: ${colors.white} !important;
-    color: ${colors.primary} !important;
-    border: 2px solid ${colors.primary} !important;
-  }
-
-  .kiosk-btn-outline:hover {
-    background-color: ${colors.primary} !important;
-    color: ${colors.white} !important;
-  }
-
-  .kiosk-btn-outline:active {
-    background-color: ${colors.primaryDark} !important;
-    border-color: ${colors.primaryDark} !important;
-  }
-
-  .kiosk-btn-primary {
-    background-color: ${colors.primary} !important;
-    color: ${colors.white} !important;
-    border: 2px solid ${colors.primary} !important;
-  }
-
-  .kiosk-btn-primary:hover {
-    background-color: ${colors.primaryDark} !important;
-    border-color: ${colors.primaryDark} !important;
-  }
-
-  .kiosk-btn-primary:active {
-    background-color: ${colors.goldDark} !important;
-    border-color: ${colors.goldDark} !important;
-  }
-
-  /* Override responsive.css for kiosk header buttons */
-  @media (max-width: 767px) {
-    header[style*="header"] .kiosk-btn-outline,
-    header[style*="header"] .kiosk-btn-primary {
-      width: auto !important;
-      min-width: 120px !important;
-      padding: 10px 16px !important;
-      font-size: 13px !important;
-    }
-  }
-
-  @media (min-width: 768px) and (max-width: 1023px) {
-    header[style*="header"] .kiosk-btn-outline,
-    header[style*="header"] .kiosk-btn-primary {
-      width: auto !important;
-      min-width: 140px !important;
-      padding: 12px 20px !important;
-    }
   }
 `;
 if (!document.head.querySelector('[data-kiosk-home-styles]')) {

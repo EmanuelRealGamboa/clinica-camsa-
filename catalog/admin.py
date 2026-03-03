@@ -54,18 +54,18 @@ class ProductTagAdmin(admin.ModelAdmin):
 
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'icon_display', 'category_type', 'sort_order', 'show_in_carousel', 'carousel_order', 'is_active', 'product_count']
+    list_display = ['id', 'name', 'icon_display', 'icon_image_preview', 'category_type', 'sort_order', 'show_in_carousel', 'carousel_order', 'is_active', 'product_count']
     list_editable = ['category_type', 'sort_order', 'show_in_carousel', 'carousel_order', 'is_active']
     list_filter = ['is_active', 'show_in_carousel', 'category_type', 'created_at']
     search_fields = ['name']
     ordering = ['sort_order', 'name']
-    readonly_fields = ['created_at', 'updated_at', 'product_count']
+    readonly_fields = ['created_at', 'updated_at', 'product_count', 'icon_image_preview']
     actions = ['show_in_carousel_action', 'hide_from_carousel_action', 'activate_categories', 'deactivate_categories', 'set_as_drink', 'set_as_snack']
 
     fieldsets = (
         ('Category Information', {
-            'fields': ('name', 'icon', 'category_type', 'sort_order', 'is_active'),
-            'description': 'Basic category information'
+            'fields': ('name', 'icon', 'icon_image', 'icon_image_preview', 'category_type', 'sort_order', 'is_active'),
+            'description': 'Basic category information. Prefer using icon_image over icon (emoji).'
         }),
         ('Carousel Settings', {
             'fields': ('show_in_carousel', 'carousel_order'),
@@ -77,7 +77,8 @@ class ProductCategoryAdmin(admin.ModelAdmin):
         ('Help', {
             'fields': (),
             'description': '''
-                <strong>Icon:</strong> Use food emojis like 🍔 🥤 🍰 🥗 🍕 🌮 🍜 ☕ 🥐 🍱<br>
+                <strong>Icon image:</strong> Upload a square PNG/JPG (e.g. 64x64) with transparent background for consistent kiosk icons.<br>
+                <strong>Icon (emoji):</strong> Legacy field; only use if no image is available.<br>
                 <strong>Category Type:</strong> DRINK (bebidas), SNACK (comida ligera), OTHER (otros)
             '''
         }),
@@ -88,8 +89,19 @@ class ProductCategoryAdmin(admin.ModelAdmin):
     )
 
     def icon_display(self, obj):
+        # Keep showing emoji icon for quick reference
         return format_html('<span style="font-size: 24px;">{}</span>', obj.icon) if obj.icon else '-'
-    icon_display.short_description = 'Icon'
+    icon_display.short_description = 'Icono Emoji'
+
+    def icon_image_preview(self, obj):
+        if obj.icon_image:
+            return format_html(
+                '<img src="{}" style="width: 32px; height: 32px; object-fit: contain; border-radius: 6px; '
+                'border: 1px solid #ddd; background: #f8f9fa;" />',
+                obj.icon_image.url
+            )
+        return '-'
+    icon_image_preview.short_description = 'Icono Imagen'
 
     def product_count(self, obj):
         count = obj.products.filter(is_active=True).count()

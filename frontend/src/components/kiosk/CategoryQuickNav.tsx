@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { ProductCategory } from '../../types';
 import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
@@ -6,9 +7,9 @@ import { colors } from '../../styles/colors';
 interface CategoryQuickNavProps {
   categories: ProductCategory[];
   onCategoryClick: (categoryId: number) => void;
-  onFoodClick?: () => void; // Special handler for FOOD category
+  onFoodClick?: () => void;
   orderLimits?: { DRINK?: number; SNACK?: number };
-  currentCounts?: Map<string, number>; // Current items in cart + active orders per category type
+  currentCounts?: Map<string, number>;
 }
 
 export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
@@ -19,23 +20,17 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
   currentCounts = new Map(),
 }) => {
   const { isMobile } = useWindowSize();
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
 
-  // Get limit info for a category
   const getLimitInfo = (category: ProductCategory) => {
     const categoryType = category.category_type;
-
-    // Check if this is the FOOD category (by type or name)
     const isFoodCategory =
       categoryType === 'FOOD' ||
       category.name.toLowerCase().includes('comida') ||
       category.name.toLowerCase().includes('ordenar');
 
     if (!categoryType || categoryType === 'OTHER') return null;
-
-    // FOOD has no limit
-    if (isFoodCategory) {
-      return { hasLimit: false, text: 'Sin limite' };
-    }
+    if (isFoodCategory) return { hasLimit: false, text: 'Sin límite' };
 
     const limit = orderLimits[categoryType as 'DRINK' | 'SNACK'];
     if (!limit) return null;
@@ -50,222 +45,221 @@ export const CategoryQuickNav: React.FC<CategoryQuickNavProps> = ({
       limit,
       remaining,
       isReached,
-      text: isReached ? 'Limite alcanzado' : `${remaining} disponible${remaining !== 1 ? 's' : ''}`,
+      text: isReached ? 'Límite alcanzado' : `${remaining} disponible${remaining !== 1 ? 's' : ''}`,
     };
   };
 
-  const containerStyles = { ...styles.container, ...(isMobile && responsiveStyles.container) };
-  const headerStyles = { ...styles.header, ...(isMobile && responsiveStyles.header) };
-  const navContainerStyles = { ...styles.navContainer, ...(isMobile && responsiveStyles.navContainer) };
+  const handleCategoryClick = (category: ProductCategory) => {
+    const isFoodCategory =
+      category.category_type === 'FOOD' ||
+      category.name.toLowerCase().includes('comida') ||
+      category.name.toLowerCase().includes('ordenar');
+
+    if (isFoodCategory && onFoodClick) {
+      onFoodClick();
+    } else {
+      onCategoryClick(category.id);
+    }
+  };
 
   return (
-    <div style={containerStyles}>
-      <div style={headerStyles}>
-        <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>Categorias</h2>
-        <p style={{ ...styles.subtitle, ...(isMobile && responsiveStyles.subtitle) }}>Selecciona una categoria para ver sus productos</p>
-      </div>
+    <section style={{
+      ...containerStyle,
+      padding: isMobile ? '24px 16px' : '36px 40px',
+      marginBottom: isMobile ? '16px' : '24px',
+    }}>
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        style={{ textAlign: 'center', marginBottom: isMobile ? '20px' : '28px' }}
+      >
+        <h2 style={{ ...sectionTitle, fontSize: isMobile ? '20px' : '26px' }}>
+          Categorías
+        </h2>
+        <p style={{ ...sectionSubtitle, fontSize: isMobile ? '13px' : '15px' }}>
+          Selecciona una categoría para ver sus productos
+        </p>
+        {/* Gold accent */}
+        <div style={goldAccent} />
+      </motion.div>
 
-      <div style={navContainerStyles}>
-        {categories.map((category) => {
+      {/* Category buttons */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1, staggerChildren: 0.06 }}
+        style={{
+          ...navGrid,
+          gap: isMobile ? '12px' : '16px',
+        }}
+      >
+        {categories.map((category, index) => {
           const limitInfo = getLimitInfo(category);
-          const isLimitReached = limitInfo?.hasLimit && limitInfo?.isReached;
+          const isReached = limitInfo?.hasLimit && limitInfo?.isReached;
+          const isHovered = hoveredId === category.id;
 
           return (
-            <button
+            <motion.button
               key={category.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={!isReached ? { y: -5, scale: 1.04 } : {}}
+              whileTap={!isReached ? { scale: 0.96 } : {}}
+              onHoverStart={() => setHoveredId(category.id)}
+              onHoverEnd={() => setHoveredId(null)}
               style={{
-                ...styles.categoryButton,
-                ...(isMobile && responsiveStyles.categoryButton),
-                ...(isLimitReached ? styles.categoryButtonDisabled : {}),
+                ...catButton,
+                padding: isMobile ? '14px 16px' : '20px 24px',
+                minWidth: isMobile ? '90px' : '140px',
+                opacity: isReached ? 0.5 : 1,
+                cursor: isReached ? 'not-allowed' : 'pointer',
+                borderColor: isHovered && !isReached ? colors.primary : 'rgba(201, 168, 76, 0.25)',
+                backgroundColor: isHovered && !isReached
+                  ? 'rgba(201, 168, 76, 0.12)'
+                  : 'rgba(255, 255, 255, 0.06)',
+                boxShadow: isHovered && !isReached
+                  ? `0 8px 28px ${colors.shadowGold}`
+                  : `0 2px 8px rgba(0,0,0,0.3)`,
               }}
-              onClick={() => {
-                // If FOOD category and we have a special handler, use it
-                // Check both category_type and name to be more robust
-                const isFoodCategory =
-                  category.category_type === 'FOOD' ||
-                  category.name.toLowerCase().includes('comida') ||
-                  category.name.toLowerCase().includes('ordenar');
-
-                console.log('Category clicked:', {
-                  name: category.name,
-                  category_type: category.category_type,
-                  isFoodCategory,
-                  hasOnFoodClick: !!onFoodClick
-                });
-
-                if (isFoodCategory && onFoodClick) {
-                  onFoodClick();
-                } else {
-                  onCategoryClick(category.id);
-                }
-              }}
-              className="category-nav-button"
+              onClick={() => !isReached && handleCategoryClick(category)}
+              aria-disabled={isReached}
             >
-              <div style={{ ...styles.iconWrapper, ...(isMobile && responsiveStyles.iconWrapper) }}>
-                <span style={{ ...styles.icon, ...(isMobile && responsiveStyles.icon) }}>{category.icon || '📦'}</span>
-              </div>
-              <span style={{ ...styles.categoryName, ...(isMobile && responsiveStyles.categoryName) }}>{category.name}</span>
+              {/* Icon circle */}
+              <motion.div
+                animate={{
+                  backgroundColor: isHovered && !isReached ? colors.primary : 'rgba(201, 168, 76, 0.15)',
+                }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  ...iconCircle,
+                  width: isMobile ? '48px' : '64px',
+                  height: isMobile ? '48px' : '64px',
+                  borderRadius: isMobile ? '12px' : '16px',
+                  border: `2px solid ${isHovered && !isReached ? colors.primaryDark : colors.primary}`,
+                }}
+              >
+                {category.icon_image_url ? (
+                  <img
+                    src={category.icon_image_url}
+                    alt={category.name}
+                    style={{
+                      width: isMobile ? 32 : 44,
+                      height: isMobile ? 32 : 44,
+                      objectFit: 'contain',
+                      display: 'block',
+                    }}
+                    draggable={false}
+                  />
+                ) : (
+                  <span style={{ fontSize: isMobile ? '22px' : '32px' }}>
+                    {category.icon || '📦'}
+                  </span>
+                )}
+              </motion.div>
+
+              {/* Name */}
+              <span style={{
+                ...catName,
+                fontSize: isMobile ? '12px' : '15px',
+                color: isHovered && !isReached ? colors.goldLight : 'rgba(255,255,255,0.85)',
+              }}>
+                {category.name}
+              </span>
+
+              {/* Limit badge */}
               {limitInfo && (
-                <span style={{
-                  ...styles.limitBadge,
-                  backgroundColor: limitInfo.hasLimit
-                    ? (limitInfo.isReached ? '#ef5350' : colors.primary)
-                    : '#ff9800',
-                  color: colors.white,
-                }}>
+                <motion.span
+                  initial={{ scale: 0.9, opacity: 0.8 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  style={{
+                    ...limitBadge,
+                    backgroundColor: limitInfo.hasLimit
+                      ? (limitInfo.isReached ? '#E53935' : colors.primary)
+                      : '#FFA726',
+                    fontSize: isMobile ? '9px' : '11px',
+                  }}
+                >
                   {limitInfo.text}
-                </span>
+                </motion.span>
               )}
-            </button>
+            </motion.button>
           );
         })}
-      </div>
-    </div>
+      </motion.div>
+    </section>
   );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    padding: '32px 40px',
-    backgroundColor: colors.white,
-    marginBottom: '24px',
-    boxShadow: `0 2px 12px ${colors.shadowGold}`,
-    borderTop: `1px solid ${colors.primaryMuted}`,
-    borderBottom: `1px solid ${colors.primaryMuted}`,
-  },
-  header: {
-    marginBottom: '24px',
-    textAlign: 'center',
-  },
-  title: {
-    fontSize: '26px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-    margin: '0 0 8px 0',
-  },
-  subtitle: {
-    fontSize: '15px',
-    color: colors.textSecondary,
-    margin: 0,
-  },
-  navContainer: {
-    display: 'flex',
-    gap: '20px',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  categoryButton: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '20px 28px',
-    backgroundColor: colors.white,
-    border: `2px solid ${colors.primaryMuted}`,
-    borderRadius: '16px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    minWidth: '150px',
-    boxShadow: `0 2px 8px ${colors.shadow}`,
-  },
-  categoryButtonDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed',
-  },
-  iconWrapper: {
-    width: '70px',
-    height: '70px',
-    borderRadius: '50%',
-    backgroundColor: colors.primaryMuted,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.3s ease',
-    border: `2px solid ${colors.primary}`,
-  },
-  icon: {
-    fontSize: '36px',
-  },
-  categoryName: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  limitBadge: {
-    fontSize: '11px',
-    fontWeight: '600',
-    padding: '5px 12px',
-    borderRadius: '12px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
+/* ─── Styles ─────────────────────────────────────────── */
+
+const containerStyle: React.CSSProperties = {
+  backgroundColor: 'rgba(30, 14, 6, 0.85)',
+  borderTop: `1px solid rgba(201, 168, 76, 0.15)`,
+  borderBottom: `1px solid rgba(201, 168, 76, 0.15)`,
 };
 
-const responsiveStyles: { [key: string]: React.CSSProperties } = {
-  container: {
-    padding: '20px 16px',
-    marginBottom: '16px',
-  },
-  header: {
-    marginBottom: '16px',
-  },
-  title: {
-    fontSize: '20px',
-  },
-  subtitle: {
-    fontSize: '13px',
-  },
-  navContainer: {
-    gap: '10px',
-    justifyContent: 'center',
-  },
-  categoryButton: {
-    padding: '12px 16px',
-    minWidth: '100px',
-    gap: '8px',
-  },
-  iconWrapper: {
-    width: '50px',
-    height: '50px',
-  },
-  icon: {
-    fontSize: '24px',
-  },
-  categoryName: {
-    fontSize: '13px',
-  },
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'var(--font-serif)',
+  fontWeight: 700,
+  color: colors.goldLight,
+  margin: '0 0 6px 0',
 };
 
-// Add hover effects
-const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-  .category-nav-button {
-    background-color: ${colors.white} !important;
-  }
+const sectionSubtitle: React.CSSProperties = {
+  color: 'rgba(255,255,255,0.55)',
+  margin: '0 0 14px 0',
+};
 
-  .category-nav-button:hover {
-    border-color: ${colors.primary} !important;
-    background-color: ${colors.primaryMuted} !important;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px ${colors.shadowGold};
-  }
+const goldAccent: React.CSSProperties = {
+  width: '48px',
+  height: '3px',
+  background: `linear-gradient(90deg, ${colors.goldGradientStart}, ${colors.goldGradientEnd})`,
+  borderRadius: '2px',
+  margin: '0 auto',
+};
 
-  .category-nav-button:hover .icon-wrapper {
-    background-color: ${colors.primary} !important;
-    border-color: ${colors.primaryDark} !important;
-  }
+const navGrid: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  justifyContent: 'center',
+};
 
-  .category-nav-button:active {
-    transform: translateY(-1px);
-    background-color: ${colors.primary} !important;
-  }
+const catButton: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '10px',
+  border: `2px solid rgba(201, 168, 76, 0.25)`,
+  borderRadius: '18px',
+  transition: 'border-color 0.2s, background-color 0.2s, box-shadow 0.2s',
+  fontFamily: 'inherit',
+};
 
-  .category-nav-button:active span {
-    color: ${colors.white} !important;
-  }
-`;
-if (!document.head.querySelector('[data-category-nav-styles]')) {
-  styleSheet.setAttribute('data-category-nav-styles', 'true');
-  document.head.appendChild(styleSheet);
-}
+const iconCircle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'background-color 0.2s, border-color 0.2s',
+  flexShrink: 0,
+};
+
+const catName: React.CSSProperties = {
+  fontWeight: 600,
+  textAlign: 'center',
+  lineHeight: 1.3,
+  transition: 'color 0.2s',
+  color: 'rgba(255,255,255,0.85)',
+};
+
+const limitBadge: React.CSSProperties = {
+  color: colors.white,
+  padding: '4px 10px',
+  borderRadius: '12px',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  whiteSpace: 'nowrap',
+};

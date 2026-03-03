@@ -47,6 +47,10 @@ const ProductsManagementPage: React.FC = () => {
     show_in_carousel: false,
     carousel_order: 0,
     is_active: true,
+    // Manejo de icono de imagen
+    icon_image_file: null as File | null,
+    icon_image_preview: null as string | null,
+    clear_icon_image: false,
   });
 
   const [tagForm, setTagForm] = useState({
@@ -340,19 +344,62 @@ const ProductsManagementPage: React.FC = () => {
     setImagePreview(null);
   };
 
+  // Category icon (image) handlers
+  const handleCategoryIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCategoryForm(prev => ({
+          ...prev,
+          icon_image_file: file,
+          icon_image_preview: reader.result as string,
+          clear_icon_image: false,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleClearCategoryIcon = () => {
+    setCategoryForm(prev => ({
+      ...prev,
+      icon_image_file: null,
+      icon_image_preview: null,
+      clear_icon_image: true,
+    }));
+  };
+
   // Category handlers
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const formData = new FormData();
+
+      formData.append('name', categoryForm.name || '');
+      formData.append('icon', categoryForm.icon || '');
+      formData.append('sort_order', (categoryForm.sort_order || 0).toString());
+      formData.append('show_in_carousel', categoryForm.show_in_carousel ? 'true' : 'false');
+      formData.append('carousel_order', (categoryForm.carousel_order || 0).toString());
+      formData.append('is_active', categoryForm.is_active ? 'true' : 'false');
+
+      if (categoryForm.icon_image_file) {
+        formData.append('icon_image', categoryForm.icon_image_file);
+      }
+
+      if (categoryForm.clear_icon_image) {
+        formData.append('clear_icon_image', 'true');
+      }
+
       if (editingCategory) {
-        await adminApi.updateCategory(editingCategory.id, categoryForm);
+        await adminApi.updateCategory(editingCategory.id, formData);
         setSuccessModal({
           show: true,
           title: 'Categoría Actualizada',
           message: `La categoría "${categoryForm.name}" ha sido actualizada exitosamente.`,
         });
       } else {
-        await adminApi.createCategory(categoryForm);
+        await adminApi.createCategory(formData);
         setSuccessModal({
           show: true,
           title: 'Categoría Creada',
@@ -422,6 +469,9 @@ const ProductsManagementPage: React.FC = () => {
       show_in_carousel: category.show_in_carousel || false,
       carousel_order: category.carousel_order || 0,
       is_active: category.is_active,
+      icon_image_file: null,
+      icon_image_preview: category.icon_image_url || null,
+      clear_icon_image: false,
     });
     setShowCategoryModal(true);
   };
@@ -434,6 +484,9 @@ const ProductsManagementPage: React.FC = () => {
       show_in_carousel: false,
       carousel_order: 0,
       is_active: true,
+      icon_image_file: null,
+      icon_image_preview: null,
+      clear_icon_image: false,
     });
   };
 
@@ -616,7 +669,27 @@ const ProductsManagementPage: React.FC = () => {
                         </td>
                         <td style={styles.td}>{product.id}</td>
                         <td style={styles.td}>
-                          <div>{product.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {product.category && (() => {
+                              const cat = categories.find(c => c.id === product.category);
+                              if (cat?.icon_image_url) {
+                                return (
+                                  <div style={styles.categoryIconTableWrapper}>
+                                    <img
+                                      src={cat.icon_image_url}
+                                      alt={cat.name}
+                                      style={styles.categoryIconTableImage}
+                                    />
+                                  </div>
+                                );
+                              }
+                              if (cat?.icon) {
+                                return <span style={{ fontSize: '18px' }}>{cat.icon}</span>;
+                              }
+                              return null;
+                            })()}
+                            <div>{product.name}</div>
+                          </div>
                           <div style={{ fontSize: '12px', color: '#666' }}>{product.sku || 'Sin SKU'}</div>
                         </td>
                         <td style={styles.td}>{getCategoryName(product.category)}</td>
@@ -719,7 +792,17 @@ const ProductsManagementPage: React.FC = () => {
                     {categories.map((category) => (
                       <tr key={category.id} style={styles.tr}>
                         <td style={styles.td}>
-                          <span style={{ fontSize: '24px' }}>{category.icon || '-'}</span>
+                          {category.icon_image_url ? (
+                            <div style={styles.categoryIconTableWrapper}>
+                              <img
+                                src={category.icon_image_url}
+                                alt={category.name}
+                                style={styles.categoryIconTableImage}
+                              />
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: '24px' }}>{category.icon || '-'}</span>
+                          )}
                         </td>
                         <td style={styles.td}>{category.id}</td>
                         <td style={styles.td}>{category.name}</td>
@@ -1186,7 +1269,37 @@ const ProductsManagementPage: React.FC = () => {
                 />
               </div>
               <div style={styles.formGroup}>
-                <label style={styles.label}>Ícono (Emoji)</label>
+                <label style={styles.label}>Icono de categoría (imagen)</label>
+                {categoryForm.icon_image_preview && (
+                  <div style={styles.categoryIconPreviewContainer}>
+                    <div style={styles.categoryIconWrapper}>
+                      <img
+                        src={categoryForm.icon_image_preview}
+                        alt="Icono de categoría"
+                        style={styles.categoryIconImage}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClearCategoryIcon}
+                      style={styles.removeImageButton}
+                    >
+                      Quitar icono
+                    </button>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCategoryIconChange}
+                  style={styles.input}
+                />
+                <small style={styles.helpText}>
+                  Sube un icono PNG/JPG cuadrado (recomendado 64x64, fondo transparente). Este icono se mostrará en el kiosco y en el admin.
+                </small>
+              </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Ícono (emoji) — opcional / obsoleto</label>
                 <input
                   type="text"
                   value={categoryForm.icon}
@@ -1194,7 +1307,9 @@ const ProductsManagementPage: React.FC = () => {
                   style={styles.input}
                   placeholder="🍔 🥤 🍰 🥗 🍕 🌮 🍜 ☕"
                 />
-                <small style={styles.helpText}>Usa emojis de comida como 🍔 🥤 🍰 🥗 🍕 🌮 🍜 ☕ 🥐 🍱</small>
+                <small style={styles.helpText}>
+                  Este campo de emoji se mantiene solo por compatibilidad. Se recomienda usar mejor el icono de imagen de arriba.
+                </small>
               </div>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Orden</label>
@@ -1738,6 +1853,44 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 'bold',
     marginRight: '4px',
     marginBottom: '4px',
+  },
+  categoryIconPreviewContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '8px',
+  },
+  categoryIconWrapper: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '8px',
+    border: '1px solid #ddd',
+    backgroundColor: '#f8f9fa',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  categoryIconImage: {
+    width: '32px',
+    height: '32px',
+    objectFit: 'contain' as const,
+  },
+  categoryIconTableWrapper: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '8px',
+    border: '1px solid #ddd',
+    backgroundColor: '#f8f9fa',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  categoryIconTableImage: {
+    width: '24px',
+    height: '24px',
+    objectFit: 'contain' as const,
   },
 };
 

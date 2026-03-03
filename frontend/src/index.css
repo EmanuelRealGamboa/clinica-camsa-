@@ -1,3 +1,6 @@
+/* Google Fonts — Playfair Display (serif elegante) + Lato (sans legible) */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Lato:wght@300;400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -5,23 +8,45 @@
 }
 
 :root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Tipografía base: Lato para UI general */
+  font-family: 'Lato', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color: #213547;
-  background-color: #ffffff;
+  color: #2C1810;
+  background-color: #FDF8F0;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* CSS Variables — paleta café elegante */
+  --color-espresso: #2C1810;
+  --color-latte: #8B5E3C;
+  --color-mocha: #5C3317;
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8C87A;
+  --color-gold-dark: #9A7430;
+  --color-ivory: #FDF8F0;
+  --color-cream: #F5EDD9;
+  --color-parchment: #EDE0C8;
+  --color-text-primary: #2C1810;
+  --color-text-secondary: #6B5E54;
+  --color-text-muted: #A89890;
+  --shadow-gold: rgba(201, 168, 76, 0.35);
+  --shadow-espresso: rgba(44, 24, 16, 0.20);
+
+  /* Tipografía serif para títulos destacados */
+  --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Lato', system-ui, -apple-system, sans-serif;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-ivory);
 }
 
 #root {
@@ -29,9 +54,17 @@ body {
   min-height: 100vh;
 }
 
+/* Headings — Lato por defecto, serif se aplica via className */
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
   font-weight: 600;
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+}
+
+/* Clase utilitaria para aplicar fuente serif en títulos destacados */
+.font-serif {
+  font-family: var(--font-serif) !important;
 }
 
 button {
@@ -49,5 +82,109 @@ a {
 }
 
 a:hover {
-  opacity: 0.8;
+  opacity: 0.85;
+}
+
+/* Scrollbar personalizado — estilo café elegante */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-dark);
+}
+
+/* Scrollbar Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold) var(--color-cream);
+}
+
+/* Animaciones globales */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(201, 168, 76, 0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* Clases utilitarias de animación */
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.pulse-gold {
+  animation: pulse-gold 2s infinite;
+}
+
+/* Shimmer skeleton loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-cream) 25%,
+    var(--color-parchment) 50%,
+    var(--color-cream) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Ocultar scrollbar en carruseles */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }

@@ -9,6 +9,7 @@ interface WelcomeModalProps {
     DRINK?: number;
     SNACK?: number;
   };
+  mode?: 'welcome' | 'limitsUpdated';
   onClose: () => void;
 }
 
@@ -16,6 +17,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   show,
   patientName,
   orderLimits,
+  mode = 'welcome',
   onClose,
 }) => {
   const { isMobile } = useWindowSize();
@@ -30,6 +32,18 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
     ...(isMobile && responsiveStyles.modal),
   };
 
+  const isLimitsUpdated = mode === 'limitsUpdated';
+  const modalTitle = isLimitsUpdated
+    ? '¡Tus límites fueron actualizados!'
+    : `¡Bienvenido/a ${patientName}!`;
+  const modalMessage = isLimitsUpdated
+    ? 'La enfermera configuró tus nuevos límites. A partir de ahora cuentas con:'
+    : 'Nos complace tenerte con nosotros. Como cortesía de la casa, puedes disfrutar de:';
+  const modalEnjoyMessage = isLimitsUpdated
+    ? 'Estos límites aplican para tu sesión actual.'
+    : '¡Disfruta tu estancia y que te recuperes pronto!';
+  const actionLabel = isLimitsUpdated ? 'Entendido' : 'Comenzar';
+
   return (
     <div style={styles.overlay}>
       <div style={modalStyles}>
@@ -37,11 +51,10 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           <span style={styles.icon}>🏥</span>
         </div>
 
-        <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>¡Bienvenido/a {patientName}!</h2>
+        <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>{modalTitle}</h2>
 
         <p style={{ ...styles.message, ...(isMobile && responsiveStyles.message) }}>
-          Nos complace tenerte con nosotros. Como cortesía de la casa,
-          puedes disfrutar de:
+          {modalMessage}
         </p>
 
         <div style={{ ...styles.limitsContainer, ...(isMobile && responsiveStyles.limitsContainer) }}>
@@ -81,11 +94,11 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
         </div>
 
         <p style={{ ...styles.enjoyMessage, ...(isMobile && responsiveStyles.enjoyMessage) }}>
-          ¡Disfruta tu estancia y que te recuperes pronto!
+          {modalEnjoyMessage}
         </p>
 
         <button style={{ ...styles.button, ...(isMobile && responsiveStyles.button) }} onClick={onClose} className="welcome-btn">
-          Comenzar
+          {actionLabel}
         </button>
       </div>
     </div>

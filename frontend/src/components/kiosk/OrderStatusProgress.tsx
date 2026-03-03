@@ -1,6 +1,7 @@
 import React from 'react';
 import { colors } from '../../styles/colors';
 import { useWindowSize } from '../../utils/responsive';
+import { Check, ClipboardCheck, ChefHat, BellRing, PackageCheck } from 'lucide-react';
 
 interface OrderStatusProgressProps {
   currentStatus: 'PLACED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CANCELLED';
@@ -10,14 +11,13 @@ interface Step {
   id: number;
   status: string;
   label: string;
-  icon: string;
 }
 
 const steps: Step[] = [
-  { id: 1, status: 'PLACED', label: 'Realizado', icon: '✓' },
-  { id: 2, status: 'PREPARING', label: 'Preparando', icon: '✓' },
-  { id: 3, status: 'READY', label: 'Listo', icon: '3' },
-  { id: 4, status: 'DELIVERED', label: 'Entregado', icon: '4' },
+  { id: 1, status: 'PLACED', label: 'Realizado' },
+  { id: 2, status: 'PREPARING', label: 'Preparando' },
+  { id: 3, status: 'READY', label: 'Listo' },
+  { id: 4, status: 'DELIVERED', label: 'Entregado' },
 ];
 
 export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ currentStatus }) => {
@@ -50,6 +50,15 @@ export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ curren
     ...(isMobile && responsiveStyles.stepLabel),
     ...(isCurrent && styles.stepLabelCurrent),
   });
+  const getStepIcon = (status: string, isCompleted: boolean, isCurrent: boolean) => {
+    const size = isMobile ? 14 : 18;
+    const color = isCompleted || isCurrent ? colors.primary : colors.textMuted;
+    if (isCompleted) return <Check size={size} color={colors.primaryDark} />;
+    if (status === 'PLACED') return <ClipboardCheck size={size} color={color} />;
+    if (status === 'PREPARING') return <ChefHat size={size} color={color} />;
+    if (status === 'READY') return <BellRing size={size} color={color} />;
+    return <PackageCheck size={size} color={color} />;
+  };
 
   return (
     <div style={containerStyles}>
@@ -75,7 +84,7 @@ export const OrderStatusProgress: React.FC<OrderStatusProgressProps> = ({ curren
             <div key={step.id} style={styles.stepWrapper}>
               {/* Step Circle */}
               <div style={stepCircleStyles(isCompleted, isCurrent)}>
-                {isCompleted ? '✓' : step.id}
+                {getStepIcon(step.status, isCompleted, isCurrent)}
               </div>
 
               {/* Step Label */}
@@ -113,13 +122,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: 'absolute',
     width: '100%',
     height: '100%',
-    backgroundColor: '#e0e0e0',
+    backgroundColor: colors.parchment,
     borderRadius: '2px',
   },
   progressBarFill: {
     position: 'absolute',
     height: '100%',
-    backgroundColor: '#ff9800',
+    backgroundColor: colors.primary,
     borderRadius: '2px',
     transition: 'width 0.5s ease',
   },
@@ -140,35 +149,35 @@ const styles: { [key: string]: React.CSSProperties } = {
     height: '48px',
     borderRadius: '50%',
     backgroundColor: colors.white,
-    border: '3px solid #e0e0e0',
+    border: `2px solid ${colors.parchment}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '18px',
     fontWeight: 'bold',
-    color: '#9e9e9e',
+    color: colors.textMuted,
     marginBottom: '12px',
     transition: 'all 0.3s ease',
   },
   stepCircleCompleted: {
-    backgroundColor: '#ff9800',
-    borderColor: '#ff9800',
-    color: colors.white,
+    backgroundColor: colors.primaryMuted,
+    borderColor: colors.primary,
+    color: colors.primaryDark,
   },
   stepCircleCurrent: {
     backgroundColor: colors.white,
-    borderColor: '#ff9800',
-    color: '#ff9800',
-    boxShadow: '0 0 0 4px rgba(255, 152, 0, 0.2)',
+    borderColor: colors.primary,
+    color: colors.primary,
+    boxShadow: `0 0 0 4px ${colors.shadowGold}`,
   },
   stepLabel: {
     fontSize: '14px',
-    color: '#9e9e9e',
+    color: colors.textMuted,
     fontWeight: '500',
     textAlign: 'center',
   },
   stepLabelCurrent: {
-    color: '#ff9800',
+    color: colors.primary,
     fontWeight: 'bold',
   },
   cancelledBadge: {

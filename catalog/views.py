@@ -56,6 +56,7 @@ class ProductCategoryViewSet(viewsets.ModelViewSet):
     queryset = ProductCategory.objects.all()
     serializer_class = ProductCategorySerializer
     permission_classes = [IsStaffOrAdmin]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active']
     search_fields = ['name']
@@ -193,7 +194,8 @@ def get_carousel_categories(request):
         show_in_carousel=True
     ).order_by('carousel_order', 'sort_order')
 
-    serializer = PublicProductCategorySerializer(categories, many=True)
+    # Pass request in context so icon_image_url is absolute (needed by kiosk frontend)
+    serializer = PublicProductCategorySerializer(categories, many=True, context={'request': request})
     return Response(serializer.data)
 
 

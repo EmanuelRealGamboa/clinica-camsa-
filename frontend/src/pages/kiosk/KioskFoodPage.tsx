@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ClipboardList } from 'lucide-react';
 import { kioskApi } from '../../api/kiosk';
 import ProductRatingsModal from '../../components/kiosk/ProductRatingsModal';
 import StaffRatingModal from '../../components/kiosk/StaffRatingModal';
 import StayRatingModal from '../../components/kiosk/StayRatingModal';
+import { MobileHeaderMenu, type MobileHeaderMenuAction } from '../../components/kiosk/MobileHeaderMenu';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useSurvey } from '../../contexts/SurveyContext';
+import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000';
@@ -68,6 +71,7 @@ interface Restaurant {
 export const KioskFoodPage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
+  const { isMobile } = useWindowSize();
 
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -166,6 +170,20 @@ export const KioskFoodPage: React.FC = () => {
   const handleViewOrders = () => {
     navigate(`/kiosk/${deviceId}/orders`);
   };
+  const mobileMenuActions: MobileHeaderMenuAction[] = [
+    {
+      id: 'back',
+      label: 'Volver',
+      icon: <ArrowLeft size={16} />,
+      onClick: handleBack,
+    },
+    {
+      id: 'orders',
+      label: 'Mis Ordenes',
+      icon: <ClipboardList size={16} />,
+      onClick: handleViewOrders,
+    },
+  ];
 
   if (loading) {
     return (
@@ -179,11 +197,14 @@ export const KioskFoodPage: React.FC = () => {
   return (
     <div style={styles.container}>
       {/* Header */}
-      <header style={styles.header}>
+      <header style={{ ...styles.header, flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center' }}>
         <div style={styles.headerLeft}>
-          <button style={styles.backButton} onClick={handleBack} className="food-back-btn">
-            ← Volver
-          </button>
+          {!isMobile && (
+            <button style={styles.backButton} onClick={handleBack} className="food-back-btn">
+              <ArrowLeft size={16} />
+              Volver
+            </button>
+          )}
           <div>
             <h1 style={styles.headerTitle}>
               <span style={styles.headerIcon}>🛵</span>
@@ -195,9 +216,16 @@ export const KioskFoodPage: React.FC = () => {
           </div>
         </div>
         <div style={styles.headerRight}>
-          <button style={styles.ordersButton} onClick={handleViewOrders} className="food-orders-btn">
-            Mis Órdenes
-          </button>
+          {isMobile ? (
+            <div style={styles.mobileMenuWrap}>
+              <MobileHeaderMenu actions={mobileMenuActions} buttonLabel="Menu comida" />
+            </div>
+          ) : (
+            <button style={styles.ordersButton} onClick={handleViewOrders} className="food-orders-btn">
+              <ClipboardList size={16} />
+              Mis Órdenes
+            </button>
+          )}
         </div>
       </header>
 
@@ -367,6 +395,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'all 0.2s',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
   },
   headerTitle: {
     fontSize: '28px',
@@ -399,6 +430,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'all 0.2s',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  mobileMenuWrap: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    width: '100%',
   },
   infoBanner: {
     margin: '0 40px 24px 40px',

@@ -79,12 +79,16 @@ export const adminApi = {
   },
 
   createCategory: async (categoryData: any) => {
-    const response = await apiClient.post('/catalog/categories/', categoryData);
+    const response = await apiClient.post('/catalog/categories/', categoryData, {
+      headers: categoryData instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
+    });
     return response.data;
   },
 
   updateCategory: async (id: number, categoryData: any) => {
-    const response = await apiClient.put(`/catalog/categories/${id}/`, categoryData);
+    const response = await apiClient.put(`/catalog/categories/${id}/`, categoryData, {
+      headers: categoryData instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {},
+    });
     return response.data;
   },
 

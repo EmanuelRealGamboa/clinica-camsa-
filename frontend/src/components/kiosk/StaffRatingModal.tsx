@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useWindowSize } from '../../utils/responsive';
 import { colors } from '../../styles/colors';
+import { UserRound } from 'lucide-react';
 
 interface StaffRatingModalProps {
   staffName: string;
@@ -22,42 +23,45 @@ const StaffRatingModal: React.FC<StaffRatingModalProps> = ({ staffName, onNext }
   const StarRating: React.FC<{
     value: number;
     onChange: (value: number) => void;
-  }> = ({ value, onChange }) => (
-    <div style={styles.starContainer}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          style={{
-            ...styles.starButton,
-            color: star <= value ? colors.primary : colors.gray,
-            fontSize: star <= value ? '48px' : '40px',
-          }}
-          onClick={() => onChange(star)}
-          onMouseEnter={(e) => {
-            if (star <= value) {
-              e.currentTarget.style.color = colors.primaryDark;
-              e.currentTarget.style.fontSize = '48px';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = star <= value ? colors.primary : colors.gray;
-            e.currentTarget.style.fontSize = star <= value ? '48px' : '40px';
-          }}
-        >
-          ★
-        </button>
-      ))}
-    </div>
-  );
+  }> = ({ value, onChange }) => {
+    const [hoverValue, setHoverValue] = useState<number>(0);
+    const displayValue = hoverValue || value;
+
+    return (
+      <div style={styles.starContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            style={{
+              ...styles.starButton,
+              color: star <= displayValue ? colors.latte : colors.grayLight,
+              transform: star <= displayValue ? 'scale(1.08)' : 'scale(1)',
+            }}
+            onClick={() => onChange(star)}
+            onMouseEnter={() => setHoverValue(star)}
+            onMouseLeave={() => setHoverValue(0)}
+            aria-label={`Calificar con ${star} estrellas`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div style={styles.overlay}>
       <div style={{ ...styles.modal, ...(isMobile && responsiveStyles.modal) }}>
-        <div style={styles.iconContainer}>👩‍⚕️</div>
+        <div style={styles.iconContainer}>
+          <UserRound size={66} color={colors.primaryDark} />
+        </div>
         <h2 style={{ ...styles.title, ...(isMobile && responsiveStyles.title) }}>
           2. Califica la interacción con el personal
         </h2>
+        <p style={styles.legendText}>
+          Ayúdanos calificando el trato de tu enfermera con estrellas.
+        </p>
         <div style={styles.staffInfo}>
           <p style={styles.staffLabel}>Enfermera asignada:</p>
           <p style={styles.staffName}>{staffName}</p>
@@ -75,10 +79,10 @@ const StaffRatingModal: React.FC<StaffRatingModalProps> = ({ staffName, onNext }
             ...(isMobile && responsiveStyles.nextButton),
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors.primaryDark;
+            e.currentTarget.style.backgroundColor = colors.mocha;
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = colors.primary;
+            e.currentTarget.style.backgroundColor = colors.espresso;
           }}
         >
           Continuar
@@ -113,14 +117,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: 'center',
   },
   iconContainer: {
-    fontSize: '64px',
     marginBottom: '20px',
+    display: 'flex',
+    justifyContent: 'center',
   },
   title: {
     fontSize: '28px',
     fontWeight: 600,
     color: colors.textPrimary,
     marginBottom: '30px',
+  },
+  legendText: {
+    margin: '-8px 0 24px 0',
+    fontSize: '17px',
+    color: colors.textSecondary,
+    fontWeight: 500,
   },
   staffInfo: {
     marginBottom: '40px',
@@ -145,7 +156,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   starContainer: {
     display: 'flex',
     justifyContent: 'center',
-    gap: '15px',
+    gap: '14px',
     marginBottom: '20px',
   },
   starButton: {
@@ -154,6 +165,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
     padding: 0,
     transition: 'all 0.2s',
+    fontSize: '56px',
+    lineHeight: 1,
   },
   ratingText: {
     fontSize: '18px',
@@ -163,7 +176,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   nextButton: {
     width: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.espresso,
     color: colors.white,
     border: 'none',
     borderRadius: '8px',

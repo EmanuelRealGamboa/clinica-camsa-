@@ -17,6 +17,8 @@ class ProductCategorySerializer(serializers.ModelSerializer):
     Serializer for ProductCategory model
     """
     product_count = serializers.SerializerMethodField()
+    icon_image = serializers.ImageField(required=False, allow_null=True)
+    icon_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductCategory
@@ -24,6 +26,8 @@ class ProductCategorySerializer(serializers.ModelSerializer):
             'id',
             'name',
             'icon',
+            'icon_image',
+            'icon_image_url',
             'category_type',
             'sort_order',
             'show_in_carousel',
@@ -33,11 +37,23 @@ class ProductCategorySerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'icon_image_url']
 
     def get_product_count(self, obj):
         """Get count of active products in this category"""
         return obj.products.filter(is_active=True).count()
+
+    def get_icon_image_url(self, obj):
+        """
+        Return absolute URL for icon_image if present.
+        """
+        if not obj.icon_image:
+            return None
+        request = self.context.get('request')
+        image_url = obj.icon_image.url
+        if request and not image_url.startswith('http'):
+            return request.build_absolute_uri(image_url)
+        return image_url
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -100,14 +116,39 @@ class PublicProductCategorySerializer(serializers.ModelSerializer):
     Public serializer for ProductCategory (only active)
     """
     product_count = serializers.SerializerMethodField()
+    icon_image = serializers.ImageField(required=False, allow_null=True)
+    icon_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductCategory
-        fields = ['id', 'name', 'icon', 'category_type', 'sort_order', 'show_in_carousel', 'carousel_order', 'product_count']
+        fields = [
+            'id',
+            'name',
+            'icon',
+            'icon_image',
+            'icon_image_url',
+            'category_type',
+            'sort_order',
+            'show_in_carousel',
+            'carousel_order',
+            'product_count',
+        ]
 
     def get_product_count(self, obj):
         """Get count of active products in this category"""
         return obj.products.filter(is_active=True).count()
+
+    def get_icon_image_url(self, obj):
+        """
+        Return absolute URL for icon_image if present (used by kiosk frontend).
+        """
+        if not obj.icon_image:
+            return None
+        request = self.context.get('request')
+        image_url = obj.icon_image.url
+        if request and not image_url.startswith('http'):
+            return request.build_absolute_uri(image_url)
+        return image_url
 
 
 class PublicProductSerializer(serializers.ModelSerializer):

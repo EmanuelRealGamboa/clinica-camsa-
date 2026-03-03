@@ -26,12 +26,12 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55 } },
 };
 
 const cardVariants = {
   hidden: { opacity: 0, y: 40, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: 'easeOut' } },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6 } },
   hover: {
     y: -8,
     scale: 1.03,
@@ -105,7 +105,7 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.6 }}
         style={headerStyle}
       >
         <div style={logoBadgeStyle}>
@@ -233,7 +233,7 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
               >
                 <motion.div
                   animate={{ opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  transition={{ duration: 1.8, repeat: Infinity }}
                   style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
                 >
                   <Loader2 size={20} style={{ animation: 'spin 1.5s linear infinite' }} />

@@ -45,6 +45,14 @@ venv.bak/
 *~
 .DS_Store
 
+# Local-only files (no subir a git)
+backup_produccion.sql
+clinic_service/settings_local.py
+add_device_101.py
+fix_cloudinary_urls.py
+seed_data.py
+*.lnk
+
 # Testing
 .pytest_cache/
 .coverage

@@ -119,10 +119,11 @@ export interface Product {
 export interface ProductCategory {
   id: number;
   name: string;
-  icon?: string;
+  icon?: string | null;
+  icon_image_url?: string | null;
   description?: string;
   category_type?: 'DRINK' | 'SNACK' | 'FOOD' | 'OTHER';
-  sort_order: number;
+  sort_order?: number;
   show_in_carousel?: boolean;
   carousel_order?: number;
   product_count?: number;

@@ -48,6 +48,6 @@ urlpatterns = [
     path('api/public/', include('clinic.public_urls')),
 ]
 
-# Serve media files in development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve media files (category icons, etc.) in development and production
+# so the kiosk landing can load product images from /media/category-icons/
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

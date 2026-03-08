@@ -27,7 +27,7 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
   loading = false,
   patientAssigned = false,
 }) => {
-  const { isMobile } = useWindowSize();
+  const { width, isMobile } = useWindowSize();
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
 
@@ -49,9 +49,13 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
     setVideoUnavailable(false);
   }, [activeVideoId]);
 
-  const mainSize = isMobile ? 320 : 480;
-  const thumbSize = isMobile ? 160 : 220;
-  const orbitRadius = isMobile ? 280 : 420;
+  const baseMainSize = isMobile ? 360 : 560;
+  const baseThumbSize = isMobile ? 180 : 260;
+  const baseOrbitRadius = isMobile ? 300 : 480;
+  const scale = width > 0 ? Math.min(1.15, Math.max(0.75, width / 900)) : 1;
+  const mainSize = Math.round(baseMainSize * scale);
+  const thumbSize = Math.round(baseThumbSize * scale);
+  const orbitRadius = Math.round(baseOrbitRadius * scale);
 
   const productAngles = KIOSK_PRODUCT_IMAGES.map((_, i) => {
     const start = -90;
@@ -82,11 +86,11 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
         style={titleBlock}
       >
         <p style={eyebrow}>Descubre CAMSA</p>
-        <h1 style={{ ...titleMain, fontSize: isMobile ? '26px' : '42px' }}>
+        <h1 style={{ ...titleMain, fontSize: isMobile ? 'clamp(22px, 5.5vw, 32px)' : 'clamp(32px, 4.2vw, 48px)' }}>
           Descubre nuestros productos{' '}
           <span style={titleAccent}>mientras esperas</span>
         </h1>
-        <p style={{ ...subtitle, fontSize: isMobile ? '13px' : '15px' }}>
+        <p style={{ ...subtitle, fontSize: isMobile ? 'clamp(12px, 2.8vw, 16px)' : 'clamp(14px, 1.8vw, 18px)' }}>
           Tienda, comida y cortesías para ti.
         </p>
       </motion.div>
@@ -275,15 +279,15 @@ const page: React.CSSProperties = {
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  gap: '20px',
-  padding: '28px 20px',
+  gap: 'clamp(16px, 2.5vw, 28px)',
+  padding: 'clamp(20px, 4vw, 40px) clamp(16px, 3vw, 28px)',
   boxSizing: 'border-box',
 };
 
 /* ── Title ───────────────────────────────────────────── */
 const titleBlock: React.CSSProperties = {
   textAlign: 'center',
-  maxWidth: '600px',
+  maxWidth: 'min(720px, 92vw)',
 };
 
 const eyebrow: React.CSSProperties = {
@@ -413,8 +417,8 @@ const btnPill: React.CSSProperties = {
   justifyContent: 'center',
   gap: '10px',
   borderRadius: '999px',
-  padding: '16px 36px',
-  fontSize: '17px',
+  padding: 'clamp(14px, 1.8vw, 20px) clamp(28px, 3.5vw, 44px)',
+  fontSize: 'clamp(15px, 1.8vw, 19px)',
   fontWeight: 600,
   fontFamily: 'inherit',
   cursor: 'pointer',

@@ -23,14 +23,22 @@ const fallbackVideoIds = [
 
 export const KIOSK_LANDING_VIDEO_IDS = envVideoIds.length > 0 ? envVideoIds : fallbackVideoIds;
 
-/** Base URL for media files (category icons, etc.) - same origin as API */
+/** Base URL for media files (category icons, etc.). In production set VITE_API_BASE_URL to your backend URL if frontend and backend are on different domains. */
 const MEDIA_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const CATEGORY_ICONS_PATH = '/media/category-icons';
 
 /**
+ * Returns the full URL for a product/category icon.
+ * Uses VITE_API_BASE_URL when set (different domains). Otherwise uses relative path (same-origin).
+ */
+export const getProductImageUrl = (filename: string): string => {
+  const base = MEDIA_BASE || (typeof window !== 'undefined' ? window.location.origin : '');
+  return base ? `${base}${CATEGORY_ICONS_PATH}/${filename}` : `${CATEGORY_ICONS_PATH}/${filename}`;
+};
+
+/**
  * Product showcase images for the landing page orbit circles.
  * Images are loaded from project media/category-icons folder (served by backend).
- * Each entry has a label and filename; all link to the store when clicked.
  */
 export const KIOSK_PRODUCT_IMAGES: { label: string; filename: string }[] = [
   { label: 'Acuaminerales', filename: 'ACUAMINERALES.png' },
@@ -40,9 +48,6 @@ export const KIOSK_PRODUCT_IMAGES: { label: string; filename: string }[] = [
   { label: 'Sales', filename: 'SALES.png' },
   { label: 'Shot 5', filename: 'Shot5-2.png' },
 ];
-
-export const getProductImageUrl = (filename: string): string =>
-  MEDIA_BASE ? `${MEDIA_BASE}${CATEGORY_ICONS_PATH}/${filename}` : `${CATEGORY_ICONS_PATH}/${filename}`;
 
 export const getYoutubeEmbedUrl = (videoId: string): string => {
   const params = new URLSearchParams({

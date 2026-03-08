@@ -12,6 +12,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     """
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_category = serializers.CharField(source='product.category.name', read_only=True)
+    product_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
@@ -20,11 +21,22 @@ class OrderItemSerializer(serializers.ModelSerializer):
             'product',
             'product_name',
             'product_category',
+            'product_image_url',
             'quantity',
             'unit_label',
             'created_at'
         ]
         read_only_fields = ['id', 'unit_label', 'created_at']
+
+    def get_product_image_url(self, obj):
+        """Return absolute URL for product image (for kiosk order details)."""
+        image_url = obj.product.get_image_url() if obj.product else None
+        if not image_url:
+            return None
+        request = self.context.get('request')
+        if request and not image_url.startswith('http'):
+            return request.build_absolute_uri(image_url)
+        return image_url
 
 
 class OrderStatusEventSerializer(serializers.ModelSerializer):

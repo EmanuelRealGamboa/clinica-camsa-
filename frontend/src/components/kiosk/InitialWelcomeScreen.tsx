@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, ChevronRight, Star } from 'lucide-react';
-import { colors, gradients } from '../../styles/colors';
-import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
+import { Loader2, PlayCircle, Store, Utensils, Gift } from 'lucide-react';
+import {
+  TIENDA_CAMSA_URL,
+  RESTAURANTES_CAMSA_URL,
+  KIOSK_LANDING_VIDEO_IDS,
+  KIOSK_PRODUCT_IMAGES,
+  getYoutubeEmbedUrl,
+  getProductImageUrl,
+} from '../../constants/urls';
 import { useWindowSize } from '../../utils/responsive';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
-import iconTe from '../../assets/icons/te.png';
-import iconStore from '../../assets/icons/store.png';
-import iconComida from '../../assets/icons/comida.png';
 
 interface InitialWelcomeScreenProps {
   deviceUid: string;
@@ -16,74 +19,7 @@ interface InitialWelcomeScreenProps {
   patientAssigned?: boolean;
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.2 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.55 } },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 40, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6 } },
-  hover: {
-    y: -8,
-    scale: 1.03,
-    transition: { type: 'spring' as const, stiffness: 320, damping: 22 },
-  },
-  tap: { scale: 0.97 },
-};
-
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  href?: string;
-  accent?: string;
-  delay?: number;
-}
-
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, href, accent, delay = 0 }) => {
-  const cardContent = (
-    <motion.div
-      variants={cardVariants}
-      whileHover="hover"
-      whileTap="tap"
-      style={{
-        ...cardStyle,
-        borderTop: `4px solid ${accent || colors.primary}`,
-      }}
-      custom={delay}
-    >
-      <div style={{ ...iconCircle, backgroundColor: accent ? `${accent}18` : colors.primaryMuted, border: `2px solid ${accent || colors.primary}` }}>
-        <span style={{ color: accent || colors.primaryDark }}>{icon}</span>
-      </div>
-      <h3 style={cardTitle}>{title}</h3>
-      <p style={cardDescription}>{description}</p>
-      {href && (
-        <div style={cardLink}>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: accent || colors.primaryDark }}>Explorar</span>
-          <ChevronRight size={14} color={accent || colors.primaryDark} />
-        </div>
-      )}
-    </motion.div>
-  );
-
-  if (href) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
-        {cardContent}
-      </a>
-    );
-  }
-  return cardContent;
-};
+const VIDEO_ROTATION_MS = 15000;
 
 export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
   deviceUid,
@@ -92,417 +28,447 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
   patientAssigned = false,
 }) => {
   const { isMobile } = useWindowSize();
-  const isButtonDisabled = !patientAssigned || loading;
+  const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
+
+  useEffect(() => {
+    if (KIOSK_LANDING_VIDEO_IDS.length <= 1) return;
+    const id = window.setInterval(() => {
+      setActiveVideoIndex((prev) => (prev + 1) % KIOSK_LANDING_VIDEO_IDS.length);
+    }, VIDEO_ROTATION_MS);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const activeVideoId = KIOSK_LANDING_VIDEO_IDS[activeVideoIndex] || '';
+  const activeVideoUrl = useMemo(
+    () => (activeVideoId ? getYoutubeEmbedUrl(activeVideoId) : ''),
+    [activeVideoId],
+  );
+
+  useEffect(() => {
+    setVideoUnavailable(false);
+  }, [activeVideoId]);
+
+  const mainSize = isMobile ? 320 : 480;
+  const thumbSize = isMobile ? 160 : 220;
+  const orbitRadius = isMobile ? 280 : 420;
+
+  const productAngles = KIOSK_PRODUCT_IMAGES.map((_, i) => {
+    const start = -90;
+    const step = 360 / KIOSK_PRODUCT_IMAGES.length;
+    return start + step * i;
+  });
 
   return (
-    <div style={containerStyle}>
-      {/* Background decorative elements */}
-      <div style={bgCircle1} />
-      <div style={bgCircle2} />
-      <div style={bgDots} />
-
-      {/* Logo / Header */}
+    <div style={page}>
+      {/* Logo */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        style={headerStyle}
+        transition={{ duration: 0.5 }}
       >
-        <div style={logoBadgeStyle}>
-          <img src={logoHorizontal} alt="Clínica CAMSA" style={{ height: isMobile ? 48 : 68, width: 'auto', objectFit: 'contain' }} />
-        </div>
-        {/* Gold accent line */}
-        <div style={goldLine} />
+        <img
+          src={logoHorizontal}
+          alt="Clínica CAMSA"
+          style={{ height: isMobile ? 34 : 44, width: 'auto', objectFit: 'contain' }}
+        />
       </motion.div>
 
-      {/* Main content */}
+      {/* Title */}
       <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        style={mainContent}
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.08 }}
+        style={titleBlock}
       >
-        {/* Welcome heading */}
-        <motion.div variants={itemVariants} style={{ textAlign: 'center' }}>
-          <p style={eyebrow}>
-            <Star size={13} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
-            Servicio Premium
-          </p>
-          <h1 style={{ ...welcomeTitle, fontSize: isMobile ? '38px' : '60px' }}>
-            ¡Bienvenido!
-          </h1>
-          <p style={{ ...welcomeSubtitle, fontSize: isMobile ? '16px' : '20px' }}>
-            Tu comodidad es nuestra prioridad
-          </p>
-        </motion.div>
+        <p style={eyebrow}>Descubre CAMSA</p>
+        <h1 style={{ ...titleMain, fontSize: isMobile ? '26px' : '42px' }}>
+          Descubre nuestros productos{' '}
+          <span style={titleAccent}>mientras esperas</span>
+        </h1>
+        <p style={{ ...subtitle, fontSize: isMobile ? '13px' : '15px' }}>
+          Tienda, comida y cortesías para ti.
+        </p>
+      </motion.div>
 
-        {/* Feature cards */}
-        <motion.div
-          variants={containerVariants}
+      {/* Orbit area: main video + product thumbnails */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, delay: 0.15 }}
+        style={{
+          position: 'relative',
+          width: orbitRadius * 2 + thumbSize,
+          height: orbitRadius * 2 + thumbSize,
+          flexShrink: 0,
+        }}
+      >
+        {/* Central video circle */}
+        <div
           style={{
-            ...cardsGrid,
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            maxWidth: isMobile ? '420px' : '960px',
+            ...videoCircle,
+            width: mainSize,
+            height: mainSize,
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
           }}
         >
-          <FeatureCard
-            icon={
-              <img
-                src={iconTe}
-                alt="Cortesías gratuitas"
-                style={{ width: isMobile ? 32 : 40, height: isMobile ? 32 : 40, objectFit: 'contain', display: 'block' }}
-                draggable={false}
-              />
-            }
-            title="Cortesías Gratuitas"
-            description="Durante tu consulta, disfruta de bebidas y snacks completamente gratis."
-            accent={colors.primary}
-          />
-          <FeatureCard
-            icon={
-              <img
-                src={iconStore}
-                alt="Conoce nuestros productos"
-                style={{ width: isMobile ? 32 : 40, height: isMobile ? 32 : 40, objectFit: 'contain', display: 'block' }}
-                draggable={false}
-              />
-            }
-            title="Conoce nuestros productos"
-            description="Explora nuestra tienda en línea y descubre más opciones disponibles."
-            href={TIENDA_CAMSA_URL}
-            accent={colors.latte}
-          />
-          <FeatureCard
-            icon={
-              <img
-                src={iconComida}
-                alt="Pedir comida"
-                style={{ width: isMobile ? 32 : 40, height: isMobile ? 32 : 40, objectFit: 'contain', display: 'block' }}
-                draggable={false}
-              />
-            }
-            title="Pedir comida"
-            description="Ordena comida de restaurantes cercanos y disfrútala en la clínica."
-            href={RESTAURANTES_CAMSA_URL}
-            accent={colors.caramel}
-          />
-        </motion.div>
-
-        {/* Divider */}
-        <motion.div variants={itemVariants} style={divider}>
-          <div style={dividerLine} />
-          <span style={dividerText}>Registro de paciente</span>
-          <div style={dividerLine} />
-        </motion.div>
-
-        {/* CTA Button */}
-        <motion.div variants={itemVariants} style={{ width: '100%', maxWidth: isMobile ? '400px' : '560px' }}>
           <AnimatePresence mode="wait">
-            {patientAssigned ? (
-              <motion.button
-                key="ready"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={onViewMenu}
-                disabled={loading}
-                style={buttonReady}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={20} style={{ animation: 'spin 1s linear infinite', marginRight: '10px' }} />
-                    Verificando...
-                  </>
-                ) : (
-                  <>
-                    Ver Menú
-                    <ChevronRight size={22} style={{ marginLeft: '8px' }} />
-                  </>
-                )}
-              </motion.button>
-            ) : (
-              <motion.button
-                key="waiting"
+            {activeVideoUrl && !videoUnavailable ? (
+              <motion.div
+                key={activeVideoId}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                style={buttonWaiting}
-                disabled
+                transition={{ duration: 0.4 }}
+                style={videoInner}
               >
-                <motion.div
-                  animate={{ opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 1.8, repeat: Infinity }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-                >
-                  <Loader2 size={20} style={{ animation: 'spin 1.5s linear infinite' }} />
-                  Esperando registro...
-                </motion.div>
-              </motion.button>
+                <iframe
+                  title="Productos CAMSA"
+                  src={activeVideoUrl}
+                  style={videoIframe}
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  onError={() => setVideoUnavailable(true)}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="fallback"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={videoFallback}
+              >
+                <PlayCircle size={48} color="#fff" strokeWidth={1.5} />
+              </motion.div>
             )}
           </AnimatePresence>
+        </div>
 
-          {!patientAssigned && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              style={waitingMessage}
+        {/* Orbiting product circles */}
+        {KIOSK_PRODUCT_IMAGES.map((product, i) => {
+          const angleDeg = productAngles[i];
+          const angleRad = (angleDeg * Math.PI) / 180;
+          const cx = orbitRadius * Math.cos(angleRad);
+          const cy = orbitRadius * Math.sin(angleRad);
+
+          return (
+            <motion.a
+              key={product.label}
+              href={TIENDA_CAMSA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.45, delay: 0.3 + i * 0.08 }}
+              whileHover={{ scale: 1.12 }}
+              style={{
+                ...thumbCircle,
+                width: thumbSize,
+                height: thumbSize,
+                position: 'absolute',
+                top: `calc(50% + ${cy}px - ${thumbSize / 2}px)`,
+                left: `calc(50% + ${cx}px - ${thumbSize / 2}px)`,
+              }}
+              title={product.label}
             >
-              Por favor espera a que tu enfermera te registre en el sistema
-            </motion.p>
-          )}
-        </motion.div>
+              <img
+                src={getProductImageUrl(product.filename)}
+                alt={product.label}
+                style={thumbImg}
+                draggable={false}
+              />
+            </motion.a>
+          );
+        })}
       </motion.div>
 
-      {/* Footer */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        style={footerStyle}
+      {/* Video dots */}
+      {KIOSK_LANDING_VIDEO_IDS.length > 1 && (
+        <div style={dotsRow}>
+          {KIOSK_LANDING_VIDEO_IDS.map((vid, i) => (
+            <button
+              key={vid}
+              type="button"
+              onClick={() => setActiveVideoIndex(i)}
+              aria-label={`Video ${i + 1}`}
+              style={{ ...dotBtn, ...(i === activeVideoIndex ? dotActive : {}) }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.4 }}
+        style={{ ...buttonsWrap, flexDirection: isMobile ? 'column' : 'row' }}
       >
-        Dispositivo: {deviceUid}
-      </motion.p>
+        <a href={TIENDA_CAMSA_URL} target="_blank" rel="noopener noreferrer" style={linkReset}>
+          <span style={{ ...btnPill, ...btnGold }}>
+            <Store size={20} />
+            Visitar tienda online
+          </span>
+        </a>
+        <a href={RESTAURANTES_CAMSA_URL} target="_blank" rel="noopener noreferrer" style={linkReset}>
+          <span style={{ ...btnPill, ...btnGoldDark }}>
+            <Utensils size={20} />
+            Pedir comida
+          </span>
+        </a>
+      </motion.div>
+
+      {/* Cortesias */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.5 }}
+        style={cortesiasWrap}
+      >
+        <button
+          type="button"
+          onClick={onViewMenu}
+          disabled={!patientAssigned || loading}
+          style={{
+            ...btnPill,
+            ...(patientAssigned && !loading ? btnOutlineActive : btnOutline),
+            ...((!patientAssigned || loading) ? btnDisabled : {}),
+            width: isMobile ? '100%' : '380px',
+          }}
+        >
+          {loading ? (
+            <>
+              <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+              Verificando...
+            </>
+          ) : (
+            <>
+              <Gift size={20} />
+              Ver menú de cortesías
+            </>
+          )}
+        </button>
+        {!patientAssigned && (
+          <p style={waitingMsg}>Esperando registro de paciente</p>
+        )}
+      </motion.div>
+
+      <p style={footer}>Dispositivo: {deviceUid}</p>
     </div>
   );
 };
 
-/* ─── Styles ─────────────────────────────────────────── */
+/* ── Palette ─────────────────────────────────────────── */
+const GOLD = '#C9A227';
+const GOLD_LIGHT = '#E8C547';
+const GOLD_DARK = '#B8860B';
+const BG = '#FAFAF5';
 
-const containerStyle: React.CSSProperties = {
+/* ── Page ────────────────────────────────────────────── */
+const page: React.CSSProperties = {
   minHeight: '100vh',
-  backgroundColor: colors.ivory,
+  backgroundColor: BG,
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '32px 24px',
-  boxSizing: 'border-box',
-  position: 'relative',
-  overflow: 'hidden',
-};
-
-const bgCircle1: React.CSSProperties = {
-  position: 'absolute',
-  top: '-120px',
-  right: '-120px',
-  width: '400px',
-  height: '400px',
-  borderRadius: '50%',
-  background: `radial-gradient(circle, ${colors.primaryMuted} 0%, transparent 70%)`,
-  pointerEvents: 'none',
-  zIndex: 0,
-};
-
-const bgCircle2: React.CSSProperties = {
-  position: 'absolute',
-  bottom: '-80px',
-  left: '-80px',
-  width: '300px',
-  height: '300px',
-  borderRadius: '50%',
-  background: `radial-gradient(circle, ${colors.cream} 0%, transparent 70%)`,
-  pointerEvents: 'none',
-  zIndex: 0,
-};
-
-const bgDots: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage: `radial-gradient(circle, ${colors.parchment} 1.5px, transparent 1.5px)`,
-  backgroundSize: '32px 32px',
-  pointerEvents: 'none',
-  zIndex: 0,
-  opacity: 0.6,
-};
-
-const headerStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '16px',
-  position: 'relative',
-  zIndex: 1,
-  flexShrink: 0,
-};
-
-const logoBadgeStyle: React.CSSProperties = {
-  backgroundColor: colors.white,
-  borderRadius: '20px',
-  padding: '16px 48px',
-  display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  boxShadow: `0 4px 24px ${colors.shadowGold}, 0 1px 4px ${colors.shadow}`,
-  border: `1px solid ${colors.parchment}`,
+  gap: '20px',
+  padding: '28px 20px',
+  boxSizing: 'border-box',
 };
 
-const goldLine: React.CSSProperties = {
-  width: '60px',
-  height: '3px',
-  background: gradients.gold,
-  borderRadius: '2px',
-};
-
-const mainContent: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '36px',
-  width: '100%',
-  position: 'relative',
-  zIndex: 1,
+/* ── Title ───────────────────────────────────────────── */
+const titleBlock: React.CSSProperties = {
+  textAlign: 'center',
+  maxWidth: '600px',
 };
 
 const eyebrow: React.CSSProperties = {
-  fontSize: '13px',
+  fontSize: '11px',
   fontWeight: 600,
-  color: colors.primary,
+  color: GOLD_DARK,
   textTransform: 'uppercase',
-  letterSpacing: '1.5px',
-  marginBottom: '8px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  letterSpacing: '2px',
+  margin: '0 0 10px 0',
 };
 
-const welcomeTitle: React.CSSProperties = {
+const titleMain: React.CSSProperties = {
   fontFamily: 'var(--font-serif)',
   fontWeight: 700,
-  color: colors.espresso,
-  lineHeight: 1.1,
-  margin: '0 0 12px 0',
+  color: '#1a1a1a',
+  lineHeight: 1.15,
+  margin: '0 0 10px 0',
 };
 
-const welcomeSubtitle: React.CSSProperties = {
-  color: colors.textSecondary,
+const titleAccent: React.CSSProperties = {
+  color: GOLD,
+  fontStyle: 'italic',
+};
+
+const subtitle: React.CSSProperties = {
+  color: '#888',
   fontWeight: 400,
   margin: 0,
-};
-
-const cardsGrid: React.CSSProperties = {
-  display: 'grid',
-  gap: '20px',
-  width: '100%',
-};
-
-const cardStyle: React.CSSProperties = {
-  backgroundColor: colors.white,
-  borderRadius: '20px',
-  padding: '28px 24px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  textAlign: 'center',
-  gap: '14px',
-  boxShadow: `0 4px 24px ${colors.shadow}, 0 1px 4px ${colors.shadowGold}`,
-  border: `1px solid ${colors.parchment}`,
-  cursor: 'pointer',
-  position: 'relative',
-  overflow: 'hidden',
-};
-
-const iconCircle: React.CSSProperties = {
-  width: '64px',
-  height: '64px',
-  borderRadius: '16px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexShrink: 0,
-};
-
-const cardTitle: React.CSSProperties = {
-  fontSize: '18px',
-  fontWeight: 700,
-  color: colors.espresso,
-  margin: 0,
-  lineHeight: 1.3,
-};
-
-const cardDescription: React.CSSProperties = {
-  fontSize: '14px',
-  color: colors.textSecondary,
-  margin: 0,
-  lineHeight: 1.6,
-  flex: 1,
-};
-
-const cardLink: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '4px',
-  marginTop: '4px',
-};
-
-const divider: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '16px',
-  width: '100%',
-  maxWidth: '560px',
-};
-
-const dividerLine: React.CSSProperties = {
-  flex: 1,
-  height: '1px',
-  backgroundColor: colors.parchment,
-};
-
-const dividerText: React.CSSProperties = {
-  fontSize: '12px',
-  fontWeight: 600,
-  color: colors.textMuted,
-  textTransform: 'uppercase',
-  letterSpacing: '1px',
-  whiteSpace: 'nowrap',
-};
-
-const buttonBase: React.CSSProperties = {
-  width: '100%',
-  padding: '20px 40px',
-  borderRadius: '14px',
-  fontSize: '18px',
-  fontWeight: 700,
-  cursor: 'pointer',
-  border: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  letterSpacing: '0.5px',
-  transition: 'box-shadow 0.2s',
-};
-
-const buttonReady: React.CSSProperties = {
-  ...buttonBase,
-  background: gradients.gold,
-  color: colors.white,
-  boxShadow: `0 6px 28px ${colors.shadowGold}`,
-};
-
-const buttonWaiting: React.CSSProperties = {
-  ...buttonBase,
-  background: gradients.gold,
-  color: colors.white,
-  opacity: 0.75,
-  cursor: 'not-allowed',
-  boxShadow: `0 4px 16px ${colors.shadowGold}`,
-};
-
-const waitingMessage: React.CSSProperties = {
-  marginTop: '14px',
-  fontSize: '14px',
-  color: colors.textSecondary,
-  textAlign: 'center',
   lineHeight: 1.5,
 };
 
-const footerStyle: React.CSSProperties = {
-  fontSize: '12px',
-  color: colors.textMuted,
-  position: 'relative',
+/* ── Video circle (center) ───────────────────────────── */
+const videoCircle: React.CSSProperties = {
+  borderRadius: '50%',
+  overflow: 'hidden',
+  border: `3px solid rgba(212, 175, 55, 0.35)`,
+  boxShadow: '0 10px 50px rgba(212, 175, 55, 0.14), 0 2px 12px rgba(0,0,0,0.04)',
+  zIndex: 2,
+};
+
+const videoInner: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+};
+
+const videoIframe: React.CSSProperties = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  width: '200%',
+  height: '200%',
+  transform: 'translate(-50%, -50%)',
+  border: 'none',
+  pointerEvents: 'none',
+};
+
+const videoFallback: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: `linear-gradient(135deg, ${GOLD_LIGHT} 0%, ${GOLD} 100%)`,
+};
+
+/* ── Product thumbnail circles ───────────────────────── */
+const thumbCircle: React.CSSProperties = {
+  borderRadius: '50%',
+  overflow: 'hidden',
+  border: `2px solid rgba(212, 175, 55, 0.4)`,
+  boxShadow: '0 4px 20px rgba(212, 175, 55, 0.15), 0 1px 6px rgba(0,0,0,0.05)',
   zIndex: 1,
-  flexShrink: 0,
+  cursor: 'pointer',
+  display: 'block',
+  textDecoration: 'none',
+  backgroundColor: '#fff',
+};
+
+const thumbImg: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
+};
+
+/* ── Dots ────────────────────────────────────────────── */
+const dotsRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '8px',
+  marginTop: '-6px',
+};
+
+const dotBtn: React.CSSProperties = {
+  width: '9px',
+  height: '9px',
+  borderRadius: '999px',
+  border: '1.5px solid rgba(0,0,0,0.18)',
+  backgroundColor: 'transparent',
+  padding: 0,
+  cursor: 'pointer',
+  transition: 'background-color 0.2s, border-color 0.2s',
+};
+
+const dotActive: React.CSSProperties = {
+  backgroundColor: GOLD,
+  borderColor: GOLD,
+};
+
+/* ── Buttons ─────────────────────────────────────────── */
+const buttonsWrap: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '14px',
+};
+
+const linkReset: React.CSSProperties = {
+  textDecoration: 'none',
+  display: 'block',
+};
+
+const btnPill: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '10px',
+  borderRadius: '999px',
+  padding: '16px 36px',
+  fontSize: '17px',
+  fontWeight: 600,
+  fontFamily: 'inherit',
+  cursor: 'pointer',
+  border: 'none',
+  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+  whiteSpace: 'nowrap',
+};
+
+const btnGold: React.CSSProperties = {
+  background: `linear-gradient(135deg, ${GOLD_LIGHT} 0%, ${GOLD} 100%)`,
+  color: '#fff',
+  boxShadow: '0 4px 20px rgba(212, 175, 55, 0.32)',
+};
+
+const btnGoldDark: React.CSSProperties = {
+  background: `linear-gradient(135deg, ${GOLD} 0%, ${GOLD_DARK} 100%)`,
+  color: '#fff',
+  boxShadow: '0 4px 20px rgba(184, 134, 11, 0.32)',
+};
+
+const btnOutline: React.CSSProperties = {
+  background: 'transparent',
+  color: GOLD_DARK,
+  border: `2px solid rgba(212, 175, 55, 0.45)`,
+  boxShadow: 'none',
+};
+
+const btnOutlineActive: React.CSSProperties = {
+  background: `linear-gradient(135deg, ${GOLD_LIGHT} 0%, ${GOLD} 100%)`,
+  color: '#fff',
+  border: '2px solid transparent',
+  boxShadow: '0 4px 20px rgba(212, 175, 55, 0.32)',
+};
+
+const btnDisabled: React.CSSProperties = {
+  cursor: 'not-allowed',
+  opacity: 0.55,
+};
+
+const cortesiasWrap: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '10px',
+};
+
+const waitingMsg: React.CSSProperties = {
+  fontSize: '13px',
+  color: '#aaa',
+  margin: 0,
+};
+
+const footer: React.CSSProperties = {
+  fontSize: '12px',
+  color: '#ccc',
+  marginTop: '4px',
 };

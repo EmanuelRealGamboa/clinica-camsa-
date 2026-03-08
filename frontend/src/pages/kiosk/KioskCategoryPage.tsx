@@ -564,7 +564,7 @@ export const KioskCategoryPage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#1A0D05',
+    backgroundColor: '#FAFAF5',
     paddingBottom: '40px',
   },
   loading: {
@@ -573,8 +573,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: '#1A0D05',
-    color: colors.cream,
+    backgroundColor: '#FAFAF5',
+    color: colors.textMuted,
   },
   spinner: {
     width: '48px',

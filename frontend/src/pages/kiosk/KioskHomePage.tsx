@@ -607,34 +607,6 @@ export const KioskHomePage: React.FC = () => {
   const cartTotal = Array.from(cart.values()).reduce((sum, qty) => sum + qty, 0);
   const mobileMenuActions: MobileHeaderMenuAction[] = [
     {
-      id: 'products',
-      label: 'Productos',
-      icon: (
-        <img
-          src={iconStore}
-          alt="Productos"
-          style={{ width: 18, height: 18, objectFit: 'contain' }}
-          draggable={false}
-        />
-      ),
-      group: 'navigation',
-      onClick: handleOpenTienda,
-    },
-    {
-      id: 'food',
-      label: 'Comida',
-      icon: (
-        <img
-          src={iconComida}
-          alt="Comida"
-          style={{ width: 18, height: 18, objectFit: 'contain' }}
-          draggable={false}
-        />
-      ),
-      group: 'navigation',
-      onClick: handleOpenRestaurantes,
-    },
-    {
       id: 'orders',
       label: 'Ordenes',
       icon: (
@@ -695,10 +667,10 @@ export const KioskHomePage: React.FC = () => {
             </h1>
             {patientInfo && (
               <>
-                <p style={{ ...styles.welcomeText, fontSize: isMobile ? '12px' : '13px' }}>
+                <p style={{ ...styles.welcomeText, fontSize: isMobile ? '15px' : '18px' }}>
                   Bienvenido, {patientInfo.full_name}
                 </p>
-                <p style={{ ...styles.nurseText, fontSize: isMobile ? '11px' : '12px' }}>
+                <p style={{ ...styles.nurseText, fontSize: isMobile ? '13px' : '15px' }}>
                   Tu enfermera: {patientInfo.staff_name}
                 </p>
               </>
@@ -714,7 +686,7 @@ export const KioskHomePage: React.FC = () => {
         }}>
           {patientInfo && (
             <div style={{ ...styles.roomInfo, ...(isMobile && responsiveStyles.roomInfo) }}>
-              <div style={{ ...styles.roomLabel, fontSize: isMobile ? '12px' : '14px' }}>
+              <div style={{ ...styles.roomLabel, fontSize: isMobile ? '15px' : '18px' }}>
                 Habitación: {patientInfo.room_code}
               </div>
               <div style={{ ...styles.deviceLabel }}>Dispositivo: {deviceId}</div>
@@ -742,38 +714,6 @@ export const KioskHomePage: React.FC = () => {
             </div>
           ) : (
             <div style={styles.headerRight}>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                style={styles.navButton}
-                onClick={handleOpenTienda}
-                title="Conoce nuestros productos"
-              >
-                <img
-                  src={iconStore}
-                  alt="Conoce productos"
-                  style={{ width: 18, height: 18, objectFit: 'contain', marginRight: 6, flexShrink: 0 }}
-                  draggable={false}
-                />
-                Conoce productos
-              </motion.button>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                style={styles.navButton}
-                onClick={handleOpenRestaurantes}
-                title="Pedir comida"
-              >
-                <img
-                  src={iconComida}
-                  alt="Pedir comida"
-                  style={{ width: 18, height: 18, objectFit: 'contain', marginRight: 6, flexShrink: 0 }}
-                  draggable={false}
-                />
-                Pedir comida
-              </motion.button>
               <motion.button
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
@@ -814,6 +754,70 @@ export const KioskHomePage: React.FC = () => {
       {featuredProduct && (
         <HeroSection product={featuredProduct} onAddToCart={handleAddToCart} />
       )}
+
+      {/* External links: tienda + comida */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: isMobile ? '10px' : '16px',
+          flexDirection: isMobile ? 'column' : 'row',
+          padding: isMobile ? '0 12px' : '0 20px',
+          margin: '4px auto 8px',
+          maxWidth: '1200px',
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
+        <a href={TIENDA_CAMSA_URL} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block', width: isMobile ? '100%' : 'auto' }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            borderRadius: '999px',
+            padding: isMobile ? '14px 24px' : '14px 32px',
+            fontSize: '15px',
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            background: 'linear-gradient(135deg, #E8C547 0%, #C9A227 100%)',
+            color: '#fff',
+            boxShadow: '0 4px 18px rgba(212, 175, 55, 0.28)',
+            whiteSpace: 'nowrap',
+            width: isMobile ? '100%' : 'auto',
+            boxSizing: 'border-box',
+          }}>
+            <img src={iconStore} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} draggable={false} />
+            Visitar tienda online
+          </span>
+        </a>
+        <a href={RESTAURANTES_CAMSA_URL} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block', width: isMobile ? '100%' : 'auto' }}>
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            borderRadius: '999px',
+            padding: isMobile ? '14px 24px' : '14px 32px',
+            fontSize: '15px',
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            background: 'linear-gradient(135deg, #C9A227 0%, #B8860B 100%)',
+            color: '#fff',
+            boxShadow: '0 4px 18px rgba(184, 134, 11, 0.28)',
+            whiteSpace: 'nowrap',
+            width: isMobile ? '100%' : 'auto',
+            boxSizing: 'border-box',
+          }}>
+            <img src={iconComida} alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} draggable={false} />
+            Pedir comida
+          </span>
+        </a>
+      </motion.div>
 
       {/* Category Quick Navigation */}
       {carouselCategories.length > 0 && (
@@ -993,7 +997,7 @@ const cartBadge: React.CSSProperties = {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#1A0D05',
+    backgroundColor: '#FAFAF5',
     paddingBottom: '48px',
   },
   loading: {
@@ -1002,7 +1006,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: '#1A0D05',
+    backgroundColor: '#FAFAF5',
     color: colors.textMuted,
   },
   header: {

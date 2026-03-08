@@ -15,7 +15,7 @@ import { useSurvey } from '../../contexts/SurveyContext';
 import { useWindowSize } from '../../utils/responsive';
 import { MobileHeaderMenu, type MobileHeaderMenuAction } from '../../components/kiosk/MobileHeaderMenu';
 import { colors } from '../../styles/colors';
-import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
+import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL, KIOSK_LANDING_VIDEO_IDS, KIOSK_PRODUCT_IMAGES, getYoutubeEmbedUrl, getProductImageUrl } from '../../constants/urls';
 import logoHorizontal from '../../assets/logos/logo-horizontal.png';
 import iconTe from '../../assets/icons/te.png';
 import iconStore from '../../assets/icons/store.png';
@@ -34,7 +34,9 @@ interface PatientInfo {
 
 interface OrderItem {
   id: number;
+  product?: number;
   product_name: string;
+  product_image_url?: string | null;
   quantity: number;
   unit_label: string;
 }
@@ -390,32 +392,6 @@ export const KioskOrdersPage: React.FC = () => {
     ...(isMobile && responsiveStyles.headerInfo),
   };
   const mobileMenuActions: MobileHeaderMenuAction[] = [
-    {
-      id: 'products',
-      label: 'Conoce productos',
-      icon: (
-        <img
-          src={iconStore}
-          alt="Conoce productos"
-          style={{ width: 18, height: 18, objectFit: 'contain' }}
-          draggable={false}
-        />
-      ),
-      onClick: handleOpenTienda,
-    },
-    {
-      id: 'food',
-      label: 'Pedir comida',
-      icon: (
-        <img
-          src={iconComida}
-          alt="Pedir comida"
-          style={{ width: 18, height: 18, objectFit: 'contain' }}
-          draggable={false}
-        />
-      ),
-      onClick: handleOpenRestaurantes,
-    },
     ...(!hasActiveOrders
       ? [
           {
@@ -476,36 +452,6 @@ export const KioskOrdersPage: React.FC = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button
-                type="button"
-                style={styles.viewMenuButton}
-                onClick={handleOpenTienda}
-                className="kiosk-btn-outline"
-                title="Conoce nuestros productos"
-              >
-                <img
-                  src={iconStore}
-                  alt="Conoce productos"
-                  style={{ width: 18, height: 18, objectFit: 'contain' }}
-                  draggable={false}
-                />
-                Conoce productos
-              </button>
-              <button
-                type="button"
-                style={styles.viewMenuButton}
-                onClick={handleOpenRestaurantes}
-                className="kiosk-btn-outline"
-                title="Pedir comida"
-              >
-                <img
-                  src={iconComida}
-                  alt="Pedir comida"
-                  style={{ width: 18, height: 18, objectFit: 'contain' }}
-                  draggable={false}
-                />
-                Pedir comida
-              </button>
               {!hasActiveOrders && (
                 <button
                   style={styles.viewMenuButton}
@@ -589,77 +535,159 @@ export const KioskOrdersPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div style={styles.ordersList}>
-            {activeOrders.map((order) => {
-              const isExpanded = expandedOrders.has(order.id);
-              return (
-                <div key={order.id} style={{ ...styles.orderCard, ...(isMobile && responsiveStyles.orderCard) }}>
-                  {/* Order Header */}
-                  <div style={{ ...styles.orderCardHeader, ...(isMobile && responsiveStyles.orderCardHeader) }}>
-                    <div>
-                      <h3 style={{ ...styles.orderNumber, ...(isMobile && responsiveStyles.orderNumber) }}>Orden #{order.id}</h3>
-                      <p style={{ ...styles.orderTime, ...(isMobile && responsiveStyles.orderTime) }}>
-                        Realizada: {new Date(order.placed_at).toLocaleString('es-MX', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                    </div>
-                    <button
-                      style={{ ...styles.detailsButton, ...(isMobile && responsiveStyles.detailsButton) }}
-                      onClick={() => toggleOrderDetails(order.id)}
-                    >
-                      {isExpanded ? (
-                        <>
-                          {isMobile ? 'Ocultar' : 'Ocultar Detalles'} <ChevronUp size={14} />
-                        </>
-                      ) : (
-                        <>
-                          {isMobile ? 'Ver' : 'Ver Detalles'} <ChevronDown size={14} />
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Order Status Progress */}
-                  <OrderStatusProgress currentStatus={order.status} />
-
-                  {/* Order Details (Collapsible) */}
-                  {isExpanded && (
-                    <div style={styles.orderDetails}>
-                      <h4 style={styles.detailsTitle}>Productos del Pedido</h4>
-                      <div style={styles.orderItems}>
-                        {order.items.map((item) => (
-                          <div key={item.id} style={styles.orderItem}>
-                            <div style={styles.orderItemInfo}>
-                              <span style={styles.orderItemName}>{item.product_name}</span>
-                              <span style={styles.orderItemUnit}>{item.unit_label}</span>
-                            </div>
-                            <span style={styles.orderItemQuantity}>x{item.quantity}</span>
-                          </div>
-                        ))}
+          <>
+            <div style={styles.ordersList}>
+              {(() => {
+                const currentOrder = activeOrders[0];
+                const isExpanded = expandedOrders.has(currentOrder.id);
+                return (
+                  <div key={currentOrder.id} style={{ ...styles.orderCard, ...(isMobile && responsiveStyles.orderCard) }}>
+                    <div style={{ ...styles.orderCardHeader, ...(isMobile && responsiveStyles.orderCardHeader) }}>
+                      <div>
+                        <h3 style={{ ...styles.orderNumber, ...(isMobile && responsiveStyles.orderNumber) }}>Orden #{currentOrder.id}</h3>
+                        <p style={{ ...styles.orderTime, ...(isMobile && responsiveStyles.orderTime) }}>
+                          Realizada: {new Date(currentOrder.placed_at).toLocaleString('es-MX', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
                       </div>
-                      {order.delivered_at && (
-                        <div style={styles.deliveredInfo}>
-                          <span style={styles.deliveredLabel}>Entregado:</span>
-                          <span style={styles.deliveredTime}>
-                            {new Date(order.delivered_at).toLocaleString('es-MX', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                      )}
+                      <button
+                        style={{ ...styles.detailsButton, ...(isMobile && responsiveStyles.detailsButton) }}
+                        onClick={() => toggleOrderDetails(currentOrder.id)}
+                      >
+                        {isExpanded ? (
+                          <>
+                            {isMobile ? 'Ocultar' : 'Ocultar Detalles'} <ChevronUp size={14} />
+                          </>
+                        ) : (
+                          <>
+                            {isMobile ? 'Ver' : 'Ver Detalles'} <ChevronDown size={14} />
+                          </>
+                        )}
+                      </button>
                     </div>
-                  )}
+
+                    <OrderStatusProgress currentStatus={currentOrder.status} />
+
+                    {isExpanded && (
+                      <div style={styles.orderDetails}>
+                        <h4 style={styles.detailsTitle}>Productos del Pedido</h4>
+                        <div style={styles.orderItems}>
+                          {currentOrder.items.map((item) => (
+                            <div key={item.id} style={styles.orderItem}>
+                              <div style={styles.orderItemImageWrap}>
+                                <div style={styles.orderItemCircle}>
+                                  {item.product_image_url ? (
+                                    <img
+                                      src={item.product_image_url}
+                                      alt={item.product_name}
+                                      style={styles.orderItemCircleImg}
+                                      draggable={false}
+                                    />
+                                  ) : (
+                                    <div style={styles.orderItemCirclePlaceholder}>
+                                      <PackageSearch size={24} color="currentColor" />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div style={styles.orderItemInfo}>
+                                <span style={styles.orderItemName}>{item.product_name}</span>
+                                <span style={styles.orderItemUnit}>{item.unit_label}</span>
+                              </div>
+                              <span style={styles.orderItemQuantity}>x{item.quantity}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {currentOrder.delivered_at && (
+                          <div style={styles.deliveredInfo}>
+                            <span style={styles.deliveredLabel}>Entregado:</span>
+                            <span style={styles.deliveredTime}>
+                              {new Date(currentOrder.delivered_at).toLocaleString('es-MX', {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        )}
+                        {currentOrder.status === 'DELIVERED' && (
+                          <div style={styles.exploreMoreBlock}>
+                            <h4 style={styles.exploreMoreTitle}>Explora más productos</h4>
+                            <div style={styles.exploreMoreActions}>
+                              <a
+                                href={TIENDA_CAMSA_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={styles.exploreMoreLink}
+                              >
+                                <img src={iconStore} alt="" style={styles.exploreMoreIcon} draggable={false} />
+                                Visitar tienda online
+                              </a>
+                            </div>
+                            {KIOSK_LANDING_VIDEO_IDS.length > 0 && (
+                              <div style={styles.exploreMoreVideoWrap}>
+                                <div style={styles.videoCircleLarge}>
+                                  <iframe
+                                    title="Productos CAMSA"
+                                    src={getYoutubeEmbedUrl(KIOSK_LANDING_VIDEO_IDS[0])}
+                                    style={styles.videoIframe}
+                                    allow="autoplay; encrypted-media; picture-in-picture"
+                                    referrerPolicy="strict-origin-when-cross-origin"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Sección de video debajo de la orden: video cuadrado grande + productos abajo con separación */}
+            {KIOSK_LANDING_VIDEO_IDS.length > 0 && (
+              <div style={styles.landingVideoSection}>
+                <h3 style={styles.landingVideoTitle}>Descubre más productos</h3>
+                <div style={styles.videoSquareWrap}>
+                  <div style={styles.videoSquareLarge}>
+                    <iframe
+                      title="Productos CAMSA"
+                      src={getYoutubeEmbedUrl(KIOSK_LANDING_VIDEO_IDS[0])}
+                      style={styles.videoIframeSquare}
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  </div>
                 </div>
-              );
-            })}
-          </div>
+                <div style={styles.productsRowWrap}>
+                  {KIOSK_PRODUCT_IMAGES.map((product) => (
+                    <a
+                      key={product.label}
+                      href={TIENDA_CAMSA_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={styles.productThumbCircleBelow}
+                      title={product.label}
+                    >
+                      <img
+                        src={getProductImageUrl(product.filename)}
+                        alt={product.label}
+                        style={styles.productThumbImg}
+                        draggable={false}
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -739,7 +767,7 @@ export const KioskOrdersPage: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#1A0D05',
+    backgroundColor: '#FAFAF5',
   },
   loading: {
     display: 'flex',
@@ -747,8 +775,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: '#1A0D05',
-    color: colors.cream,
+    backgroundColor: '#FAFAF5',
+    color: colors.textMuted,
   },
   spinner: {
     width: '48px',
@@ -858,7 +886,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   ordersTitle: {
     fontSize: '32px',
     fontWeight: 'bold',
-    color: colors.cream,
+    color: colors.textPrimary,
     margin: 0,
     fontFamily: 'var(--font-serif)',
   },
@@ -988,14 +1016,40 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   orderItem: {
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: '16px',
     padding: '12px 16px',
     backgroundColor: colors.white,
     borderRadius: '8px',
     border: `1px solid ${colors.primaryMuted}`,
   },
+  orderItemImageWrap: {
+    flexShrink: 0,
+  },
+  orderItemCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: '50%',
+    overflow: 'hidden',
+    border: '2px solid rgba(212, 175, 55, 0.35)',
+    backgroundColor: colors.cream,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orderItemCircleImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  orderItemCirclePlaceholder: {
+    color: colors.primaryMuted,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   orderItemInfo: {
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
     gap: '4px',
@@ -1031,6 +1085,177 @@ const styles: { [key: string]: React.CSSProperties } = {
   deliveredTime: {
     fontSize: '14px',
     color: colors.success,
+  },
+  /* Explora más (pedidos entregados) */
+  exploreMoreBlock: {
+    marginTop: '20px',
+    padding: '20px',
+    backgroundColor: colors.white,
+    borderRadius: '12px',
+    border: `1px solid ${colors.primaryMuted}`,
+  },
+  exploreMoreTitle: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    margin: '0 0 12px 0',
+  },
+  exploreMoreActions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+  },
+  exploreMoreLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 24px',
+    backgroundColor: colors.ivory,
+    color: colors.primaryDark,
+    border: `1px solid ${colors.primary}`,
+    borderRadius: '8px',
+    fontSize: '15px',
+    fontWeight: 600,
+    textDecoration: 'none',
+    transition: 'all 0.2s ease',
+  },
+  exploreMoreIcon: {
+    width: 20,
+    height: 20,
+    objectFit: 'contain',
+  },
+  exploreMoreVideoWrap: {
+    marginTop: '16px',
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  /* Video círculo (landing style) */
+  videoCircle: {
+    width: 200,
+    height: 200,
+    borderRadius: '50%',
+    overflow: 'hidden',
+    border: '3px solid rgba(212, 175, 55, 0.35)',
+    boxShadow: '0 10px 50px rgba(212, 175, 55, 0.14), 0 2px 12px rgba(0,0,0,0.04)',
+    position: 'relative',
+  },
+  videoCircleLarge: {
+    width: 400,
+    height: 400,
+    borderRadius: '50%',
+    overflow: 'hidden',
+    border: '3px solid rgba(212, 175, 55, 0.35)',
+    boxShadow: '0 10px 50px rgba(212, 175, 55, 0.14), 0 2px 12px rgba(0,0,0,0.04)',
+    position: 'relative',
+  },
+  videoCircleLargeCentered: {
+    width: 400,
+    height: 400,
+    borderRadius: '50%',
+    overflow: 'hidden',
+    border: '3px solid rgba(212, 175, 55, 0.35)',
+    boxShadow: '0 10px 50px rgba(212, 175, 55, 0.14), 0 2px 12px rgba(0,0,0,0.04)',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+  },
+  videoSquareWrap: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: 0,
+  },
+  videoSquareLarge: {
+    width: 720,
+    height: 520,
+    maxWidth: '100%',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    border: '3px solid rgba(212, 175, 55, 0.35)',
+    boxShadow: '0 10px 50px rgba(212, 175, 55, 0.14), 0 2px 12px rgba(0,0,0,0.04)',
+    position: 'relative',
+    backgroundColor: '#000',
+  },
+  videoIframeSquare: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: '177.78%',
+    height: '100%',
+    transform: 'translate(-50%, -50%)',
+    border: 'none',
+    pointerEvents: 'none',
+  },
+  productsRowWrap: {
+    marginTop: '48px',
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '24px',
+  },
+  productThumbCircleBelow: {
+    width: 100,
+    height: 100,
+    borderRadius: '50%',
+    overflow: 'hidden',
+    border: '2px solid rgba(212, 175, 55, 0.4)',
+    boxShadow: '0 4px 20px rgba(212, 175, 55, 0.15), 0 1px 6px rgba(0,0,0,0.05)',
+    cursor: 'pointer',
+    display: 'block',
+    textDecoration: 'none',
+    backgroundColor: colors.white,
+    flexShrink: 0,
+  },
+  landingVideoOrbitWrap: {
+    position: 'relative',
+    width: 620,
+    height: 620,
+    margin: '0 auto',
+  },
+  productThumbCircle: {
+    position: 'absolute',
+    borderRadius: '50%',
+    overflow: 'hidden',
+    border: '2px solid rgba(212, 175, 55, 0.4)',
+    boxShadow: '0 4px 20px rgba(212, 175, 55, 0.15), 0 1px 6px rgba(0,0,0,0.05)',
+    cursor: 'pointer',
+    display: 'block',
+    textDecoration: 'none',
+    backgroundColor: colors.white,
+  },
+  productThumbImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+  },
+  videoIframe: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: '200%',
+    height: '200%',
+    transform: 'translate(-50%, -50%)',
+    border: 'none',
+    pointerEvents: 'none',
+  },
+  landingVideoSection: {
+    marginBottom: '28px',
+    padding: '24px',
+    backgroundColor: colors.white,
+    borderRadius: '12px',
+    border: `1px solid ${colors.parchment}`,
+    textAlign: 'center',
+  },
+  landingVideoTitle: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    margin: '0 0 16px 0',
+  },
+  landingVideoWrap: {
+    display: 'flex',
+    justifyContent: 'center',
   },
 };
 

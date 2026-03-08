@@ -10,7 +10,7 @@ from asgiref.sync import async_to_sync
 
 from .models import Order, OrderItem, OrderStatusEvent
 from catalog.models import Product
-from clinic.models import Device
+from clinic.models import Device, PatientAssignment
 from inventory.models import InventoryBalance, InventoryMovement
 from .serializers import (
     OrderSerializer,
@@ -219,7 +219,9 @@ class PublicOrderViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='active')
     def active_orders(self, request):
         """
-        Get active orders for a device
+        Get active orders for the current patient on this device.
+        Only returns orders from the current patient assignment so that when
+        a new patient is registered, previous patient's orders are not shown.
         GET /api/public/orders/active?device_uid=ipad-room-101
         """
         device_uid = request.query_params.get('device_uid')
@@ -231,15 +233,29 @@ class PublicOrderViewSet(viewsets.ViewSet):
         try:
             device = Device.objects.get(device_uid=device_uid)
 
-            # Get active orders (not delivered or cancelled)
+            # Get the active patient assignment for this device (only one at a time)
+            active_assignment = PatientAssignment.objects.filter(
+                device=device,
+                is_active=True
+            ).first()
+
+            # If no active assignment (e.g. just registered new patient, or no patient), return no orders
+            if not active_assignment:
+                return Response({
+                    'success': True,
+                    'orders': []
+                }, status=status.HTTP_200_OK)
+
+            # Only orders belonging to this patient assignment (current session)
             orders = Order.objects.filter(
                 assignment=device,
-                status__in=['PLACED', 'PREPARING', 'READY']
+                patient_assignment=active_assignment,
+                status__in=['PLACED', 'PREPARING', 'READY', 'DELIVERED']
             ).prefetch_related('items', 'items__product').order_by('-placed_at')
 
             return Response({
                 'success': True,
-                'orders': PublicOrderSerializer(orders, many=True).data
+                'orders': PublicOrderSerializer(orders, many=True, context={'request': request}).data
             }, status=status.HTTP_200_OK)
 
         except Device.DoesNotExist:
@@ -271,7 +287,7 @@ class PublicOrderViewSet(viewsets.ViewSet):
                 status='DELIVERED'
             ).prefetch_related('items', 'items__product').order_by('-delivered_at')
             
-            serializer = PublicOrderSerializer(orders, many=True)
+            serializer = PublicOrderSerializer(orders, many=True, context={'request': request})
             
             return Response({
                 'success': True,

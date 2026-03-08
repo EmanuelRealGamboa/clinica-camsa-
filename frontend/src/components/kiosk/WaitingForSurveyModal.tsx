@@ -1,6 +1,6 @@
 import React from 'react';
 import { colors } from '../../styles/colors';
-import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL } from '../../constants/urls';
+import { TIENDA_CAMSA_URL, RESTAURANTES_CAMSA_URL, KIOSK_LANDING_VIDEO_IDS, getYoutubeEmbedUrl } from '../../constants/urls';
 
 interface WaitingForSurveyModalProps {
   onReturnToMenu: () => void;
@@ -21,6 +21,22 @@ const WaitingForSurveyModal: React.FC<WaitingForSurveyModalProps> = ({ onReturnT
           <p style={styles.note}>
             Mientras tanto, puedes regresar al menú, pero no podrás realizar nuevas órdenes a menos que tu enfermera las cree por ti.
           </p>
+
+          {/* Video grande tipo landing mientras espera */}
+          {KIOSK_LANDING_VIDEO_IDS.length > 0 && (
+            <div style={styles.videoSection}>
+              <div style={styles.videoCircleLarge}>
+                <iframe
+                  title="Productos CAMSA"
+                  src={getYoutubeEmbedUrl(KIOSK_LANDING_VIDEO_IDS[0])}
+                  style={styles.videoIframe}
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              </div>
+            </div>
+          )}
+
           <div style={styles.buttonsContainer}>
             <button
               type="button"
@@ -91,8 +107,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: colors.white,
     borderRadius: '16px',
     padding: '40px',
-    maxWidth: '500px',
+    maxWidth: '560px',
     width: '100%',
+    maxHeight: '95vh',
+    overflowY: 'auto',
     boxShadow: colors.shadowGold,
     border: `1px solid ${colors.primaryMuted}`,
     textAlign: 'center',
@@ -134,6 +152,30 @@ const styles: { [key: string]: React.CSSProperties } = {
     lineHeight: 1.5,
     fontStyle: 'italic',
     margin: 0,
+  },
+  videoSection: {
+    display: 'flex',
+    justifyContent: 'center',
+    margin: '16px 0',
+  },
+  videoCircleLarge: {
+    width: 400,
+    height: 400,
+    borderRadius: '50%',
+    overflow: 'hidden',
+    border: '3px solid rgba(212, 175, 55, 0.35)',
+    boxShadow: '0 10px 50px rgba(212, 175, 55, 0.14), 0 2px 12px rgba(0,0,0,0.04)',
+    position: 'relative' as const,
+  },
+  videoIframe: {
+    position: 'absolute' as const,
+    top: '50%',
+    left: '50%',
+    width: '200%',
+    height: '200%',
+    transform: 'translate(-50%, -50%)',
+    border: 'none',
+    pointerEvents: 'none' as const,
   },
   buttonsContainer: {
     display: 'flex',

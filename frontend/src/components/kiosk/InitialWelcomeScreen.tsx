@@ -188,7 +188,7 @@ export const InitialWelcomeScreen: React.FC<InitialWelcomeScreenProps> = ({
       {/* Video dots */}
       {KIOSK_LANDING_VIDEO_IDS.length > 1 && (
         <div style={dotsRow}>
-          {KIOSK_LANDING_VIDEO_IDS.map((vid, i) => (
+          {KIOSK_LANDING_VIDEO_IDS.map((vid: string, i: number) => (
             <button
               key={vid}
               type="button"

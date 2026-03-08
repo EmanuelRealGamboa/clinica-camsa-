@@ -23,22 +23,19 @@ const fallbackVideoIds = [
 
 export const KIOSK_LANDING_VIDEO_IDS = envVideoIds.length > 0 ? envVideoIds : fallbackVideoIds;
 
-/** Base URL for media files (category icons, etc.). In production set VITE_API_BASE_URL to your backend URL if frontend and backend are on different domains. */
-const MEDIA_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+/** Path donde el frontend sirve los íconos de productos del kiosk (copia en public/media/category-icons). */
 const CATEGORY_ICONS_PATH = '/media/category-icons';
 
 /**
- * Returns the full URL for a product/category icon.
- * Uses VITE_API_BASE_URL when set (different domains). Otherwise uses relative path (same-origin).
+ * Devuelve la URL de un ícono de producto para el kiosk.
+ * En producción las imágenes se sirven desde el mismo frontend (public/media/category-icons).
  */
-export const getProductImageUrl = (filename: string): string => {
-  const base = MEDIA_BASE || (typeof window !== 'undefined' ? window.location.origin : '');
-  return base ? `${base}${CATEGORY_ICONS_PATH}/${filename}` : `${CATEGORY_ICONS_PATH}/${filename}`;
-};
+export const getProductImageUrl = (filename: string): string =>
+  `${CATEGORY_ICONS_PATH}/${filename}`;
 
 /**
- * Product showcase images for the landing page orbit circles.
- * Images are loaded from project media/category-icons folder (served by backend).
+ * Imágenes de productos para los círculos del kiosk (landing y página de pedidos).
+ * Se sirven desde el frontend: public/media/category-icons/
  */
 export const KIOSK_PRODUCT_IMAGES: { label: string; filename: string }[] = [
   { label: 'Acuaminerales', filename: 'ACUAMINERALES.png' },

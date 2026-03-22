@@ -1,38 +1,39 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { AdminProtectedRoute } from './auth/AdminProtectedRoute';
 import { SurveyProvider } from './contexts/SurveyContext';
 
-// Kiosk Pages
+// Kiosk Pages (no lazy loading - main route, must load fast)
 import KioskPage from './pages/kiosk/KioskPage';
 import { KioskHomePage } from './pages/kiosk/KioskHomePage';
 import { KioskCategoryPage } from './pages/kiosk/KioskCategoryPage';
 import { KioskFoodPage } from './pages/kiosk/KioskFoodPage';
 import { KioskOrdersPage } from './pages/kiosk/KioskOrdersPage';
 
-// Staff Pages
-import LoginPage from './pages/staff/LoginPage';
-import DashboardPage from './pages/staff/DashboardPage';
-import OrdersPage from './pages/staff/OrdersPage';
-import OrderDetailPage from './pages/staff/OrderDetailPage';
-import { InventoryViewPage } from './pages/staff/InventoryViewPage';
+// Staff Pages (lazy loaded)
+const LoginPage = lazy(() => import('./pages/staff/LoginPage'));
+const DashboardPage = lazy(() => import('./pages/staff/DashboardPage'));
+const OrdersPage = lazy(() => import('./pages/staff/OrdersPage'));
+const OrderDetailPage = lazy(() => import('./pages/staff/OrderDetailPage'));
+const InventoryViewPage = lazy(() => import('./pages/staff/InventoryViewPage').then(m => ({ default: m.InventoryViewPage })));
 
-// Admin Pages
-import AdminLoginPage from './pages/admin/AdminLoginPage';
-import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import UsersManagementPage from './pages/admin/UsersManagementPage';
-import ProductsManagementPage from './pages/admin/ProductsManagementPage';
-import DevicesManagementPage from './pages/admin/DevicesManagementPage';
-import FeedbackPage from './pages/admin/FeedbackPage';
-import InventoryPage from './pages/admin/InventoryPage';
+// Admin Pages (lazy loaded)
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const UsersManagementPage = lazy(() => import('./pages/admin/UsersManagementPage'));
+const ProductsManagementPage = lazy(() => import('./pages/admin/ProductsManagementPage'));
+const DevicesManagementPage = lazy(() => import('./pages/admin/DevicesManagementPage'));
+const FeedbackPage = lazy(() => import('./pages/admin/FeedbackPage'));
+const InventoryPage = lazy(() => import('./pages/admin/InventoryPage'));
 
 function App() {
   return (
     <AuthProvider>
       <SurveyProvider>
         <BrowserRouter>
+          <Suspense fallback={<div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'100vh'}}>Cargando...</div>}>
           <Routes>
           {/* Kiosk Routes - More specific routes first */}
           <Route path="/kiosk/:deviceId/food/restaurant/:restaurantId" element={<KioskFoodPage />} />
@@ -135,6 +136,7 @@ function App() {
           <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
+          </Suspense>
         </BrowserRouter>
       </SurveyProvider>
     </AuthProvider>

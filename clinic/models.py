@@ -16,6 +16,7 @@ class Room(models.Model):
         _('room code'),
         max_length=50,
         unique=True,
+        db_index=True,
         help_text=_('Unique room code (e.g., 101, A-205)')
     )
     floor = models.CharField(
@@ -54,6 +55,7 @@ class Patient(models.Model):
     full_name = models.CharField(
         _('full name'),
         max_length=255,
+        db_index=True,
         help_text=_('Patient full name')
     )
     phone_e164 = models.CharField(
@@ -209,6 +211,7 @@ class PatientAssignment(models.Model):
     is_active = models.BooleanField(
         _('is active'),
         default=True,
+        db_index=True,
         help_text=_('Whether this assignment is currently active')
     )
     started_at = models.DateTimeField(

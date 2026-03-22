@@ -73,6 +73,19 @@ const DashboardPage: React.FC = () => {
         // Reload data to reflect that staff is now free
         // This happens when patient completes survey and session ends automatically
         loadData();
+      } else if (message.type === 'assignment_updated') {
+        console.log('Assignment updated:', message.data);
+        // Refrescar datos del panel
+        loadData();
+
+        if (message.data.event === 'session_ended_by_survey') {
+          // Mostrar notificación de éxito
+          showModal(
+            'Sesión Finalizada',
+            `${message.data.patient_name}: Encuesta completada y sesión finalizada automáticamente.`,
+            'success'
+          );
+        }
       }
     },
     onOpen: () => {
@@ -462,13 +475,20 @@ const DashboardPage: React.FC = () => {
                       ⚙️ Configurar Límites
                     </button>
                     {activeAssignment && !activeAssignment.survey_enabled && !activeAssignment.can_patient_order && (
-                      <button onClick={handleEnableSurvey} style={styles.enableSurveyButton} className="enable-survey-button">
-                        📝 Habilitar Encuesta
+                      <>
+                        <button onClick={handleEnableSurvey} style={styles.enableSurveyButton} className="enable-survey-button">
+                          📝 Habilitar Encuesta
+                        </button>
+                        <button onClick={handleEndCare} style={styles.endCareButton} className="end-care-button">
+                          🚪 Finalizar sin Encuesta
+                        </button>
+                      </>
+                    )}
+                    {activeAssignment && !activeAssignment.survey_enabled && activeAssignment.can_patient_order && (
+                      <button onClick={handleEndCare} style={styles.endCareButton} className="end-care-button">
+                        Finalizar Atención
                       </button>
                     )}
-                    <button onClick={handleEndCare} style={styles.endCareButton} className="end-care-button">
-                      Finalizar Atención
-                    </button>
                   </div>
                 </div>
                 <div style={styles.activePatientCard}>
@@ -495,6 +515,27 @@ const DashboardPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                {activeAssignment.survey_enabled && activeAssignment.is_active && (
+                  <div style={{
+                    padding: '16px',
+                    backgroundColor: '#FFF3CD',
+                    borderRadius: '8px',
+                    textAlign: 'center' as const,
+                    border: '1px solid #FFC107',
+                    marginTop: '16px'
+                  }}>
+                    <p style={{ margin: 0, fontWeight: 'bold' }}>⏳ Esperando respuesta de encuesta del paciente...</p>
+                    <p style={{ margin: '8px 0 0', fontSize: '14px', color: '#666' }}>
+                      La sesión se finalizará automáticamente cuando el paciente complete la encuesta.
+                    </p>
+                    <button
+                      onClick={handleEndCare}
+                      style={{ marginTop: '12px', padding: '8px 16px', backgroundColor: '#DC3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      Finalizar sin esperar encuesta
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

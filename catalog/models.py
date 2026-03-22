@@ -102,6 +102,7 @@ class ProductCategory(models.Model):
     is_active = models.BooleanField(
         _('is active'),
         default=True,
+        db_index=True,
         help_text=_('Whether this category is currently active')
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -129,6 +130,7 @@ class Product(models.Model):
     name = models.CharField(
         _('product name'),
         max_length=200,
+        db_index=True,
         help_text=_('Product name')
     )
     description = models.TextField(
@@ -235,6 +237,7 @@ class Product(models.Model):
     is_active = models.BooleanField(
         _('is active'),
         default=True,
+        db_index=True,
         help_text=_('Whether this product is currently active')
     )
     created_at = models.DateTimeField(auto_now_add=True)

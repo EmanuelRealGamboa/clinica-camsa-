@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import viewsets, status
@@ -7,6 +9,8 @@ from rest_framework.permissions import AllowAny
 from accounts.permissions import IsStaffOrAdmin
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+
+logger = logging.getLogger(__name__)
 
 from .models import Order, OrderItem, OrderStatusEvent
 from catalog.models import Product
@@ -111,24 +115,47 @@ class PublicOrderViewSet(viewsets.ViewSet):
                             'requested': count
                         }, status=status.HTTP_400_BAD_REQUEST)
 
-                # Validate inventory availability for all items first
+                # Sort product IDs to acquire locks in deterministic order (avoid deadlocks)
+                product_ids = sorted(set([item['product_id'] for item in items_data]))
+
+                # Acquire locks on all products in sorted order
+                products = {
+                    p.id: p
+                    for p in Product.objects.select_for_update().filter(
+                        id__in=product_ids, is_active=True
+                    ).select_related('category')
+                }
+
+                # Validate all requested products exist and are active
+                for pid in product_ids:
+                    if pid not in products:
+                        raise Product.DoesNotExist()
+
+                # Acquire locks on all inventory balances in sorted order
+                balances = {
+                    b.product_id: b
+                    for b in InventoryBalance.objects.select_for_update().filter(
+                        product_id__in=product_ids
+                    )
+                }
+
+                # Ensure balances exist for all products (create if missing)
+                for pid in product_ids:
+                    if pid not in balances:
+                        balance, _ = InventoryBalance.objects.select_for_update().get_or_create(
+                            product=products[pid],
+                            defaults={'on_hand': 0, 'reserved': 0}
+                        )
+                        balances[pid] = balance
+
+                # Validate inventory availability for all items INSIDE the lock
                 inventory_checks = []
                 for item_data in items_data:
-                    product = Product.objects.select_for_update().get(
-                        id=item_data['product_id'],
-                        is_active=True
-                    )
-
-                    # Get or create inventory balance with lock
-                    balance, created = InventoryBalance.objects.select_for_update().get_or_create(
-                        product=product,
-                        defaults={'on_hand': 0, 'reserved': 0}
-                    )
-
-                    # Check availability: available = on_hand - reserved
-                    available = balance.on_hand - balance.reserved
+                    product = products[item_data['product_id']]
+                    balance = balances[item_data['product_id']]
                     requested_qty = item_data['quantity']
 
+                    available = balance.on_hand - balance.reserved
                     if available < requested_qty:
                         return Response({
                             'error': f'Insufficient inventory for {product.name}. Available: {available}, Requested: {requested_qty}'
@@ -140,6 +167,11 @@ class PublicOrderViewSet(viewsets.ViewSet):
                         'quantity': requested_qty
                     })
 
+                # Reserve inventory INSIDE the same atomic block
+                for check in inventory_checks:
+                    check['balance'].reserved += check['quantity']
+                    check['balance'].save(update_fields=['reserved', 'updated_at'])
+
                 # Create order
                 order = Order.objects.create(
                     assignment=device,
@@ -149,10 +181,9 @@ class PublicOrderViewSet(viewsets.ViewSet):
                     status='PLACED'
                 )
 
-                # Create order items and reserve inventory
+                # Create order items and inventory movements
                 for check in inventory_checks:
                     product = check['product']
-                    balance = check['balance']
                     quantity = check['quantity']
 
                     # Create order item
@@ -162,10 +193,6 @@ class PublicOrderViewSet(viewsets.ViewSet):
                         quantity=quantity,
                         unit_label=product.unit_label  # Snapshot unit_label
                     )
-
-                    # Reserve inventory
-                    balance.reserved += quantity
-                    balance.save(update_fields=['reserved', 'updated_at'])
 
                     # Create inventory movement for reservation
                     InventoryMovement.objects.create(
@@ -212,8 +239,9 @@ class PublicOrderViewSet(viewsets.ViewSet):
                 'error': 'Product not found or inactive'
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error('Error creating order from kiosk', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path='active')
@@ -263,8 +291,9 @@ class PublicOrderViewSet(viewsets.ViewSet):
                 'error': 'Device not found'
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error('Error fetching active orders', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path='by-assignment/(?P<assignment_id>[^/.]+)')
@@ -304,8 +333,9 @@ class PublicOrderViewSet(viewsets.ViewSet):
                 'error': 'Invalid assignment ID'
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error('Error fetching orders by assignment', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -376,12 +406,12 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
         # Use get_queryset() to apply my_orders filter
         orders = self.get_queryset().filter(status__in=statuses)
 
+        page = self.paginate_queryset(orders)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(orders, many=True)
-        return Response({
-            'success': True,
-            'count': orders.count(),
-            'orders': serializer.data
-        }, status=status.HTTP_200_OK)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['patch'], url_path='status')
     def change_status(self, request, pk=None):
@@ -505,8 +535,9 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                 'error': 'Inventory balance not found for one or more products'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
+            logger.error('Error changing order status', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'], url_path='cancel')
@@ -606,8 +637,9 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                 'error': 'Inventory balance not found for one or more products'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
+            logger.error('Error cancelling order', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'], url_path='create-order')
@@ -649,25 +681,55 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                         'error': 'You can only create orders for your own assigned patients'
                     }, status=status.HTTP_403_FORBIDDEN)
 
-                # Validate inventory availability for all items
-                for item in items:
-                    product = Product.objects.select_related('category').get(
-                        id=item['product_id'],
-                        is_active=True
-                    )
-                    quantity = int(item['quantity'])
+                # Sort product IDs to acquire locks in deterministic order (avoid deadlocks)
+                product_ids = sorted(set([item['product_id'] for item in items]))
 
-                    # Check inventory if product is tracked
-                    try:
-                        inventory = InventoryBalance.objects.select_for_update().get(product=product)
-                        available = inventory.on_hand - inventory.reserved
+                # Acquire locks on all products in sorted order
+                products = {
+                    p.id: p
+                    for p in Product.objects.select_for_update().filter(
+                        id__in=product_ids, is_active=True
+                    ).select_related('category')
+                }
+
+                # Validate all requested products exist and are active
+                for pid in product_ids:
+                    if pid not in products:
+                        raise Product.DoesNotExist()
+
+                # Acquire locks on all inventory balances in sorted order
+                balances = {
+                    b.product_id: b
+                    for b in InventoryBalance.objects.select_for_update().filter(
+                        product_id__in=product_ids
+                    )
+                }
+
+                # Validate inventory availability INSIDE the lock
+                inventory_checks = []
+                for item in items:
+                    product = products[item['product_id']]
+                    quantity = int(item['quantity'])
+                    balance = balances.get(item['product_id'])
+
+                    if balance:
+                        available = balance.on_hand - balance.reserved
                         if available < quantity:
                             return Response({
                                 'error': f'Insufficient inventory for {product.name}. Available: {available}, Requested: {quantity}'
                             }, status=status.HTTP_400_BAD_REQUEST)
-                    except InventoryBalance.DoesNotExist:
-                        # Product not tracked in inventory, allow order
-                        pass
+
+                    inventory_checks.append({
+                        'product': product,
+                        'balance': balance,
+                        'quantity': quantity,
+                    })
+
+                # Reserve inventory INSIDE the same atomic block
+                for check in inventory_checks:
+                    if check['balance']:
+                        check['balance'].reserved += check['quantity']
+                        check['balance'].save(update_fields=['reserved', 'updated_at'])
 
                 # Create the order
                 order = Order.objects.create(
@@ -679,13 +741,10 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                     placed_at=timezone.now()
                 )
 
-                # Create order items and reserve inventory
-                for item in items:
-                    product = Product.objects.select_related('category').get(
-                        id=item['product_id'],
-                        is_active=True
-                    )
-                    quantity = int(item['quantity'])
+                # Create order items and inventory movements
+                for check in inventory_checks:
+                    product = check['product']
+                    quantity = check['quantity']
 
                     # Create order item
                     OrderItem.objects.create(
@@ -695,13 +754,8 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                         unit_label=product.unit_label
                     )
 
-                    # Reserve inventory if product is tracked
-                    try:
-                        inventory = InventoryBalance.objects.select_for_update().get(product=product)
-                        inventory.reserved += quantity
-                        inventory.save(update_fields=['reserved', 'updated_at'])
-
-                        # Create inventory movement
+                    # Create inventory movement if product is tracked
+                    if check['balance']:
                         InventoryMovement.objects.create(
                             product=product,
                             movement_type='RESERVE',
@@ -710,9 +764,6 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                             created_by=request.user,
                             note=f'Reserved for Order #{order.id} (created by staff)'
                         )
-                    except InventoryBalance.DoesNotExist:
-                        # Product not tracked, skip inventory operations
-                        pass
 
                 # Create status event
                 OrderStatusEvent.objects.create(
@@ -751,7 +802,7 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                             )
                 except Exception as ws_error:
                     # Log but don't fail the request
-                    print(f'WebSocket broadcast failed: {ws_error}')
+                    logger.error('WebSocket broadcast failed', exc_info=True)
 
                 return Response({
                     'success': True,
@@ -768,6 +819,7 @@ class OrderManagementViewSet(viewsets.ReadOnlyModelViewSet):
                 'error': 'One or more products not found or inactive'
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error('Error creating order for patient', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

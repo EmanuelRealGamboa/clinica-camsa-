@@ -92,6 +92,15 @@ class StaffOrderConsumer(AsyncWebsocketConsumer):
             'changed_at': event.get('changed_at'),
         }))
 
+    async def assignment_updated(self, event):
+        """
+        Handle assignment update notifications (e.g., session ended by survey)
+        """
+        await self.send(text_data=json.dumps({
+            'type': 'assignment_updated',
+            'data': event['data']
+        }))
+
     async def patient_assignment_ended(self, event):
         """
         Handle patient_assignment_ended event from channel layer

@@ -54,12 +54,14 @@ class Feedback(models.Model):
     )
     # Staff interaction rating (0-5)
     staff_rating = models.IntegerField(
+        default=0,
         validators=[MinValueValidator(0), MaxValueValidator(5)],
         verbose_name=_('staff rating'),
         help_text=_('Rating for staff interaction (0-5 stars)')
     )
     # Stay experience rating (0-5)
     stay_rating = models.IntegerField(
+        default=0,
         validators=[MinValueValidator(0), MaxValueValidator(5)],
         verbose_name=_('stay rating'),
         help_text=_('Rating for stay experience (0-5 stars)')

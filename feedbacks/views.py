@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.db.models import Avg, Count, Q
 from django.utils import timezone
@@ -7,6 +9,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from accounts.permissions import IsStaffOrAdmin
+
+logger = logging.getLogger(__name__)
 
 from .models import Feedback
 from orders.models import Order
@@ -117,7 +121,7 @@ class PublicFeedbackViewSet(viewsets.ViewSet):
                         )
                 except Exception as ws_error:
                     # Log but don't fail the request
-                    print(f'WebSocket broadcast failed: {ws_error}')
+                    logger.error('WebSocket broadcast failed', exc_info=True)
 
                 # Broadcast session ended to staff via WebSocket
                 try:
@@ -135,7 +139,29 @@ class PublicFeedbackViewSet(viewsets.ViewSet):
                     )
                 except Exception as ws_error:
                     # Log but don't fail the request
-                    print(f'WebSocket broadcast to staff failed: {ws_error}')
+                    logger.error('WebSocket broadcast to staff failed', exc_info=True)
+
+                # Notificar al staff que la sesión fue finalizada automáticamente por encuesta
+                try:
+                    from channels.layers import get_channel_layer
+                    from asgiref.sync import async_to_sync
+                    channel_layer = get_channel_layer()
+                    if channel_layer:
+                        async_to_sync(channel_layer.group_send)(
+                            'staff_orders',
+                            {
+                                'type': 'assignment_updated',
+                                'data': {
+                                    'event': 'session_ended_by_survey',
+                                    'assignment_id': patient_assignment.id,
+                                    'patient_name': patient_assignment.patient.full_name if patient_assignment.patient else '',
+                                    'message': 'Sesión finalizada automáticamente tras completar encuesta'
+                                }
+                            }
+                        )
+                except Exception as ws_error:
+                    # Log but don't fail the request
+                    logger.error('WebSocket assignment_updated broadcast to staff failed', exc_info=True)
 
                 # Calculate and update product ratings averages
                 self._update_product_ratings(product_ratings)
@@ -151,10 +177,9 @@ class PublicFeedbackViewSet(viewsets.ViewSet):
                 'error': 'Patient assignment not found or inactive'
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            import traceback
-            traceback.print_exc()
+            logger.error('Error creating feedback', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _update_product_ratings(self, product_ratings):
@@ -292,17 +317,21 @@ class FeedbackManagementViewSet(viewsets.ReadOnlyModelViewSet):
         total_ended_assignments = PatientAssignment.objects.filter(is_active=False).count()
         response_rate = (total_feedbacks / total_ended_assignments * 100) if total_ended_assignments > 0 else 0
 
-        # Staff rating distribution
-        staff_rating_distribution = {}
-        for i in range(0, 6):
-            count = feedbacks.filter(staff_rating=i).count()
-            staff_rating_distribution[str(i)] = count
+        # Staff rating distribution (single query instead of loop)
+        staff_rating_counts = feedbacks.values('staff_rating').annotate(count=Count('id'))
+        staff_rating_distribution = {str(i): 0 for i in range(0, 6)}
+        for entry in staff_rating_counts:
+            key = str(entry['staff_rating'])
+            if key in staff_rating_distribution:
+                staff_rating_distribution[key] = entry['count']
 
-        # Stay rating distribution
-        stay_rating_distribution = {}
-        for i in range(0, 6):
-            count = feedbacks.filter(stay_rating=i).count()
-            stay_rating_distribution[str(i)] = count
+        # Stay rating distribution (single query instead of loop)
+        stay_rating_counts = feedbacks.values('stay_rating').annotate(count=Count('id'))
+        stay_rating_distribution = {str(i): 0 for i in range(0, 6)}
+        for entry in stay_rating_counts:
+            key = str(entry['stay_rating'])
+            if key in stay_rating_distribution:
+                stay_rating_distribution[key] = entry['count']
 
         # Top rated staff
         top_staff = feedbacks.filter(staff__isnull=False).values(

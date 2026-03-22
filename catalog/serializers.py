@@ -55,6 +55,14 @@ class ProductCategorySerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(image_url)
         return image_url
 
+    def validate_icon_image(self, value):
+        if value and value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("Imagen demasiado grande. Máximo 5MB.")
+        allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        if value and hasattr(value, 'content_type') and value.content_type not in allowed:
+            raise serializers.ValidationError("Formato no permitido. Use JPG, PNG, WebP o GIF.")
+        return value
+
 
 class ProductSerializer(serializers.ModelSerializer):
     """
@@ -101,6 +109,14 @@ class ProductSerializer(serializers.ModelSerializer):
         if image_url and request and not image_url.startswith('http'):
             return request.build_absolute_uri(image_url)
         return image_url
+
+    def validate_image(self, value):
+        if value and value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("Imagen demasiado grande. Máximo 5MB.")
+        allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        if value and hasattr(value, 'content_type') and value.content_type not in allowed:
+            raise serializers.ValidationError("Formato no permitido. Use JPG, PNG, WebP o GIF.")
+        return value
 
     def validate(self, data):
         """Convert empty strings to None for optional fields"""

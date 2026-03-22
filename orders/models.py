@@ -55,6 +55,7 @@ class Order(models.Model):
         max_length=20,
         choices=STATUS_CHOICES,
         default='PLACED',
+        db_index=True,
         help_text=_('Current order status')
     )
     placed_at = models.DateTimeField(
@@ -81,6 +82,9 @@ class Order(models.Model):
         verbose_name = _('order')
         verbose_name_plural = _('orders')
         ordering = ['-placed_at']
+        indexes = [
+            models.Index(fields=['status', '-placed_at'], name='idx_order_status_placed'),
+        ]
 
     def __str__(self):
         return f'Order #{self.id} - {self.get_status_display()} - {self.placed_at.strftime("%Y-%m-%d %H:%M")}'

@@ -1,9 +1,13 @@
+import logging
+
 from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from accounts.permissions import IsStaffOrAdmin
+
+logger = logging.getLogger(__name__)
 
 from .models import InventoryBalance, InventoryMovement
 from catalog.models import Product
@@ -137,8 +141,9 @@ class StockOperationsViewSet(viewsets.ViewSet):
                 'error': 'Product not found'
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error('Error receiving stock', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path='adjust')
@@ -211,6 +216,7 @@ class StockOperationsViewSet(viewsets.ViewSet):
                 'error': 'Product not found'
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error('Error adjusting stock', exc_info=True)
             return Response({
-                'error': str(e)
+                'error': 'Error interno del servidor. Intente nuevamente.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

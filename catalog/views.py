@@ -76,7 +76,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     partial_update: Partially update a product
     destroy: Delete a product
     """
-    queryset = Product.objects.select_related('category').all()
+    queryset = Product.objects.select_related('category').prefetch_related('tags').all()
     serializer_class = ProductSerializer
     permission_classes = [IsStaffOrAdmin]
     parser_classes = [MultiPartParser, FormParser, JSONParser]

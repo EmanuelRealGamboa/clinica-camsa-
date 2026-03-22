@@ -1,5 +1,7 @@
 # Python
+__pycache__/
 *.py[cod]
+*.pyo
 *$py.class
 *.so
 .Python
@@ -29,8 +31,13 @@ db.sqlite3-journal
 !/media/category-icons/
 /staticfiles
 
-# Environment
+# Archivos sensibles
 .env
+.env.production
+backup_produccion.sql
+*.sql
+
+# Environment
 .venv
 env/
 venv/
@@ -44,15 +51,17 @@ venv.bak/
 *.swp
 *.swo
 *~
+
+# OS
 .DS_Store
+Thumbs.db
 
 # Local-only files (no subir a git)
-backup_produccion.sql
 clinic_service/settings_local.py
-add_device_101.py
-fix_cloudinary_urls.py
-seed_data.py
 *.lnk
+
+# Redis
+dump.rdb
 
 # Testing
 .pytest_cache/
